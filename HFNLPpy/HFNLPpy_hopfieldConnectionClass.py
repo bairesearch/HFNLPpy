@@ -21,10 +21,12 @@ import numpy as np
 
 
 class HopfieldConnection:
-	def __init__(self, nodeSource, nodeTarget, spatioTemporalIndex, activationTime):
+	def __init__(self, nodeSource, nodeTarget, activationTime, spatioTemporalIndex, weight=1.0):
 		#primary vars;
 		self.nodeSource = nodeSource
 		self.nodeTarget = nodeTarget
-		self.spatioTemporalIndex = spatioTemporalIndex	#creation time
 		self.activationTime = activationTime	#last activation time (used to calculate recency)	#not currently used
-		
+		self.spatioTemporalIndex = spatioTemporalIndex	#creation time (not used by biological implementation)		#for biologicalImplementation: interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex)
+		#if(biologicalImplementation):
+		self.weight = weight	#for biologicalImplementation: interpret connection as unique synapse
+

@@ -25,7 +25,10 @@ spacyWordVectorGenerator = spacy.load('en_core_web_md')	#spacy.load('en_core_web
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 
+
 printVerbose = False
+
+biologicalImplementation = True
 
 drawHopfieldGraphSentence = False
 if(drawHopfieldGraphSentence):
@@ -34,12 +37,12 @@ drawHopfieldGraphNetwork = True	#draw graph for entire network (not just sentenc
 if(drawHopfieldGraphNetwork):
 	import HFNLPpy_hopfieldGraphDraw as ATNLPtf_hopfieldGraphDrawNetwork
 
-networkLeafNodeDict = {}
+networkConceptNodeDict = {}
 networkSize = 0
 
 def generateHopfieldGraphNetwork(articles):
 	for sentenceIndex, sentence in enumerate(articles):
-		generateHopfieldGraphSentenceString(sentenceIndex, sentence)		
+		generateHopfieldGraphSentenceString(sentenceIndex, sentence)	
 
 def generateHopfieldGraphSentenceString(sentenceIndex, sentence):
 	print("\n\ngenerateHopfieldGraphSentenceString: sentenceIndex = ", sentenceIndex, "; ", sentence)
@@ -52,9 +55,7 @@ def generateHopfieldGraphSentenceString(sentenceIndex, sentence):
 		return generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence)
 
 def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
-	
-	global networkSize
-	
+		
 	currentTime = calculateActivationTime(sentenceIndex)
 
 	if(drawHopfieldGraphSentence):
@@ -62,64 +63,107 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 	if(drawHopfieldGraphNetwork):
 		ATNLPtf_hopfieldGraphDrawNetwork.clearHopfieldGraph()
 			
-	sentenceLeafNodeList = []
-	
+	sentenceConceptNodeList = []
 	sentenceLength = len(tokenisedSentence)
-	
-	#declare graph nodes;
+				
+	#declare graph nodes;	
 	for w, token in enumerate(tokenisedSentence):	
 
-		#primary vars;
 		word = getTokenWord(token)
 		lemma = getTokenLemma(token)
-		nodeName = generateHopfieldGraphNodeName(word, lemma)
-		wordVector = getTokenWordVector(token)	#numpy word vector
-		#posTag = getTokenPOStag(token)	#not used
-		activationTime = calculateActivationTime(sentenceIndex)
-		nodeGraphType = graphNodeTypeLeaf
-		networkIndex = getNetworkIndex()
-		
-		#add instance to sentenceLeafNodeList
-		leafNode = HopfieldNode(networkIndex, nodeName, wordVector, nodeGraphType, activationTime)
-		if(printVerbose):
-			print("create new leafNode; ", leafNode.lemma)
-		sentenceLeafNodeList.append(leafNode)
-		
+		nodeName = generateHopfieldGraphNodeName(word, lemma)	
+		if(graphNodeExists(nodeName)):
+			conceptNode = getGraphNode(nodeName)
+		else:
+			#primary vars;
+			wordVector = getTokenWordVector(token)	#numpy word vector
+			#posTag = getTokenPOStag(token)	#not used
+			activationTime = calculateActivationTime(sentenceIndex)
+			nodeGraphType = graphNodeTypeConcept
+			networkIndex = getNetworkIndex()
+			conceptNode = HopfieldNode(networkIndex, nodeName, wordVector, nodeGraphType, activationTime)
+			addNodeToGraph(conceptNode)
+			if(printVerbose):
+				print("create new conceptNode; ", conceptNode.lemma)
+		sentenceConceptNodeList.append(conceptNode)
+			
 		#connection vars;
 		if(w > 0):
-			previousLeafNode = sentenceLeafNodeList[w-1]
-			spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
-			addConnectionToNode(previousLeafNode, leafNode, spatioTemporalIndex, activationTime)
-		
-		networkLeafNodeDict[nodeName] = leafNode
-		networkSize = networkSize + 1
+			spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)	#for biologicalImplementation: interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause)
+			if(biologicalImplementation):
+				totalConceptsInSubsequence = 0
+				for w2 in range(w-1):
+					totalConceptsInSubsequence += 1
+					#multiple connections/synapses are made between current neuron and ealier neurons in sequence, and synapse weights are adjusted such that the particular combination (or permutation if SANI synapses) will fire the neuron
+					previousConceptNode = sentenceConceptNodeList[w2]
+					weight = 1.0/totalConceptsInSubsequence	#for biologicalImplementation: interpret connection as unique synapse
+					#print("weight = ", weight)
+					addConnectionToNode(previousConceptNode, conceptNode, activationTime, spatioTemporalIndex, weight=weight)					
+			else:
+				previousConceptNode = sentenceConceptNodeList[w-1]
+				addConnectionToNode(previousConceptNode, conceptNode, activationTime, spatioTemporalIndex)
 		
 		#if(drawHopfieldGraphSentence):
 		#	ATNLPtf_hopfieldGraphDrawSentence.drawHopfieldGraphNode(instanceNode, w, treeLevel)	#done later
 
 	
 	if(drawHopfieldGraphSentence):
-		for leafNode in sentenceLeafNodeList:
-			ATNLPtf_hopfieldGraphDrawSentence.drawHopfieldGraphNodeAndConnections(leafNode, networkSize, drawGraph=False)
+		for conceptNode in sentenceConceptNodeList:
+			ATNLPtf_hopfieldGraphDrawSentence.drawHopfieldGraphNodeAndConnections(conceptNode, networkSize, drawGraph=False)
 		print("ATNLPtf_hopfieldGraphDrawSentence.displayHopfieldGraph()")
 		ATNLPtf_hopfieldGraphDrawSentence.displayHopfieldGraph()
 		
 	if(drawHopfieldGraphNetwork):
-		ATNLPtf_hopfieldGraphDrawNetwork.drawHopfieldGraphNetwork(networkLeafNodeDict)
+		ATNLPtf_hopfieldGraphDrawNetwork.drawHopfieldGraphNetwork(networkConceptNodeDict)
 		print("ATNLPtf_hopfieldGraphDrawNetwork.displayHopfieldGraph()")
 		ATNLPtf_hopfieldGraphDrawNetwork.displayHopfieldGraph()
 	
 	result = True			
 	return result
 
-
-
-def addConnectionToNode(nodeSource, nodeTarget, spatioTemporalIndex, activationTime):
-	connection = HopfieldConnection(nodeSource, nodeTarget, spatioTemporalIndex, activationTime)
-	nodeSource.targetConnectionList.append(connection)
-	nodeTarget.sourceConnectionList.append(connection)
+def getGraphNode(nodeName):
+	return networkConceptNodeDict[nodeName]
 	
+def graphNodeExists(nodeName):
+	result = False
+	if(nodeName in networkConceptNodeDict):
+		result = True
+	return result
+	
+def addNodeToGraph(conceptNode):
+	global networkSize
+	if(conceptNode.nodeName not in networkConceptNodeDict):
+		networkConceptNodeDict[conceptNode.nodeName] = conceptNode
+		networkSize = networkSize + 1
+	else:
+		print("addNodeToGraph error: conceptNode.nodeName already in networkConceptNodeDict")
+		exit()
 		
+def connectionExists(nodeSource, nodeTarget):
+	result = False
+	if(nodeTarget.nodeName in nodeSource.targetConnectionDict):
+		result = True
+		#connectionList = nodeSource.targetConnectionDict[nodeTarget.nodeName]
+		#for connection in connectionList:
+		#	if(connection
+	return result
+
+def addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, weight=1.0, subsequenceConnection=False):
+	connection = HopfieldConnection(nodeSource, nodeTarget, spatioTemporalIndex, activationTime, weight)
+	#nodeSource.targetConnectionList.append(connection)
+	#nodeTarget.sourceConnectionList.append(connection)
+	createConnectionKeyIfNonExistant(nodeSource.targetConnectionDict, nodeTarget.nodeName)
+	createConnectionKeyIfNonExistant(nodeTarget.sourceConnectionDict, nodeSource.nodeName)
+	nodeSource.targetConnectionDict[nodeTarget.nodeName].append(connection)
+	nodeTarget.sourceConnectionDict[nodeSource.nodeName].append(connection)
+	#connection.subsequenceConnection = subsequenceConnection
+
+def createConnectionKeyIfNonExistant(dic, key):
+	if key not in dic:
+		dic[key] = []	#create new empty list
+		
+
+			
 #tokenisation:
 
 def tokeniseSentence(sentence):
@@ -149,7 +193,7 @@ def getTokenPOStag(token):
 #creation/access time:
 
 def getNetworkIndex():
-	networkIndex = len(networkLeafNodeDict)
+	networkIndex = len(networkConceptNodeDict)
 	return networkIndex
 		
 #creation time

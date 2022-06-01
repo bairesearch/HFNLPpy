@@ -19,9 +19,15 @@ ATNLP Hopfield Node Class
 
 import numpy as np
 
-storeLeafNodesByLemma = True	#else store by word (morphology included)
+storeConceptNodesByLemma = True	#else store by word (morphology included)
 
-graphNodeTypeLeaf = 1	#base/input neuron (network neuron)
+
+graphNodeTypeConcept = 1	#base/input neuron (network neuron)
+
+
+#if(biologicalImplementationReuseSynapticSubstrateForIdenticalSubsequences):
+graphNodeTypeStart = 5	#start of sequence - used by biologicalImplementationReuseSynapticSubstrateForIdenticalSubsequences only
+nodeNameStart = "SEQUENCESTARTNODE"
 
 class HopfieldNode:
 	def __init__(self, networkIndex, nodeName, wordVector, nodeGraphType, activationTime):
@@ -34,11 +40,15 @@ class HopfieldNode:
 		self.activationTime = activationTime	#last activation time (used to calculate recency)	#not currently used
 		
 		#connection vars;
-		self.sourceConnectionList = []
-		self.targetConnectionList = []
+		self.sourceConnectionDict = {}
+		self.targetConnectionDict = {}
+		#self.sourceConnectionList = []
+		#self.targetConnectionList = []
+
+		
 
 def generateHopfieldGraphNodeName(word, lemma):
-	if(storeLeafNodesByLemma):
+	if(storeConceptNodesByLemma):
 		nodeName = lemma
 	else:
 		nodeName = word
