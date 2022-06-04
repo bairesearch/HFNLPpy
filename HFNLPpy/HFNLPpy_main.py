@@ -7,11 +7,8 @@ Richard Bruce Baxter - Copyright (c) 2020-2022 Baxter AI (baxterai.com)
 MIT License
 
 # Installation:
-Python 3 and Tensorflow 2.1+ 
-
 conda create -n anntf2 python=3.7
 source activate anntf2
-conda install -c tensorflow tensorflow=2.3 (only required for ANNtf2_loadDataset library access)
 conda install nltk
 conda install spacy
 conda install networkx

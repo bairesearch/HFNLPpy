@@ -28,8 +28,14 @@ from HFNLPpy_hopfieldConnectionClass import *
 
 printVerbose = False
 
-biologicalImplementation = True
+biologicalImplementation = False
 
+useDependencyParseTree = True
+if(useDependencyParseTree):
+	import SPNLPpy_syntacticalGraph
+	if(not SPNLPpy_syntacticalGraph.useSPNLPcustomSyntacticalParser):
+		SPNLPpy_syntacticalGraph.SPNLPpy_syntacticalGraphConstituencyParserFormal.initalise(spacyWordVectorGenerator)
+	
 drawHopfieldGraphSentence = False
 if(drawHopfieldGraphSentence):
 	import HFNLPpy_hopfieldGraphDraw as ATNLPtf_hopfieldGraphDrawSentence
@@ -65,7 +71,13 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 			
 	sentenceConceptNodeList = []
 	sentenceLength = len(tokenisedSentence)
-				
+		
+	if(useDependencyParseTree):
+		performIntermediarySyntacticalTransformation = False
+		identifySyntacticalDependencyRelations = True
+		generateSyntacticalGraphNetwork = False
+		sentenceLeafNodeList, _, DPgraphHeadNode = SPNLPpy_syntacticalGraph.generateSyntacticalGraphSentence(sentenceIndex, tokenisedSentence, performIntermediarySyntacticalTransformation, generateSyntacticalGraphNetwork, identifySyntacticalDependencyRelations)
+
 	#declare graph nodes;	
 	for w, token in enumerate(tokenisedSentence):	
 
@@ -87,24 +99,22 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 				print("create new conceptNode; ", conceptNode.lemma)
 		sentenceConceptNodeList.append(conceptNode)
 			
-		#connection vars;
-		if(w > 0):
-			spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)	#for biologicalImplementation: interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause)
-			if(biologicalImplementation):
-				totalConceptsInSubsequence = 0
-				for w2 in range(w-1):
-					totalConceptsInSubsequence += 1
-					#multiple connections/synapses are made between current neuron and ealier neurons in sequence, and synapse weights are adjusted such that the particular combination (or permutation if SANI synapses) will fire the neuron
-					previousConceptNode = sentenceConceptNodeList[w2]
-					weight = 1.0/totalConceptsInSubsequence	#for biologicalImplementation: interpret connection as unique synapse
-					#print("weight = ", weight)
-					addConnectionToNode(previousConceptNode, conceptNode, activationTime, spatioTemporalIndex, weight=weight)					
-			else:
-				previousConceptNode = sentenceConceptNodeList[w-1]
-				addConnectionToNode(previousConceptNode, conceptNode, activationTime, spatioTemporalIndex)
-		
-		#if(drawHopfieldGraphSentence):
-		#	ATNLPtf_hopfieldGraphDrawSentence.drawHopfieldGraphNode(instanceNode, w, treeLevel)	#done later
+	#connection vars;
+	if(useDependencyParseTree):
+		spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
+		connectHopfieldGraphSentence(sentenceConceptNodeList, DPgraphHeadNode, spatioTemporalIndex, activationTime)
+	else:
+		for w, token in enumerate(tokenisedSentence):
+			if(w > 0):
+				conceptNode = sentenceConceptNodeList[w]
+				spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)	#for biologicalImplementation: interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause)
+				previousNodesList = []
+				if(biologicalImplementation):
+					for w2 in range(w-1):
+						previousNodesList.append(sentenceConceptNodeList[w2]) 
+				else:
+					previousNodesList.append(sentenceConceptNodeList[w-1])
+				createConnection(conceptNode, previousNodesList, spatioTemporalIndex, activationTime)
 
 	
 	if(drawHopfieldGraphSentence):
@@ -120,6 +130,35 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 	
 	result = True			
 	return result
+
+def connectHopfieldGraphSentence(sentenceConceptNodeList, DPgovernorNode, spatioTemporalIndex, activationTime):
+	for DPdependentNode in DPgovernorNode.DPdependentList:
+		previousNodesList = []
+		conceptNode = identifyHopfieldGraphNode(sentenceConceptNodeList, DPgovernorNode, DPdependentNode, previousNodesList)
+		createConnection(conceptNode, previousNodesList, spatioTemporalIndex, activationTime)
+		connectHopfieldGraphSentence(sentenceConceptNodeList, DPdependentNode, spatioTemporalIndex, activationTime)
+
+def identifyHopfieldGraphNode(sentenceConceptNodeList, DPgovernorNode, DPdependentNode, previousNodesList):
+	conceptNode = sentenceConceptNodeList[DPgovernorNode.w]
+	previousConceptNode = sentenceConceptNodeList[DPdependentNode.w]
+	previousNodesList.append(previousConceptNode)
+	if(biologicalImplementation):
+		for DPdependentNode2 in DPdependentNode.DPdependentList:
+			_ = identifyHopfieldGraphNode(sentenceConceptNodeList, DPgovernorNode, DPdependentNode2, previousNodesList)
+	return conceptNode
+	
+def createConnection(conceptNode, previousNodesList, spatioTemporalIndex, activationTime):
+	if(biologicalImplementation):
+		totalConceptsInSubsequence = 0
+		for previousConceptNode in previousNodesList:
+			totalConceptsInSubsequence += 1
+			#multiple connections/synapses are made between current neuron and ealier neurons in sequence, and synapse weights are adjusted such that the particular combination (or permutation if SANI synapses) will fire the neuron
+			weight = 1.0/totalConceptsInSubsequence	#for biologicalImplementation: interpret connection as unique synapse
+			#print("weight = ", weight)
+			addConnectionToNode(previousConceptNode, conceptNode, activationTime, spatioTemporalIndex, weight=weight)					
+	else:
+		previousConceptNode = previousNodesList[0]
+		addConnectionToNode(previousConceptNode, conceptNode, activationTime, spatioTemporalIndex)
 
 def getGraphNode(nodeName):
 	return networkConceptNodeDict[nodeName]
