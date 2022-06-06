@@ -108,7 +108,7 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 			if(w > 0):
 				conceptNode = sentenceConceptNodeList[w]
 				previousConceptNode = sentenceConceptNodeList[w-1]
-				spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)	#for biologicalImplementation: interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause)
+				spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
 				previousContextConceptNodesList = []
 				if(biologicalImplementation):
 					for w2 in range(w-1):
@@ -241,6 +241,7 @@ def getNetworkIndex():
 		
 #creation time
 def calculateSpatioTemporalIndex(sentenceIndex):
+	#for biologicalImplementation: e.g. 1) interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause); or 2) store spatiotemporal index synapses on separate dendritic branch
 	spatioTemporalIndex = sentenceIndex
 	return spatioTemporalIndex
 
