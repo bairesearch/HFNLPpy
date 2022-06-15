@@ -24,11 +24,14 @@ import spacy
 spacyWordVectorGenerator = spacy.load('en_core_web_md')	#spacy.load('en_core_web_lg')
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
-
+import HFNLPpy_hopfieldOperations
 
 printVerbose = False
 
 biologicalImplementation = True
+biologicalSimulation = True
+if(biologicalSimulation):
+	import HFNLPpy_biologicalSimulation
 
 useDependencyParseTree = True
 if(useDependencyParseTree):
@@ -99,22 +102,24 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 				print("create new conceptNode; ", conceptNode.lemma)
 		sentenceConceptNodeList.append(conceptNode)
 			
-	#connection vars;
-	if(useDependencyParseTree):
-		spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
-		connectHopfieldGraphSentence(sentenceConceptNodeList, DPgraphHeadNode, spatioTemporalIndex, activationTime)
+	if(biologicalSimulation):
+		HFNLPpy_biologicalSimulation.simulateBiologicalHFnetworkSequenceTrain(sentenceIndex, networkConceptNodeDict, sentenceConceptNodeList)
 	else:
-		for w, token in enumerate(tokenisedSentence):
-			if(w > 0):
-				conceptNode = sentenceConceptNodeList[w]
-				previousConceptNode = sentenceConceptNodeList[w-1]
-				spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
-				previousContextConceptNodesList = []
-				if(biologicalImplementation):
-					for w2 in range(w-1):
-						previousContextConceptNodesList.append(sentenceConceptNodeList[w2]) 
-				createConnection(conceptNode, previousConceptNode, previousContextConceptNodesList, spatioTemporalIndex, activationTime)
-
+		#connection vars;
+		if(useDependencyParseTree):
+			spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
+			connectHopfieldGraphSentence(sentenceConceptNodeList, DPgraphHeadNode, spatioTemporalIndex, activationTime)
+		else:
+			for w, token in enumerate(tokenisedSentence):
+				if(w > 0):
+					conceptNode = sentenceConceptNodeList[w]
+					previousConceptNode = sentenceConceptNodeList[w-1]
+					spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
+					previousContextConceptNodesList = []
+					if(biologicalImplementation):
+						for w2 in range(w-1):
+							previousContextConceptNodesList.append(sentenceConceptNodeList[w2]) 
+					createConnection(conceptNode, previousConceptNode, previousContextConceptNodesList, spatioTemporalIndex, activationTime)
 	
 	if(drawHopfieldGraphSentence):
 		for conceptNode in sentenceConceptNodeList:
@@ -148,7 +153,7 @@ def identifyHopfieldGraphNode(sentenceConceptNodeList, DPgovernorNode, DPdepende
 	return conceptNode, previousConceptNode
 	
 def createConnection(conceptNode, previousConceptNode, previousContextConceptNodesList, spatioTemporalIndex, activationTime):
-	addConnectionToNode(previousConceptNode, conceptNode, activationTime, spatioTemporalIndex)
+	HFNLPpy_hopfieldOperations.addConnectionToNode(previousConceptNode, conceptNode, activationTime, spatioTemporalIndex)
 	
 	if(biologicalImplementation):
 		totalConceptsInSubsequence = 0
@@ -157,7 +162,7 @@ def createConnection(conceptNode, previousConceptNode, previousContextConceptNod
 			#multiple connections/synapses are made between current neuron and ealier neurons in sequence, and synapse weights are adjusted such that the particular combination (or permutation if SANI synapses) will fire the neuron
 			weight = 1.0/totalConceptsInSubsequence	#for biologicalImplementation: interpret connection as unique synapse
 			#print("weight = ", weight)
-			addConnectionToNode(previousContextConceptNode, conceptNode, activationTime, spatioTemporalIndex, weight=weight, contextConnection=True, contextConnectionSANIindex=previousContextIndex)					
+			HFNLPpy_hopfieldOperations.addConnectionToNode(previousContextConceptNode, conceptNode, activationTime, spatioTemporalIndex, biologicalImplementation=biologicalImplementation, weight=weight, contextConnection=True, contextConnectionSANIindex=previousContextIndex)					
 
 
 def getGraphNode(nodeName):
@@ -186,25 +191,9 @@ def connectionExists(nodeSource, nodeTarget):
 		#for connection in connectionList:
 		#	if(connection
 	return result
-
-def addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0):
-	connection = HopfieldConnection(nodeSource, nodeTarget, spatioTemporalIndex, activationTime)
-	#nodeSource.targetConnectionList.append(connection)
-	#nodeTarget.sourceConnectionList.append(connection)
-	createConnectionKeyIfNonExistant(nodeSource.targetConnectionDict, nodeTarget.nodeName)
-	createConnectionKeyIfNonExistant(nodeTarget.sourceConnectionDict, nodeSource.nodeName)
-	nodeSource.targetConnectionDict[nodeTarget.nodeName].append(connection)
-	nodeTarget.sourceConnectionDict[nodeSource.nodeName].append(connection)
-	#connection.subsequenceConnection = subsequenceConnection
-	if(biologicalImplementation):
-		connection.weight = weight
-		connection.contextConnection = contextConnection
-		connection.contextConnectionSANIindex = contextConnectionSANIindex
-
-def createConnectionKeyIfNonExistant(dic, key):
-	if key not in dic:
-		dic[key] = []	#create new empty list
 		
+
+
 
 			
 #tokenisation:
@@ -239,14 +228,5 @@ def getNetworkIndex():
 	networkIndex = len(networkConceptNodeDict)
 	return networkIndex
 		
-#creation time
-def calculateSpatioTemporalIndex(sentenceIndex):
-	#for biologicalImplementation: e.g. 1) interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause); or 2) store spatiotemporal index synapses on separate dendritic branch
-	spatioTemporalIndex = sentenceIndex
-	return spatioTemporalIndex
 
-#last access time	
-def calculateActivationTime(sentenceIndex):
-	activationTime = sentenceIndex
-	return activationTime
-	
+

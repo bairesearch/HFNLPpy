@@ -33,3 +33,10 @@ class HopfieldConnection:
 		self.weight = 1.0	
 		self.contextConnection = False
 		self.contextConnectionSANIindex = 0
+		
+		#if(biologicalSimulation):
+		self.biologicalSynapse = False
+		self.nodeTargetBranchIndex1 = 0
+		self.nodeTargetBranchIndex2 = 0
+		self.nodeTargetSequentialSegmentIndex = 0
+		self.nodeTargetSequentialSegmentInputIndex = 0
