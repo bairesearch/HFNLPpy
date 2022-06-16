@@ -16,6 +16,8 @@ see HFNLPpy_main.py
 HFNLP Hopfield Graph - generate hopfield graph/network based on textual input
 
 - different instances (sentence clauses) are stored via a spatiotemporal connection index
+- biologicalPrototype: add contextual connections to emulate spatiotemporal index restriction (visualise theoretical biological connections without simulation)
+- biologicalSimulation: simulate sequential activation of concept neurons and their dendritic input/synapses
 
 """
 
@@ -28,16 +30,24 @@ import HFNLPpy_hopfieldOperations
 
 printVerbose = False
 
-biologicalImplementation = True
-biologicalSimulation = True
+biologicalPrototype = False	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
+biologicalSimulation = True	#simulate sequential activation of dendritic input 
+useDependencyParseTree = False
+
 if(biologicalSimulation):
 	import HFNLPpy_biologicalSimulation
-
-useDependencyParseTree = True
+	biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False
+	if(useDependencyParseTree):
+		biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False	#optional	#speculative: directly encode precalculated syntactical structure in dendritic branches (rather than deriving syntax from commonly used dendritic subsequence encodings)
+	
 if(useDependencyParseTree):
 	import SPNLPpy_syntacticalGraph
 	if(not SPNLPpy_syntacticalGraph.useSPNLPcustomSyntacticalParser):
 		SPNLPpy_syntacticalGraph.SPNLPpy_syntacticalGraphConstituencyParserFormal.initalise(spacyWordVectorGenerator)
+	if(biologicalSimulation):
+		identifySyntacticalDependencyRelations = True	#optional; only implementation coded (if use constituency parser, synapses are created in most distal branch segments only)
+	else:
+		identifySyntacticalDependencyRelations = True	#mandatory 
 	
 drawHopfieldGraphSentence = False
 if(drawHopfieldGraphSentence):
@@ -77,9 +87,8 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 		
 	if(useDependencyParseTree):
 		performIntermediarySyntacticalTransformation = False
-		identifySyntacticalDependencyRelations = True
 		generateSyntacticalGraphNetwork = False
-		sentenceLeafNodeList, _, DPgraphHeadNode = SPNLPpy_syntacticalGraph.generateSyntacticalGraphSentence(sentenceIndex, tokenisedSentence, performIntermediarySyntacticalTransformation, generateSyntacticalGraphNetwork, identifySyntacticalDependencyRelations)
+		sentenceLeafNodeList, _, SPgraphHeadNode = SPNLPpy_syntacticalGraph.generateSyntacticalGraphSentence(sentenceIndex, tokenisedSentence, performIntermediarySyntacticalTransformation, generateSyntacticalGraphNetwork, identifySyntacticalDependencyRelations)
 
 	#declare graph nodes;	
 	for w, token in enumerate(tokenisedSentence):	
@@ -96,19 +105,27 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 			activationTime = calculateActivationTime(sentenceIndex)
 			nodeGraphType = graphNodeTypeConcept
 			networkIndex = getNetworkIndex()
-			conceptNode = HopfieldNode(networkIndex, nodeName, wordVector, nodeGraphType, activationTime)
+			conceptNode = HopfieldNode(networkIndex, nodeName, wordVector, nodeGraphType, activationTime, biologicalSimulation)
 			addNodeToGraph(conceptNode)
 			if(printVerbose):
 				print("create new conceptNode; ", conceptNode.lemma)
 		sentenceConceptNodeList.append(conceptNode)
 			
 	if(biologicalSimulation):
-		HFNLPpy_biologicalSimulation.simulateBiologicalHFnetworkSequenceTrain(sentenceIndex, networkConceptNodeDict, sentenceConceptNodeList)
+		if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
+			if(identifySyntacticalDependencyRelations):
+				simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchDP(sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode)		
+			else:
+				print("biologicalSimulation:identifySyntacticalDependencyRelations current implementation requires identifySyntacticalDependencyRelations")
+				exit()
+				#simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchCP(sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode)					
+		else:
+			HFNLPpy_biologicalSimulation.simulateBiologicalHFnetworkSequenceTrain(sentenceIndex, sentenceConceptNodeList)
 	else:
 		#connection vars;
 		if(useDependencyParseTree):
 			spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
-			connectHopfieldGraphSentence(sentenceConceptNodeList, DPgraphHeadNode, spatioTemporalIndex, activationTime)
+			connectHopfieldGraphSentenceSyntacticalBranchDP(sentenceConceptNodeList, SPgraphHeadNode, spatioTemporalIndex, activationTime)
 		else:
 			for w, token in enumerate(tokenisedSentence):
 				if(w > 0):
@@ -116,7 +133,7 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 					previousConceptNode = sentenceConceptNodeList[w-1]
 					spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
 					previousContextConceptNodesList = []
-					if(biologicalImplementation):
+					if(biologicalPrototype):
 						for w2 in range(w-1):
 							previousContextConceptNodesList.append(sentenceConceptNodeList[w2]) 
 					createConnection(conceptNode, previousConceptNode, previousContextConceptNodesList, spatioTemporalIndex, activationTime)
@@ -135,34 +152,64 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 	result = True			
 	return result
 
-def connectHopfieldGraphSentence(sentenceConceptNodeList, DPgovernorNode, spatioTemporalIndex, activationTime):
+
+#if(useDependencyParseTree):
+
+#if(biologicalSimulation):
+#def simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchCP(sentenceIndex, sentenceConceptNodeList, CPtargetNode):
+#	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
+#		HFNLPpy_biologicalSimulation.simulateBiologicalHFnetworkSequenceSyntacticalBranchCPTrain(sentenceIndex, identifySyntacticalDependencyRelations, CPtargetNode)
+#	else:
+#		print("simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchCP error: requires biologicalSimulationEncodeSyntaxInDendriticBranchStructure")
+#		exit()
+#	for CPsourceNode in SPtargetNode.CPgraphNodeSourceList:
+#		simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchCP(sentenceIndex, sentenceConceptNodeList, CPsourceNode)
+		
+def simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchDP(sentenceIndex, sentenceConceptNodeList, DPgovernorNode):
+	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
+		HFNLPpy_biologicalSimulation.simulateBiologicalHFnetworkSequenceSyntacticalBranchDPTrain(sentenceIndex, identifySyntacticalDependencyRelations, DPgovernorNode)
+	else:
+		contextConceptNodesList = []
+		identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulation(sentenceConceptNodeList, DPgovernorNode, contextConceptNodesList)
+		w = len(contextConceptNodesList) - 1	#index of DPgovernorNode in contextConceptNodesList
+		HFNLPpy_biologicalSimulation.simulateBiologicalHFnetworkSequenceNodeTrain(sentenceIndex, contextConceptNodesList, w, DPgovernorNode)
+	for DPdependentNode in DPgovernorNode.DPdependentList:
+		simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchDP(sentenceIndex, sentenceConceptNodeList, DPdependentNode)
+		
+def connectHopfieldGraphSentenceSyntacticalBranchDP(sentenceConceptNodeList, DPgovernorNode, spatioTemporalIndex, activationTime):
 	for DPdependentNode in DPgovernorNode.DPdependentList:
 		previousContextConceptNodesList = []
-		conceptNode, previousConceptNode = identifyHopfieldGraphNode(sentenceConceptNodeList, DPgovernorNode, DPdependentNode, previousContextConceptNodesList)
+		conceptNode, previousConceptNode = identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalProtoype(sentenceConceptNodeList, DPgovernorNode, DPdependentNode, previousContextConceptNodesList)
 		createConnection(conceptNode, previousConceptNode, previousContextConceptNodesList, spatioTemporalIndex, activationTime)
 		connectHopfieldGraphSentence(sentenceConceptNodeList, DPdependentNode, spatioTemporalIndex, activationTime)
 
-def identifyHopfieldGraphNode(sentenceConceptNodeList, DPgovernorNode, DPdependentNode, previousContextConceptNodesList):
+def identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalProtoype(sentenceConceptNodeList, DPgovernorNode, DPdependentNode, previousContextConceptNodesList):
 	conceptNode = sentenceConceptNodeList[DPgovernorNode.w]
 	previousConceptNode = sentenceConceptNodeList[DPdependentNode.w]
-	if(biologicalImplementation):
+	if(biologicalPrototype):
 		for DPdependentNode2 in DPdependentNode.DPdependentList:
 			previousContextConceptNode = sentenceConceptNodeList[DPdependentNode2.w]
 			previousContextConceptNodesList.append(previousContextConceptNode)
-			_, _ = identifyHopfieldGraphNode(sentenceConceptNodeList, DPgovernorNode, DPdependentNode2, previousContextConceptNodesList)
+			_, _ = identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalProtoype(sentenceConceptNodeList, DPgovernorNode, DPdependentNode2, previousContextConceptNodesList)
 	return conceptNode, previousConceptNode
+
+def identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulation(sentenceConceptNodeList, DPgovernorNode, contextConceptNodesList):
+	contextConceptNodesList.append(DPgovernorNode)
+	for DPdependentNode in DPgovernorNode.DPdependentList:
+		identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulation(sentenceConceptNodeList, DPdependentNode, contextConceptNodesList)
 	
+
 def createConnection(conceptNode, previousConceptNode, previousContextConceptNodesList, spatioTemporalIndex, activationTime):
 	HFNLPpy_hopfieldOperations.addConnectionToNode(previousConceptNode, conceptNode, activationTime, spatioTemporalIndex)
 	
-	if(biologicalImplementation):
+	if(biologicalPrototype):
 		totalConceptsInSubsequence = 0
 		for previousContextIndex, previousContextConceptNode in enumerate(previousContextConceptNodesList):
 			totalConceptsInSubsequence += 1
 			#multiple connections/synapses are made between current neuron and ealier neurons in sequence, and synapse weights are adjusted such that the particular combination (or permutation if SANI synapses) will fire the neuron
-			weight = 1.0/totalConceptsInSubsequence	#for biologicalImplementation: interpret connection as unique synapse
+			weight = 1.0/totalConceptsInSubsequence	#for biologicalPrototype: interpret connection as unique synapse
 			#print("weight = ", weight)
-			HFNLPpy_hopfieldOperations.addConnectionToNode(previousContextConceptNode, conceptNode, activationTime, spatioTemporalIndex, biologicalImplementation=biologicalImplementation, weight=weight, contextConnection=True, contextConnectionSANIindex=previousContextIndex)					
+			HFNLPpy_hopfieldOperations.addConnectionToNode(previousContextConceptNode, conceptNode, activationTime, spatioTemporalIndex, biologicalPrototype=biologicalPrototype, weight=weight, contextConnection=True, contextConnectionSANIindex=previousContextIndex)					
 
 
 def getGraphNode(nodeName):

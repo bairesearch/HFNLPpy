@@ -24,8 +24,8 @@ from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 
 
-def addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalImplementation=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=False, biologicalSynapse=False, nodeTargetBranchIndex1=None, nodeTargetBranchIndex2=None, nodeTargetSequentialSegmentIndex=None, nodeTargetSequentialSegmentInputIndex=None):
-	connection = HopfieldConnection(nodeSource, nodeTarget, spatioTemporalIndex, activationTime)
+def addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=False, biologicalSynapse=False, nodeTargetSequentialSegment=None, nodeTargetSequentialSegmentInputIndex=None):
+	connection = HopfieldConnection(nodeSource, nodeTarget, spatioTemporalIndex, activationTime, biologicalPrototype, biologicalSimulation)
 	#nodeSource.targetConnectionList.append(connection)
 	#nodeTarget.sourceConnectionList.append(connection)
 	#print("addConnectionToNode: nodeTarget.nodeName = ", nodeTarget.nodeName)
@@ -35,14 +35,12 @@ def addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIn
 	nodeSource.targetConnectionDict[nodeTarget.nodeName].append(connection)
 	nodeTarget.sourceConnectionDict[nodeSource.nodeName].append(connection)
 	#connection.subsequenceConnection = subsequenceConnection
-	if(biologicalImplementation):
+	if(biologicalPrototype):
 		connection.weight = weight
 		connection.contextConnection = contextConnection
 		connection.contextConnectionSANIindex = contextConnectionSANIindex
 	if(biologicalSimulation):
 		connection.biologicalSynapse = biologicalSynapse
-		connection.nodeTargetBranchIndex1 = nodeTargetBranchIndex1
-		connection.nodeTargetBranchIndex2 = nodeTargetBranchIndex2
-		connection.nodeTargetSequentialSegmentIndex = nodeTargetSequentialSegmentIndex
+		connection.nodeTargetSequentialSegment = nodeTargetSequentialSegment
 		connection.nodeTargetSequentialSegmentInputIndex = nodeTargetSequentialSegmentInputIndex
 		

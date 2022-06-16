@@ -55,11 +55,15 @@ def drawHopfieldGraphConnection(connection):
 	node2 = connection.nodeTarget
 	spatioTemporalIndex = connection.spatioTemporalIndex
 	if(drawHopfieldGraphEdgeColoursWeights):
-		if(connection.contextConnection):
-			color = 'blue'
+		if(connection.biologicalPrototype):
+			if(connection.contextConnection):
+				color = 'blue'
+			else:
+				color = 'red'
+			weight = connection.weight
 		else:
 			color = 'red'
-		weight = connection.weight
+			weight = 1.0
 		hopfieldGraph.add_edge(node1.nodeName, node2.nodeName, color=color, weight=weight)	#FUTURE: consider setting color based on spatioTemporalIndex
 	else:
 		hopfieldGraph.add_edge(node1.nodeName, node2.nodeName)

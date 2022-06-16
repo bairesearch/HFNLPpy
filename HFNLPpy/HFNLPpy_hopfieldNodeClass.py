@@ -31,14 +31,14 @@ nodeNameStart = "SEQUENCESTARTNODE"
 
 #if(biologicalSimulation):
 numberOfBranches1 = 3	#number of vertical branches
-numberOfBranches2 = 3	#number of new horizontal branches created at each vertical branch
+numberOfBranches2 = 2	#number of new horizontal branches created at each vertical branch
 #[3,3,3]	#number of new horizontal branches created at each vertical branch
 numberOfBranchSequentialSegments = 1	#1+	#sequential inputs (FUTURE: if > 1: each branch segment may require sequential inputs)
 #numberOfBranchSequentialSegmentInputs = 1	#1+	#nonSequentialInputs	#in current implementation (non-parallel generative network) number of inputs at sequential segment is dynamically increased on demand #not used; currently encode infinite number of
 
 
 class HopfieldNode:
-	def __init__(self, networkIndex, nodeName, wordVector, nodeGraphType, activationTime):
+	def __init__(self, networkIndex, nodeName, wordVector, nodeGraphType, activationTime, biologicalSimulation):
 		#primary vars;
 		self.networkIndex = networkIndex
 		self.nodeName = nodeName
@@ -53,16 +53,10 @@ class HopfieldNode:
 		#self.sourceConnectionList = []
 		#self.targetConnectionList = []
 
-		#if(biologicalSimulation):
-		#self.branch1ActivationLevel = createMultilist(0, [numberOfBranches1])
-		self.branch2ActivationLevel = createMultilist(0, [numberOfBranches1, numberOfBranches2])
-		self.branchSequentialSegmentActivationLevel = createMultilist(0, [numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments])
-		#self.branchSequentialSegmentInputActivationLevel = [[[[]]]]
-		#self.branch1ActivationTime = createMultilist(0, [numberOfBranches1])
-		self.branch2ActivationTime = createMultilist(0, [numberOfBranches1, numberOfBranches2])
-		self.branchSequentialSegmentActivationTime = createMultilist(0, [numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments])
-		#self.branchSequentialSegmentInputActivationTime = [[[[]]]]
-		self.branchSequentialSegmentInputSize = createMultilist(0, [numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments])	#[[[]]]	#number of inputs at branch sequential segment
+		if(biologicalSimulation):
+			dendriticTreeHeadBranch = DendriticBranch(None, numberOfBranchSequentialSegments)
+			createDendriticTree(dendriticTreeHeadBranch, 0, numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments)
+			self.dendriticTree = dendriticTreeHeadBranch
 		
 
 #last access time	
@@ -72,7 +66,7 @@ def calculateActivationTime(sentenceIndex):
 	
 #creation time
 def calculateSpatioTemporalIndex(sentenceIndex):
-	#for biologicalImplementation: e.g. 1) interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause); or 2) store spatiotemporal index synapses on separate dendritic branch
+	#for biologicalPrototype: e.g. 1) interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause); or 2) store spatiotemporal index synapses on separate dendritic branch
 	spatioTemporalIndex = sentenceIndex
 	return spatioTemporalIndex
 
@@ -80,19 +74,36 @@ def createConnectionKeyIfNonExistant(dic, key):
 	if key not in dic:
 		dic[key] = []	#create new empty list
 		
-
 def generateHopfieldGraphNodeName(word, lemma):
 	if(storeConceptNodesByLemma):
 		nodeName = lemma
 	else:
 		nodeName = word
 	return nodeName
+
+#if(biologicalSimulation):
+class DendriticBranch:
+	def __init__(self, parentBranch, numberOfBranchSequentialSegments):
+		self.parentBranch = parentBranch
+		self.subbranches = []
+		self.sequentialSegments = [SequentialSegment(self)]*numberOfBranchSequentialSegments
+		self.activationLevel = None
+		self.activationTime = None
+
+		#def __init__(self, numberOfBranches2, numberOfBranchSequentialSegments):
+		#	self.subbranches = [DendriticBranch]*numberOfBranches2
+		#	self.sequentialSegments = [SequentialSegment]*numberOfBranchSequentialSegments
+
+class SequentialSegment:
+	def __init__(self, branch):
+		self.inputs = []
+		self.activationLevel = None
+		self.activationTime = None
+		self.branch = branch
+	
+def createDendriticTree(currentBranch, currentBranchIndex1, numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments):
+	currentBranch.subbranches = [DendriticBranch(currentBranch, numberOfBranchSequentialSegments)]*numberOfBranches2
+	if(currentBranchIndex1 < numberOfBranches1):
+		for subbranch in currentBranch.subbranches:	
+			createDendriticTree(subbranch, currentBranchIndex1+1,  numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments)
 		
-def createMultilist(level, listSizeList):
-	lst = []
-	if(level < len(listSizeList)):
-		listSize = listSizeList[level]
-		for i in range(listSize):
-			sublist = createMultilist(level+1, listSizeList)
-			lst.append(sublist)
-	return lst

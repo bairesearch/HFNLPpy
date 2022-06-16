@@ -15,16 +15,15 @@ see HFNLPpy_main.py
 # Description:
 HFNLP Biological Simulation - simulate training/inference of biological hopfield graph/network based on textual input
 
-- for every time step (word w):
-	for every concept neuron:
-		for every vertical branch/segment (from outer to inner):
-			for every horizontal branch:
-				for every sequential synapse in segment (1+):
-					for every non-sequential synapse in segment (1+):
-						calculate local dendritic activation
-							subject to readiness (repolarisation time at dendrite location)
-		calculate neuron activation
-			subject to readiness (repolarisation time)
+pseudo code;
+for every time step/concept neuron (word w):
+	for every branch in dendriticTree (2+, recursively parsed from outer to inner; sequentially dependent):
+		for every sequential synapse in segment (1+, sequentially dependent):
+			for every non-sequential synapse (input) in segment (1+, sequentially independent):
+				calculate local dendritic activation
+					subject to readiness (repolarisation time at dendrite location)
+	calculate neuron activation
+		subject to readiness (repolarisation time)
 
 training;
 	activate concept neurons in order of sentence word order
@@ -32,7 +31,7 @@ training;
 		weaken those that do not
 	this will enable neuron to fire when specific contextual instances are experienced
 inference;
-	calculate neuron firing exclusively from subsequence detections
+	calculate neuron firing exclusively from prior/contextual subsequence detections
 
 """
 
@@ -42,8 +41,10 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 import numpy as np
-import tensorflow as tf
-import random
+vectoriseComputation = False	#FUTURE: parallel processing for optimisation
+if(vectoriseComputation):
+	import tensorflow as tf
+#import random
 
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
@@ -58,104 +59,138 @@ activationRepolarisationTime = 1	#calibrate
 
 resetSequentialSegments = True
 
-def simulateBiologicalHFnetworkSequenceTrain(sentenceIndex, networkConceptNodeDict, sentenceConceptNodeList):
+
+
+#if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
+
+#def simulateBiologicalHFnetworkSequenceSyntacticalBranchCPTrain(sentenceIndex, sentenceConceptNodeList, SPbranchHeadNode):
+#	activationTime = calculateActivationTime(sentenceIndex)
+#	somaActivationFound = False
+#	if(calculateNeuronActivationSyntacticalBranchSP(sentenceConceptNodeList, SPbranchHeadNode, SPbranchHeadNode, activationTime)):
+#		somaActivationFound = True	
+#	conceptNode = sentenceConceptNodeList[SPbranchHeadNode.w]
+#	resetBranchActivation(conceptNode.dendriticTree)
+#	if(not somaActivationFound):
+#		addPredictiveSequenceToNeuronSyntacticalBranchSP(sentenceConceptNodeList, SPbranchHeadNode, sentenceIndex)
+		
+def simulateBiologicalHFnetworkSequenceSyntacticalBranchDPTrain(sentenceIndex, sentenceConceptNodeList, DPbranchHeadNode):
+	activationTime = calculateActivationTime(sentenceIndex)
+	somaActivationFound = False
+	if(calculateNeuronActivationSyntacticalBranchDP(sentenceConceptNodeList, DPbranchHeadNode, DPbranchHeadNode, activationTime)):
+		somaActivationFound = True	
+	conceptNode = sentenceConceptNodeList[DPbranchHeadNode.w]
+	resetBranchActivation(conceptNode.dendriticTree)
+	if(not somaActivationFound):
+		addPredictiveSequenceToNeuronSyntacticalBranchDP(sentenceConceptNodeList, DPbranchHeadNode, sentenceIndex, conceptNode, conceptNode.dendriticTree)
+
+def calculateNeuronActivationSyntacticalBranchDP(sentenceIndex, sentenceConceptNodeList, DPgovernorNode, DPbranchHeadNode, activationTime):
+	somaActivationFound = False
+	conceptNode = sentenceConceptNodeList[DPbranchHeadNode.w]
+	for DPdependentNode in DPgovernorNode.DPdependentList:
+		previousContextConceptNode = sentenceConceptNodeList[DPdependentNode.w]
+		calculateNeuronActivationSyntacticalBranchDP(sentenceIndex, sentenceConceptNodeList, DPdependentNode, DPbranchHeadNode, activationTime)
+		
+		for targetConnectionConceptName, connectionList in previousContextConceptNode.targetConnectionDict.items():
+			print("targetConnectionConceptName = ", targetConnectionConceptName)
+			if(targetConnectionConceptName == conceptNode.nodeName):
+				for connection in connectionList:
+					targetNeuron = connection.nodeTarget	#targetNeuron will be the same for all connection in connectionList (if targetConnectionConceptName == conceptNeuron)
+					if(targetNeuron != conceptNeuron):
+						print("calculateNeuronActivationSyntacticalBranchDP error: (targetNeuron != conceptNeuron)")
+						exit()
+
+					if(calculateNeuronActivation(connection, 0, targetNeuron.dendriticTree, activationTime)):
+						somaActivationFound = True
+	return somaActivationFound
+			
+def addPredictiveSequenceToNeuronSyntacticalBranchDP(sentenceIndex, sentenceConceptNodeList, DPgovernorNode, currentBranchIndex1, conceptNeuron, dendriticBranch):
+
+	activationTime = calculateActivationTime(sentenceIndex)
+	spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
+	
+	#headNode in DP = current conceptNode (so not encoded in dendritic tree)
+	currentBranchIndex2 = 0
+	for DPdependentNodeIndex in range(len(DPdependentNode.DPdependentList)):
+		DPdependentNode = DPdependentNode.DPdependentList[DPdependentNodeIndex]
+		dendriticBranchSub = dendriticBranch.subbranches[DPdependentNodeIndex]
+		
+		previousContextConceptNode = sentenceConceptNodeList[DPdependentNode.w]
+		currentSequentialSegmentIndex = 0	#SyntacticalBranchDP/SyntacticalBranchSP biologicalSimulation implementation does not use local sequential segments (encode sequentiality in branch structure only)
+		currentSequentialSegment = dendriticBranchSub.sequentialSegments[currentSequentialSegmentIndex]
+		newSequentialSegmentSegmentInputIndex = calculateNewSequentialSegmentInputIndex(currentSequentialSegment)	
+		addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=True, biologicalSynapse=True, nodeTargetSequentialSegment=currentSequentialSegment, nodeTargetSequentialSegmentInputIndex=newSequentialSegmentSegmentInputIndex)
+
+		addPredictiveSequenceToNeuronSyntacticalBranchDP(sentenceIndex, sentenceConceptNodeList, DPdependentNode, currentBranchIndex1+1, dendriticBranchSub)
+		currentBranchIndex2 += 1
+
+#else (!biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
+
+def simulateBiologicalHFnetworkSequenceTrain(sentenceIndex, sentenceConceptNodeList):
+	for w, conceptNeuron in enumerate(sentenceConceptNodeList):
+		simulateBiologicalHFnetworkSequenceNodeTrain(sentenceIndex, sentenceConceptNodeList, w, conceptNeuron)
+
+def simulateBiologicalHFnetworkSequenceNodeTrain(sentenceIndex, sentenceConceptNodeList, w, conceptNeuron):
+
+	print("simulateBiologicalHFnetworkSequenceTrain: w = ", w)
 
 	activationTime = calculateActivationTime(sentenceIndex)
 	
-	for w, conceptNeuron in enumerate(sentenceConceptNodeList):
-		print("simulateBiologicalHFnetworkSequenceTrain: w = ", w)
-		
-		somaActivationFound = False	#is conceptNeuron activated by its prior context?
-		for w2 in range(0, w):
-			previousConceptNeuron = sentenceConceptNodeList[w2]	#source neuron
-			for targetConnectionConceptName, connectionList in previousConceptNeuron.targetConnectionDict.items():
-				if(targetConnectionConceptName == conceptNeuron):
-					for connection in connectionList:
-						targetNeuron = connection.nodeTarget	#targetNeuron will be the same for all connection in connectionList (if targetConnectionConceptName == conceptNeuron)
-						
-						if(targetNeuron != conceptNeuron):
-							print("simulateBiologicalHFnetworkSequenceTrain error: (targetNeuron != conceptNeuron)")
-							exit()
-							
-						#FUTURE: perform parallel processing (add target concept synapse/sequentialSegment/branch to tensor)
-						if(calculateNeuronActivation(connection, activationTime)):
-							somaActivationFound = True
-							print("somaActivationFound")
-							
-		if(not somaActivationFound):
-			addPredictiveSequenceToNeuron(conceptNeuron, w, sentenceConceptNodeList, sentenceIndex)
-			
-def addPredictiveSequenceToNeuron(conceptNeuron, w, sentenceConceptNodeList, sentenceIndex):
+	somaActivationFound = False	#is conceptNeuron activated by its prior context?
+	for w2 in range(0, w):
+		previousConceptNeuron = sentenceConceptNodeList[w2]	#source neuron
+		for targetConnectionConceptName, connectionList in previousConceptNeuron.targetConnectionDict.items():
+			if(targetConnectionConceptName == conceptNeuron.nodeName):
+				for connection in connectionList:
+					targetNeuron = connection.nodeTarget	#targetNeuron will be the same for all connection in connectionList (if targetConnectionConceptName == conceptNeuron)
+					if(targetNeuron != conceptNeuron):
+						print("simulateBiologicalHFnetworkSequenceTrain error: (targetNeuron != conceptNeuron)")
+						exit()
+
+					#FUTURE: vectoriseComputation: perform parallel processing (add target concept synapse/sequentialSegment/branch to tensor)
+					if(calculateNeuronActivation(connection, 0, targetNeuron.dendriticTree, activationTime)):
+						somaActivationFound = True
+						print("somaActivationFound")
+
+	resetBranchActivation(conceptNeuron.dendriticTree)
+	
+	if(not somaActivationFound):
+		addPredictiveSequenceToNeuron(conceptNeuron, w, sentenceConceptNodeList, sentenceIndex, conceptNeuron.dendriticTree, w)
+					
+def addPredictiveSequenceToNeuron(conceptNeuron, w, sentenceConceptNodeList, sentenceIndex, dendriticBranch, dendriticBranchMaxW):
 
 	activationTime = calculateActivationTime(sentenceIndex)
+	spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
 	numberOfWordsInSequence = len(sentenceConceptNodeList)
 	
 	#no prediction found for previous sequence; generate prediction for conceptNeuron (encode subsequences in dendrite)
-	print("addPredictiveSequenceToNeuron:")
-	#rule: encode in order of branch
-	#rule: if no soma activation found, train prior sequence of w in w concept neuron dendrite:
-	#take random subset of subsequences
-	currentBranchIndex1	= 0	#vertical (from distal to proximal)
-	currentBranchIndex2 = 0	#horizontal
-	currentSequentialSegmentIndex = 0	# (from distal to proximal)
-	for wPrevious1 in range(0, w):
-		#currentSequentialSegmentInputIndex = 0	#not used; currently encode infinite number of inputs (connected synapses) at segment	#number of inputs at sequential segment is dynamically increased on demand
-		for wPrevious2 in range(wPrevious1+1, w):
-			#for every pair of prior context concepts 
-			#probability of forming subsequence (dependent on distance between wPrevious and wPrevious2)
-			probabilityOfSubsequence = random.uniform(0, 1)
-			probabilityOfSubsequenceNormalised = probabilityOfSubsequence
-			distanceBetweenWPrevious1and2 = wPrevious2-wPrevious1
-			probabilityOfSubsequenceNormalised = probabilityOfSubsequenceNormalised/distanceBetweenWPrevious1and2	#normalise probabilityOfSubsequence wrt distance between wPrevious1 and wPrevious2
-			probabilityOfSubsequenceNormalised = probabilityOfSubsequenceNormalised/numberOfWordsInSequence	#normalise probabilityOfSubsequence wrt sequence length (average number of subsequences encoded should be relatively stable across sentence length; reduce from w^w -> ~wlog(w))
-			if(probabilityOfSubsequenceNormalised > probabilityOfSubsequenceThreshold):
-				print("\tprobabilityOfSubsequence = ", probabilityOfSubsequence)
-				print("\tprobabilityOfSubsequenceNormalised = ", probabilityOfSubsequenceNormalised)
-				previousConceptNeuron1 = sentenceConceptNodeList[wPrevious1]
-				previousConceptNeuron2 = sentenceConceptNodeList[wPrevious2]
+	#print("addPredictiveSequenceToNeuron:")
 
-				spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
-
-				newSequentialSegmentSegmentInputIndex = len(conceptNeuron.branchSequentialSegmentInputSize[currentBranchIndex1][currentBranchIndex2][currentSequentialSegmentIndex])
-				#print("newSequentialSegmentSegmentInputIndex = ", newSequentialSegmentSegmentInputIndex)
-				newSequentialSegmentSegmentInputIndex =+ 1						
-				currentBranchIndex1, currentBranchIndex2, currentSequentialSegmentIndex = addPredictiveSynapseToNeuron(currentBranchIndex1, currentBranchIndex2, currentSequentialSegmentIndex, previousConceptNeuron1, conceptNeuron, activationTime, spatioTemporalIndex, biologicalImplementation=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=True, biologicalSynapse=True, nodeTargetBranchIndex1=currentBranchIndex1, nodeTargetBranchIndex2=currentBranchIndex2, nodeTargetSequentialSegmentIndex=currentSequentialSegmentIndex, nodeTargetSequentialSegmentInputIndex=newSequentialSegmentSegmentInputIndex)
-				
-				newSequentialSegmentSegmentInputIndex = len(conceptNeuron.branchSequentialSegmentInputSize[currentBranchIndex1][currentBranchIndex2][currentSequentialSegmentIndex])
-				#print("newSequentialSegmentSegmentInputIndex = ", newSequentialSegmentSegmentInputIndex)
-				newSequentialSegmentSegmentInputIndex =+ 1		
-				currentBranchIndex1, currentBranchIndex2, currentSequentialSegmentIndex = addPredictiveSynapseToNeuron(currentBranchIndex1, currentBranchIndex2, currentSequentialSegmentIndex, previousConceptNeuron2, conceptNeuron, activationTime, spatioTemporalIndex, biologicalImplementation=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=True, biologicalSynapse=True, nodeTargetBranchIndex1=currentBranchIndex1, nodeTargetBranchIndex2=currentBranchIndex2, nodeTargetSequentialSegmentIndex=currentSequentialSegmentIndex, nodeTargetSequentialSegmentInputIndex=newSequentialSegmentSegmentInputIndex)
+	previousContextConceptNode = sentenceConceptNodeList[dendriticBranchMaxW]
+	currentSequentialSegmentIndex = 0	#biologicalSimulation implementation does not currently use local sequential segments (encode sequentiality in branch structure only)
+	currentSequentialSegment = dendriticBranch.sequentialSegments[currentSequentialSegmentIndex]
+	newSequentialSegmentSegmentInputIndex = calculateNewSequentialSegmentInputIndex(currentSequentialSegment)
+	addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=True, biologicalSynapse=True, nodeTargetSequentialSegment=currentSequentialSegment, nodeTargetSequentialSegmentInputIndex=newSequentialSegmentSegmentInputIndex)
+	
+	if(dendriticBranchMaxW > 0):
+		for subbranch in dendriticBranch.subbranches:
+			#lengthOfSubsequenceScale = random.uniform(0, 1)
+			#dendriticSubBranchMaxW = int(lengthOfSubsequenceScale*dendriticBranchMaxW)	
+			lengthOfSubsequence = int(np.random.exponential())	#the more proximal the previous context, the more likely to form a synapse
+			#lengthOfSubsequence = max(1, lengthOfSubsequence)
+			lengthOfSubsequence = lengthOfSubsequence + 1	#ensure >= 1
+			#print("lengthOfSubsequence = ", lengthOfSubsequence)
+			dendriticSubBranchMaxW = dendriticBranchMaxW-lengthOfSubsequence
+			if(dendriticSubBranchMaxW >= 0):
+				#print("dendriticSubBranchMaxW = ", dendriticSubBranchMaxW)
+				addPredictiveSequenceToNeuron(conceptNeuron, w, sentenceConceptNodeList, sentenceIndex, subbranch, dendriticSubBranchMaxW)
 
 
 #adds predictive synapse such that subsequences occur in order
-def addPredictiveSynapseToNeuron(currentBranchIndex1, currentBranchIndex2, currentSequentialSegmentIndex, nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalImplementation=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=False, biologicalSynapse=False, nodeTargetBranchIndex1=None, nodeTargetBranchIndex2=None, nodeTargetSequentialSegmentIndex=None, nodeTargetSequentialSegmentInputIndex=None):
+def addPredictiveSynapseToNeuron(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=False, biologicalSynapse=False, nodeTargetSequentialSegment=None, nodeTargetSequentialSegmentInputIndex=None):
 
-	HFNLPpy_hopfieldOperations.addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalImplementation=biologicalImplementation, weight=weight, subsequenceConnection=subsequenceConnection, contextConnection=contextConnection, contextConnectionSANIindex=contextConnectionSANIindex, biologicalSimulation=biologicalSimulation, biologicalSynapse=biologicalSynapse, nodeTargetBranchIndex1=nodeTargetBranchIndex1, nodeTargetBranchIndex2=nodeTargetBranchIndex2, nodeTargetSequentialSegmentIndex=nodeTargetSequentialSegmentIndex, nodeTargetSequentialSegmentInputIndex=nodeTargetSequentialSegmentInputIndex)
+	HFNLPpy_hopfieldOperations.addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=biologicalPrototype, weight=weight, subsequenceConnection=subsequenceConnection, contextConnection=contextConnection, contextConnectionSANIindex=contextConnectionSANIindex, biologicalSimulation=biologicalSimulation, biologicalSynapse=biologicalSynapse, nodeTargetSequentialSegment=nodeTargetSequentialSegment, nodeTargetSequentialSegmentInputIndex=nodeTargetSequentialSegmentInputIndex)
 
-	newSequentialSegmentIndex = False
-	if(currentSequentialSegmentIndex+1 == numberOfBranchSequentialSegments):
-		currentSequentialSegmentIndex = 0	#reset currentBranchIndex
-		newSequentialSegmentIndex = True
-	else:
-		currentSequentialSegmentIndex += 1
-
-	if(newSequentialSegmentIndex):
-		newBranchIndex2 = False
-		if(currentBranchIndex2+1 == numberOfBranches2):
-			currentBranchIndex2 = 0	#reset currentBranchIndex
-			newBranchIndex2 = True
-		else:
-			currentBranchIndex2 += 1
-
-	if(newBranchIndex2):
-		newBranchIndex1 = False
-		if(currentBranchIndex1+1 == numberOfBranches1):
-			currentBranchIndex1 = 0	#reset currentBranchIndex
-			newBranchIndex1 = True
-		else:
-			currentBranchIndex1 += 1
-
-	return currentBranchIndex1, currentBranchIndex2, currentSequentialSegmentIndex
+	
 																				
 def filledList(lst):
 	result = False
@@ -163,87 +198,82 @@ def filledList(lst):
 		result = True
 	return result
 		
-def calculateNeuronActivation(connection, activationTime):
+def calculateNeuronActivation(connection, currentBranchIndex1, currentBranch, activationTime):
 	
-	somaActivationFound = False
+	activationFound = False
 	targetConceptNeuron = connection.nodeTarget
-
-	#calculateBranchSegmentActivation():
-	numberOfBranch1active = 0
-	branch1ActivationLevelPrevious = False
-	for branchIndex1 in range(numberOfBranches1):
-	
-		#branch1ActivationLevel = targetConceptNeuron.branch1ActivationLevel[branchIndex1]
-		#branch1ActivationTime = targetConceptNeuron.branch1ActivationTime[branchIndex1]
-		#branch1ActivationLevel = False
+		
+	#calculate subbranch activations:
+	subbranchesActive = False
+	if(len(currentBranch.subbranches) > 0):
 		numberOfBranch2active = 0
-		#branch2ActivationTimeMax = 0
-		
-		for branchIndex2 in range(numberOfBranches2):
-		
-			branch2ActivationLevel = targetConceptNeuron.branch2ActivationLevel[branchIndex1][branchIndex2]
-			branch2ActivationTime = targetConceptNeuron.branch2ActivationTime[branchIndex1][branchIndex2]
-			branch2ActivationLevel = False
-			numberOfSequentialSegmentsActive = 0	#not currently used
-			branch2ActivationLevel = False
-			
-			for currentSequentialSegmentIndex in range(numberOfBranchSequentialSegments):
-			
-				sequentialSegmentActivationLevel = targetConceptNeuron.branchSequentialSegmentActivationLevel[branchIndex1][branchIndex2][currentSequentialSegmentIndex]
-				sequentialSegmentActivationTime = targetConceptNeuron.branchSequentialSegmentActivationTime[branchIndex1][branchIndex2][currentSequentialSegmentIndex]
-				if(currentSequentialSegmentIndex == 0):
-					sequentialSegmentActivationLevel = True	#no sequential requirement @index0
-				sequentialSegmentActivationLevelNew = False
-				
-				if(connection.nodeTargetBranchIndex1 == branchIndex1):
-					if(connection.nodeTargetBranchIndex2 == branchIndex2):
-						if(connection.nodeTargetSequentialSegmentIndex == currentSequentialSegmentIndex):
-							#fire nodeTargetSequentialSegmentInputIndex
-							if(sequentialSegmentActivationLevel):	#previous sequential segment was activated
-								passSegmentActivationTimeTests = False
-								if((currentSequentialSegmentIndex == 0) or (activationTime > sequentialSegmentActivationTime+activationRepolarisationTime)):	#ensure that the segment isnt in a repolarisation state (ie it can be activated)
-									#if(activationTime > previousVerticalBranchActivationTime):	#guaranteed
-									if(branchIndex1 > 0):
-										#branch2ActivationLevelPreviousMax = 0
-										numberOfBranch2activePrevious = 0
-										for branchIndex2b in range(numberOfBranches2):
-											branch2ActivationLevelPrevious = targetConceptNeuron.branch2ActivationLevel[branchIndex1-1][branchIndex2b]
-											numberOfBranch2activePrevious = numberOfBranch2activePrevious + int(branch2ActivationLevelPrevious)
-											#if(branch2ActivationLevelPrevious > branch2ActivationLevelPreviousMax):
-											#	branch2ActivationLevelPreviousMax = branch2ActivationLevelPrevious
-										if(numberOfBranch2activePrevious > numberOfHorizontalSubBranchesRequiredForActivation):
-											passSegmentActivationTimeTests = True	#previous (ie more distal) branch1 was active
-									else:
-										passSegmentActivationTimeTests = True
-								if(passSegmentActivationTimeTests):
-									sequentialSegmentActivationLevelNew = True
-									sequentialSegmentActivationTimeNew = activationTime
-				
-				if(sequentialSegmentActivationLevelNew):
-					if(resetSequentialSegments):
-						if(currentSequentialSegmentIndex == 0):
-							for currentSequentialSegmentIndex2 in range(1, numberOfBranchSequentialSegments):	#skip currentSequentialSegmentIndex==0
-								targetConceptNeuron.branchSequentialSegmentActivationLevel[branchIndex1][branchIndex2][currentSequentialSegmentIndex2] = False
-								targetConceptNeuron.branch2ActivationLevel[branchIndex1][branchIndex2] = False	#deactivate horizontal branch
-							numberOfSequentialSegmentsActive = 0
-					numberOfSequentialSegmentsActive += 1	#CHECKTHIS
-					sequentialSegmentActivationLevel = True
-					sequentialSegmentActivationTime = activationTime
-					targetConceptNeuron.branchSequentialSegmentActivationLevel[branchIndex1][branchIndex2][currentSequentialSegmentIndex] = sequentialSegmentActivationLevel
-					targetConceptNeuron.branchSequentialSegmentActivationTime[branchIndex1][branchIndex2][currentSequentialSegmentIndex] = sequentialSegmentActivationTime
-				
-			sequentialSegmentActivationLevelLast = sequentialSegmentActivationLevel
-			sequentialSegmentActivationTimeLast = sequentialSegmentActivationTime
-			#sequentialSegmentActivationLevelLastNew = sequentialSegmentActivationLevelLast
-			if(sequentialSegmentActivationLevelLast):
+		for subbranch in currentBranch.subbranches:	
+			subbranchActive = calculateNeuronActivation(connection, currentBranchIndex1+1, subbranch, activationTime)
+			if(subbranchActive):
 				numberOfBranch2active += 1
-				branch2ActivationLevel = sequentialSegmentActivationLevelLast	#activate branch2	#activate whole sequentialSegment
-				branch2ActivationTime = sequentialSegmentActivationTimeLast
-				targetConceptNeuron.branch2ActivationLevel[branchIndex1][branchIndex2] = branch2ActivationLevel
-				targetConceptNeuron.branch2ActivationTime[branchIndex1][branchIndex2] = branch2ActivationTime	
+		if(numberOfBranch2active > numberOfHorizontalSubBranchesRequiredForActivation):
+			subbranchesActive = True
+	else:
+	 	subbranchesActive = True
+		
+	#calculate branch segment activations:
+	for currentSequentialSegmentIndex, sequentialSegment in enumerate(currentBranch.sequentialSegments):
+		sequentialSegmentActivationLevel = sequentialSegment.activationLevel
+		sequentialSegmentActivationTime = sequentialSegment.activationTime
+		if(currentSequentialSegmentIndex == 0):
+			sequentialSegmentActivationLevel = True	#no sequential requirement @index0
+		sequentialSegmentActivationLevelNew = False
 
-	numberOfBranch2activeLast = numberOfBranch2active	#most proximal subbranch
-	if(numberOfBranch2active > numberOfHorizontalSubBranchesRequiredForActivation):
-		somaActivationFound = True	#fire neuron
+		if(connection.nodeTargetSequentialSegment == sequentialSegment):
+			#fire nodeTargetSequentialSegmentInputIndex
+			if(sequentialSegmentActivationLevel):	#previous sequential segment was activated
+				passSegmentActivationTimeTests = False
+				if((currentSequentialSegmentIndex == 0) or (activationTime > sequentialSegmentActivationTime+activationRepolarisationTime)):	#ensure that the segment isnt in a repolarisation state (ie it can be activated)
+					#if(activationTime > previousVerticalBranchActivationTime):	#guaranteed
+					if(subbranchesActive):
+						passSegmentActivationTimeTests = True	#previous (ie more distal) branch was active
+				if(passSegmentActivationTimeTests):
+					sequentialSegmentActivationLevelNew = True
+					sequentialSegmentActivationTimeNew = activationTime
+
+		if(sequentialSegmentActivationLevelNew):
+			if(resetSequentialSegments):
+				if(currentSequentialSegmentIndex == 0):
+					resetBranchActivation(currentBranch)
+					numberOfSequentialSegmentsActive = 0
+			numberOfSequentialSegmentsActive += 1	#CHECKTHIS
+			sequentialSegmentActivationLevel = True
+			sequentialSegmentActivationTime = activationTime
+			sequentialSegment.activationLevel = sequentialSegmentActivationLevel
+			sequentialSegment.activationTime = sequentialSegmentActivationTime
+
+	sequentialSegmentActivationLevelLast = sequentialSegmentActivationLevel
+	sequentialSegmentActivationTimeLast = sequentialSegmentActivationTime
+	#sequentialSegmentActivationLevelLastNew = sequentialSegmentActivationLevelLast
+	if(sequentialSegmentActivationLevelLast):
+		branch2ActivationLevel = sequentialSegmentActivationLevelLast	#activate branch2	#activate whole sequentialSegment
+		branch2ActivationTime = sequentialSegmentActivationTimeLast
+		currentBranch.activationLevel = branch2ActivationLevel
+		currentBranch.activationTime = branch2ActivationTime
+		sequentialSegmentsActive = True	
+
+	if(subbranchesActive and sequentialSegmentsActive):
+		activationFound = True
+			
+	return activationFound							
+
+def calculateNewSequentialSegmentInputIndex(currentSequentialSegment):
+	newSequentialSegmentSegmentInputIndex = len(currentSequentialSegment.inputs)
+	newSequentialSegmentSegmentInputIndex =+ 1	
+	#print("newSequentialSegmentSegmentInputIndex = ", newSequentialSegmentSegmentInputIndex)
+	return newSequentialSegmentSegmentInputIndex
 	
-	return somaActivationFound							
+def resetBranchActivation(currentBranch):
+
+	currentBranch.activationLevel = 0
+	for sequentialSegment in currentBranch.sequentialSegments:
+		sequentialSegment.activationLevel = 0
+		
+	for subbranch in currentBranch.subbranches:	
+		resetBranchActivation(subbranch)
+	
