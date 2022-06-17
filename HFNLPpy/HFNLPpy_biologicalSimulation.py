@@ -50,6 +50,8 @@ from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 import HFNLPpy_hopfieldOperations
 
+printVerbose = True
+
 probabilityOfSubsequenceThreshold = 0.01	#FUTURE: calibrate depending on number of branches/sequentialSegments etc
 
 
@@ -117,8 +119,9 @@ def addPredictiveSequenceToNeuronSyntacticalBranchDP(sentenceIndex, sentenceConc
 		previousContextConceptNode = sentenceConceptNodeList[DPdependentNode.w]
 		currentSequentialSegmentIndex = 0	#SyntacticalBranchDP/SyntacticalBranchSP biologicalSimulation implementation does not use local sequential segments (encode sequentiality in branch structure only)
 		currentSequentialSegment = dendriticBranchSub.sequentialSegments[currentSequentialSegmentIndex]
-		newSequentialSegmentSegmentInputIndex = calculateNewSequentialSegmentInputIndex(currentSequentialSegment)	
-		addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=True, biologicalSynapse=True, nodeTargetSequentialSegment=currentSequentialSegment, nodeTargetSequentialSegmentInputIndex=newSequentialSegmentSegmentInputIndex)
+		currentSequentialSegmentInput = SequentialSegmentInput(currentSequentialSegment)
+		currentSequentialSegment.inputs.append(currentSequentialSegmentInput)
+		addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=True, biologicalSynapse=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
 
 		addPredictiveSequenceToNeuronSyntacticalBranchDP(sentenceIndex, sentenceConceptNodeList, DPdependentNode, currentBranchIndex1+1, dendriticBranchSub)
 		currentBranchIndex2 += 1
@@ -131,7 +134,8 @@ def simulateBiologicalHFnetworkSequenceTrain(sentenceIndex, sentenceConceptNodeL
 
 def simulateBiologicalHFnetworkSequenceNodeTrain(sentenceIndex, sentenceConceptNodeList, w, conceptNeuron):
 
-	print("simulateBiologicalHFnetworkSequenceTrain: w = ", w)
+	if(printVerbose):
+		print("simulateBiologicalHFnetworkSequenceTrain: w = ", w, ", conceptNeuron = ", conceptNeuron.nodeName)
 
 	activationTime = calculateActivationTime(sentenceIndex)
 	
@@ -147,9 +151,11 @@ def simulateBiologicalHFnetworkSequenceNodeTrain(sentenceIndex, sentenceConceptN
 						exit()
 
 					#FUTURE: vectoriseComputation: perform parallel processing (add target concept synapse/sequentialSegment/branch to tensor)
+					#print("calculateNeuronActivation")
 					if(calculateNeuronActivation(connection, 0, targetNeuron.dendriticTree, activationTime)):
 						somaActivationFound = True
-						print("somaActivationFound")
+						if(printVerbose):
+							print("somaActivationFound")
 
 	resetBranchActivation(conceptNeuron.dendriticTree)
 	
@@ -168,8 +174,9 @@ def addPredictiveSequenceToNeuron(conceptNeuron, w, sentenceConceptNodeList, sen
 	previousContextConceptNode = sentenceConceptNodeList[dendriticBranchMaxW]
 	currentSequentialSegmentIndex = 0	#biologicalSimulation implementation does not currently use local sequential segments (encode sequentiality in branch structure only)
 	currentSequentialSegment = dendriticBranch.sequentialSegments[currentSequentialSegmentIndex]
-	newSequentialSegmentSegmentInputIndex = calculateNewSequentialSegmentInputIndex(currentSequentialSegment)
-	addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=True, biologicalSynapse=True, nodeTargetSequentialSegment=currentSequentialSegment, nodeTargetSequentialSegmentInputIndex=newSequentialSegmentSegmentInputIndex)
+	currentSequentialSegmentInput = SequentialSegmentInput(currentSequentialSegment)
+	currentSequentialSegment.inputs.append(currentSequentialSegmentInput)
+	addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=True, biologicalSynapse=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
 	
 	if(dendriticBranchMaxW > 0):
 		for subbranch in dendriticBranch.subbranches:
@@ -183,12 +190,13 @@ def addPredictiveSequenceToNeuron(conceptNeuron, w, sentenceConceptNodeList, sen
 			if(dendriticSubBranchMaxW >= 0):
 				#print("dendriticSubBranchMaxW = ", dendriticSubBranchMaxW)
 				addPredictiveSequenceToNeuron(conceptNeuron, w, sentenceConceptNodeList, sentenceIndex, subbranch, dendriticSubBranchMaxW)
-
+	else:
+		currentSequentialSegmentInput.firstInputInSequence = True
 
 #adds predictive synapse such that subsequences occur in order
-def addPredictiveSynapseToNeuron(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=False, biologicalSynapse=False, nodeTargetSequentialSegment=None, nodeTargetSequentialSegmentInputIndex=None):
+def addPredictiveSynapseToNeuron(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=False, biologicalSynapse=False, nodeTargetSequentialSegmentInput=None):
 
-	HFNLPpy_hopfieldOperations.addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=biologicalPrototype, weight=weight, subsequenceConnection=subsequenceConnection, contextConnection=contextConnection, contextConnectionSANIindex=contextConnectionSANIindex, biologicalSimulation=biologicalSimulation, biologicalSynapse=biologicalSynapse, nodeTargetSequentialSegment=nodeTargetSequentialSegment, nodeTargetSequentialSegmentInputIndex=nodeTargetSequentialSegmentInputIndex)
+	HFNLPpy_hopfieldOperations.addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=biologicalPrototype, weight=weight, subsequenceConnection=subsequenceConnection, contextConnection=contextConnection, contextConnectionSANIindex=contextConnectionSANIindex, biologicalSimulation=biologicalSimulation, biologicalSynapse=biologicalSynapse, nodeTargetSequentialSegmentInput=nodeTargetSequentialSegmentInput)
 
 	
 																				
@@ -211,32 +219,42 @@ def calculateNeuronActivation(connection, currentBranchIndex1, currentBranch, ac
 			subbranchActive = calculateNeuronActivation(connection, currentBranchIndex1+1, subbranch, activationTime)
 			if(subbranchActive):
 				numberOfBranch2active += 1
-		if(numberOfBranch2active > numberOfHorizontalSubBranchesRequiredForActivation):
+		if(numberOfBranch2active >= numberOfHorizontalSubBranchesRequiredForActivation):
 			subbranchesActive = True
 	else:
 	 	subbranchesActive = True
 		
 	#calculate branch segment activations:
-	for currentSequentialSegmentIndex, sequentialSegment in enumerate(currentBranch.sequentialSegments):
-		sequentialSegmentActivationLevel = sequentialSegment.activationLevel
-		sequentialSegmentActivationTime = sequentialSegment.activationTime
+	for currentSequentialSegmentIndex, currentSequentialSegment in enumerate(currentBranch.sequentialSegments):
+		sequentialSegmentActivationLevel = currentSequentialSegment.activationLevel
+		sequentialSegmentActivationTime = currentSequentialSegment.activationTime
 		if(currentSequentialSegmentIndex == 0):
 			sequentialSegmentActivationLevel = True	#no sequential requirement @index0
 		sequentialSegmentActivationLevelNew = False
 
-		if(connection.nodeTargetSequentialSegment == sequentialSegment):
-			#fire nodeTargetSequentialSegmentInputIndex
-			if(sequentialSegmentActivationLevel):	#previous sequential segment was activated
+		for currentSequentialSegmentInputIndex, currentSequentialSegmentInput in enumerate(currentSequentialSegment.inputs):
+			if(connection.nodeTargetSequentialSegmentInput == currentSequentialSegmentInput):
+				if(printVerbose):
+					printIndentation(currentBranchIndex1+1)
+					print("activate currentSequentialSegmentInput, connection.nodeSource = ", connection.nodeSource.nodeName, ", connection.nodeTarget = ", connection.nodeTarget.nodeName)
 				passSegmentActivationTimeTests = False
-				if((currentSequentialSegmentIndex == 0) or (activationTime > sequentialSegmentActivationTime+activationRepolarisationTime)):	#ensure that the segment isnt in a repolarisation state (ie it can be activated)
-					#if(activationTime > previousVerticalBranchActivationTime):	#guaranteed
-					if(subbranchesActive):
-						passSegmentActivationTimeTests = True	#previous (ie more distal) branch was active
+				if(currentSequentialSegmentInput.firstInputInSequence):
+					passSegmentActivationTimeTests = True	#if input corresponds to first in sequence, then enforce no previous dendritic activation requirements
+					subbranchesActive = True
+				else:
+					if(sequentialSegmentActivationLevel):	#previous sequential segment was activated
+						if((currentSequentialSegmentIndex == 0) or (activationTime > sequentialSegmentActivationTime+activationRepolarisationTime)):	#ensure that the segment isnt in a repolarisation state (ie it can be activated)
+							#if(activationTime > previousVerticalBranchActivationTime):	#guaranteed
+							if(subbranchesActive):
+								passSegmentActivationTimeTests = True	#previous (ie more distal) branch was active
 				if(passSegmentActivationTimeTests):
 					sequentialSegmentActivationLevelNew = True
 					sequentialSegmentActivationTimeNew = activationTime
 
 		if(sequentialSegmentActivationLevelNew):
+			if(printVerbose):
+				printIndentation(currentBranchIndex1+1)
+				print("activate currentSequentialSegment, connection.nodeSource = ", connection.nodeSource.nodeName, ", connection.nodeTarget = ", connection.nodeTarget.nodeName)
 			if(resetSequentialSegments):
 				if(currentSequentialSegmentIndex == 0):
 					resetBranchActivation(currentBranch)
@@ -244,29 +262,30 @@ def calculateNeuronActivation(connection, currentBranchIndex1, currentBranch, ac
 			numberOfSequentialSegmentsActive += 1	#CHECKTHIS
 			sequentialSegmentActivationLevel = True
 			sequentialSegmentActivationTime = activationTime
-			sequentialSegment.activationLevel = sequentialSegmentActivationLevel
-			sequentialSegment.activationTime = sequentialSegmentActivationTime
+			currentSequentialSegment.activationLevel = sequentialSegmentActivationLevel
+			currentSequentialSegment.activationTime = sequentialSegmentActivationTime
 
 	sequentialSegmentActivationLevelLast = sequentialSegmentActivationLevel
 	sequentialSegmentActivationTimeLast = sequentialSegmentActivationTime
 	#sequentialSegmentActivationLevelLastNew = sequentialSegmentActivationLevelLast
+	sequentialSegmentsActive = False
 	if(sequentialSegmentActivationLevelLast):
-		branch2ActivationLevel = sequentialSegmentActivationLevelLast	#activate branch2	#activate whole sequentialSegment
+		if(printVerbose):
+			printIndentation(currentBranchIndex1+1)
+			print("activate currentBranch, connection.nodeSource = ", connection.nodeSource.nodeName, ", connection.nodeTarget = ", connection.nodeTarget.nodeName)
+		branch2ActivationLevel = sequentialSegmentActivationLevelLast	#activate branch2	#activate whole currentSequentialSegment
 		branch2ActivationTime = sequentialSegmentActivationTimeLast
 		currentBranch.activationLevel = branch2ActivationLevel
 		currentBranch.activationTime = branch2ActivationTime
 		sequentialSegmentsActive = True	
 
 	if(subbranchesActive and sequentialSegmentsActive):
+		if(printVerbose):
+			printIndentation(currentBranchIndex1+1)
+			print("activationFound")
 		activationFound = True
 			
 	return activationFound							
-
-def calculateNewSequentialSegmentInputIndex(currentSequentialSegment):
-	newSequentialSegmentSegmentInputIndex = len(currentSequentialSegment.inputs)
-	newSequentialSegmentSegmentInputIndex =+ 1	
-	#print("newSequentialSegmentSegmentInputIndex = ", newSequentialSegmentSegmentInputIndex)
-	return newSequentialSegmentSegmentInputIndex
 	
 def resetBranchActivation(currentBranch):
 
@@ -277,3 +296,6 @@ def resetBranchActivation(currentBranch):
 	for subbranch in currentBranch.subbranches:	
 		resetBranchActivation(subbranch)
 	
+def printIndentation(level):
+	for indentation in range(level):
+		print('\t', end='')

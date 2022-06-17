@@ -24,7 +24,7 @@ from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 
 
-def addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=False, biologicalSynapse=False, nodeTargetSequentialSegment=None, nodeTargetSequentialSegmentInputIndex=None):
+def addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=False, biologicalSynapse=False, nodeTargetSequentialSegmentInput=None):
 	connection = HopfieldConnection(nodeSource, nodeTarget, spatioTemporalIndex, activationTime, biologicalPrototype, biologicalSimulation)
 	#nodeSource.targetConnectionList.append(connection)
 	#nodeTarget.sourceConnectionList.append(connection)
@@ -41,6 +41,5 @@ def addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIn
 		connection.contextConnectionSANIindex = contextConnectionSANIindex
 	if(biologicalSimulation):
 		connection.biologicalSynapse = biologicalSynapse
-		connection.nodeTargetSequentialSegment = nodeTargetSequentialSegment
-		connection.nodeTargetSequentialSegmentInputIndex = nodeTargetSequentialSegmentInputIndex
+		connection.nodeTargetSequentialSegmentInput = nodeTargetSequentialSegmentInput
 		

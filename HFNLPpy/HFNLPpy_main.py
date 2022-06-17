@@ -46,7 +46,7 @@ import HFNLPpy_hopfieldGraph
 algorithmHFNLP = "generateHopfieldNetwork"
 
 #debug parameters
-debugUseSmallSequentialInputDataset = False
+debugUseSmallSequentialInputDataset = True
 
 
 NLPsequentialInputTypeTokeniseWords = False	#perform spacy tokenization later in pipeline

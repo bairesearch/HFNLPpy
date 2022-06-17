@@ -39,5 +39,4 @@ class HopfieldConnection:
 		if(biologicalSimulation):
 			#for biologicalSimulation: interpret connection as unique synapse
 			self.biologicalSimulation = True
-			self.nodeTargetSequentialSegment = None
-			self.nodeTargetSequentialSegmentInputIndex = 0
+			self.nodeTargetSequentialSegmentInput = None

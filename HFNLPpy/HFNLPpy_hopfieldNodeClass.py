@@ -100,7 +100,13 @@ class SequentialSegment:
 		self.activationLevel = None
 		self.activationTime = None
 		self.branch = branch
-	
+
+class SequentialSegmentInput:
+	def __init__(self, SequentialSegment):
+		self.input = None
+		self.sequentialSegment = SequentialSegment
+		self.firstInputInSequence = False
+		
 def createDendriticTree(currentBranch, currentBranchIndex1, numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments):
 	currentBranch.subbranches = [DendriticBranch(currentBranch, numberOfBranchSequentialSegments)]*numberOfBranches2
 	if(currentBranchIndex1 < numberOfBranches1):
