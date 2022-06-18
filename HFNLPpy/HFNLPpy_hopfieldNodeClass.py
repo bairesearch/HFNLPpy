@@ -38,14 +38,18 @@ numberOfBranchSequentialSegments = 1	#1+	#sequential inputs (FUTURE: if > 1: eac
 
 
 class HopfieldNode:
-	def __init__(self, networkIndex, nodeName, wordVector, nodeGraphType, activationTime, biologicalSimulation):
+	def __init__(self, networkIndex, nodeName, wordVector, nodeGraphType, activationTime, biologicalSimulation, w, sentenceIndex):
 		#primary vars;
 		self.networkIndex = networkIndex
-		self.nodeName = nodeName
+		self.nodeName = str(nodeName)
 		self.wordVector = wordVector	#numpy array
 		#self.posTag = posTag	#nlp in context prediction only (not certain)
 		self.graphNodeType = nodeGraphType
 		self.activationTime = activationTime	#last activation time (used to calculate recency)	#not currently used
+
+		#sentence artificial vars (for sentence graph only, do not generalise to network graph);	
+		self.w = w
+		self.sentenceIndex = sentenceIndex
 		
 		#connection vars;
 		self.sourceConnectionDict = {}
@@ -54,11 +58,18 @@ class HopfieldNode:
 		#self.targetConnectionList = []
 
 		if(biologicalSimulation):
-			dendriticTreeHeadBranch = DendriticBranch(None, numberOfBranchSequentialSegments)
-			createDendriticTree(dendriticTreeHeadBranch, 0, numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments)
+			#if(biologicalSimulationDraw):
+			#required to assign independent names to each;
+			self.currentBranchIndexNeuron = 0
+			self.currentSequentialSegmentIndexNeuron = 0
+			self.currentSequentialSegmentInputIndexNeuron = 0 
+			
+			currentBranchIndex1, currentBranchIndex2 = (0, 0)
+			dendriticTreeHeadBranch = DendriticBranch(self, None, numberOfBranchSequentialSegments, currentBranchIndex1, currentBranchIndex2)
+			createDendriticTree(self, dendriticTreeHeadBranch, currentBranchIndex1, currentBranchIndex2, numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments)
 			self.dendriticTree = dendriticTreeHeadBranch
 		
-
+			
 #last access time	
 def calculateActivationTime(sentenceIndex):
 	activationTime = sentenceIndex
@@ -83,33 +94,62 @@ def generateHopfieldGraphNodeName(word, lemma):
 
 #if(biologicalSimulation):
 class DendriticBranch:
-	def __init__(self, parentBranch, numberOfBranchSequentialSegments):
+	def __init__(self, conceptNode, parentBranch, numberOfBranchSequentialSegments, branchIndex1, branchIndex2):
 		self.parentBranch = parentBranch
 		self.subbranches = []
-		self.sequentialSegments = [SequentialSegment(self)]*numberOfBranchSequentialSegments
+		self.sequentialSegments = [SequentialSegment(conceptNode, self, i) for i in range(numberOfBranchSequentialSegments)]	#[SequentialSegment(conceptNode, self, i)]*numberOfBranchSequentialSegments
 		self.activationLevel = None
 		self.activationTime = None
-
-		#def __init__(self, numberOfBranches2, numberOfBranchSequentialSegments):
-		#	self.subbranches = [DendriticBranch]*numberOfBranches2
-		#	self.sequentialSegments = [SequentialSegment]*numberOfBranchSequentialSegments
+		
+		#if(biologicalSimulationDraw):
+		self.nodeName = generateDendriticBranchName(conceptNode)
+		self.branchIndex1 = branchIndex1	#not required
+		self.branchIndex2 = branchIndex2	#not required
+		self.conceptNode = conceptNode
 
 class SequentialSegment:
-	def __init__(self, branch):
+	def __init__(self, conceptNode, branch, sequentialSegmentIndex):
 		self.inputs = []
 		self.activationLevel = None
 		self.activationTime = None
 		self.branch = branch
+		
+		#if(biologicalSimulationDraw):
+		self.nodeName = generateSequentialSegmentName(conceptNode)
+		self.sequentialSegmentIndex = None	#not required
+		self.conceptNode = conceptNode	#not required (as can lookup SequentialSegment.branch.conceptNode) 
 
 class SequentialSegmentInput:
-	def __init__(self, SequentialSegment):
+	def __init__(self, conceptNode, SequentialSegment, sequentialSegmentInputIndex):
 		self.input = None
 		self.sequentialSegment = SequentialSegment
 		self.firstInputInSequence = False
 		
-def createDendriticTree(currentBranch, currentBranchIndex1, numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments):
-	currentBranch.subbranches = [DendriticBranch(currentBranch, numberOfBranchSequentialSegments)]*numberOfBranches2
+		#if(biologicalSimulationDraw):
+		self.nodeName = generateSequentialSegmentInputName(conceptNode)
+		self.sequentialSegmentInputIndex = None	#not required	#index record value not robust if inputs are removed (synaptic atrophy)
+		self.conceptNode = conceptNode	#not required (as can lookup SequentialSegment.branch.conceptNode) 
+
+def createDendriticTree(conceptNode, currentBranch, currentBranchIndex1, currentBranchIndex2, numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments):
+	currentBranch.subbranches = [DendriticBranch(conceptNode, currentBranch, numberOfBranchSequentialSegments, currentBranchIndex1, i) for i in range(numberOfBranches2)]	#[DendriticBranch(conceptNode, currentBranch, numberOfBranchSequentialSegments, currentBranchIndex1, currentBranchIndex2)]*numberOfBranches2
 	if(currentBranchIndex1 < numberOfBranches1):
-		for subbranch in currentBranch.subbranches:	
-			createDendriticTree(subbranch, currentBranchIndex1+1,  numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments)
+		for currentBranchIndex2, subbranch in enumerate(currentBranch.subbranches):	
+			createDendriticTree(conceptNode, subbranch, currentBranchIndex1+1, currentBranchIndex2, numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments)
 		
+#if(biologicalSimulationDraw):
+def generateDendriticBranchName(conceptNode):
+	nodeName = conceptNode.nodeName + "branch" + str(conceptNode.currentBranchIndexNeuron)
+	conceptNode.currentBranchIndexNeuron += 1
+	return nodeName
+	
+def generateSequentialSegmentName(conceptNode):
+	nodeName = conceptNode.nodeName + "segment" + str(conceptNode.currentSequentialSegmentIndexNeuron)
+	conceptNode.currentSequentialSegmentIndexNeuron += 1
+	return nodeName
+	
+def generateSequentialSegmentInputName(conceptNode):
+	nodeName = conceptNode.nodeName + "segmentInput" + str(conceptNode.currentSequentialSegmentInputIndexNeuron)
+	conceptNode.currentSequentialSegmentInputIndexNeuron += 1
+	return nodeName
+	
+

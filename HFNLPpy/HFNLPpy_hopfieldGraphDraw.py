@@ -88,13 +88,15 @@ def displayHopfieldGraph():
 			nx.draw(hopfieldGraph, pos, with_labels=True, alpha=graphTransparency)
 	plt.show()
 
-def drawHopfieldGraphNodeAndConnections(hopfieldGraphNode, networkSize, drawGraph=False):	
-	#parse tree and generate nodes and connections
-	drawHopfieldGraphNode(hopfieldGraphNode, networkSize)
-	#for connection in hopfieldGraphNode.targetConnectionList:
+def drawHopfieldGraphNodeConnections(hopfieldGraphNode, networkSize):
 	for connectionKey, connectionList in hopfieldGraphNode.targetConnectionDict.items():
 		for connection in connectionList:
 			drawHopfieldGraphConnection(connection)
+			
+def drawHopfieldGraphNodeAndConnections(hopfieldGraphNode, networkSize, drawGraph=False):	
+	#parse tree and generate nodes and connections
+	drawHopfieldGraphNode(hopfieldGraphNode, networkSize)
+	drawHopfieldGraphNodeConnections(hopfieldGraphNode, networkSize)
 
 def drawHopfieldGraphNetwork(networkConceptNodeDict):	
 	#generate nodes and connections
