@@ -207,8 +207,8 @@ def simulateBiologicalHFnetworkSequenceNodeTrainParallel(networkConceptNodeDict,
 		if(targetConnectionConceptName == conceptNeuron.nodeName):
 			conceptNeuronBatchIndex = batchIndex
 			conceptNeuronBatchIndexFound = True
-			print("conceptNeuron.nodeName = ", conceptNeuron.nodeName)
-			print("conceptNeuronBatchIndex = ", conceptNeuronBatchIndex)
+			#print("conceptNeuron.nodeName = ", conceptNeuron.nodeName)
+			#print("conceptNeuronBatchIndex = ", conceptNeuronBatchIndex)
 		batchIndex += 1
 			
 	for branchIndex1 in range(numberOfVerticalBranches):
@@ -409,10 +409,23 @@ def calculateSequentialSegmentsInitialActivationFromHigherBranchParallel(branchI
 		#print("vectorisedBranchActivationLevelBatchSequentialSegments.shape = ", vectorisedBranchActivationLevelBatchSequentialSegments.shape)
 		#print("numberOfHorizontalBranches = ", numberOfHorizontalBranches)
 		#print("horizontalBranchWidth = ", horizontalBranchWidth)
-		vectorisedBranchActivationLevelBatchSequentialSegments = tf.reshape(vectorisedBranchActivationLevelBatchSequentialSegments, [vectorisedBranchActivationLevelBatchSequentialSegments.shape[0], numberOfHorizontalBranches, horizontalBranchWidth])
-		vectorisedBranchActivationTimeBatchSequentialSegments = tf.reshape(vectorisedBranchActivationTimeBatchSequentialSegments, [vectorisedBranchActivationTimeBatchSequentialSegments.shape[0], numberOfHorizontalBranches, horizontalBranchWidth])
+		vectorisedBranchActivationLevelBatchSequentialSegments = sliceReshapeExpandDims(vectorisedBranchActivationLevelBatchSequentialSegments, horizontalBranchWidth, axis=-1)	#OLD: tf.reshape(vectorisedBranchActivationLevelBatchSequentialSegments, [vectorisedBranchActivationLevelBatchSequentialSegments.shape[0], numberOfHorizontalBranches, horizontalBranchWidth])
+		vectorisedBranchActivationTimeBatchSequentialSegments = sliceReshapeExpandDims(vectorisedBranchActivationTimeBatchSequentialSegments, horizontalBranchWidth, axis=-1)	#OLD: tf.reshape(vectorisedBranchActivationTimeBatchSequentialSegments, [vectorisedBranchActivationTimeBatchSequentialSegments.shape[0], numberOfHorizontalBranches, horizontalBranchWidth])
 	return vectorisedBranchActivationLevelBatchSequentialSegments, vectorisedBranchActivationTimeBatchSequentialSegments
 
+def sliceReshapeExpandDims(t, numberOfSlices, axis):
+	sliceList = []
+	#print("t.shape = ", t.shape)
+	for sliceIndex in range(numberOfSlices):
+		indices = tf.range(sliceIndex, t.shape[axis], delta=numberOfSlices)
+		#print("indices = ", indices)
+		#print("indices.shape = ", indices.shape)
+		tSlice = tf.gather(t, indices, axis=axis)
+		#print("tSlice.shape = ", tSlice.shape)
+		sliceList.append(tSlice)
+	tModified = tf.stack(sliceList, axis=-1)
+	#print("tModified.shape = ", tModified.shape)
+	return tModified
 	
 def calculateNeuronActivation(connection, currentBranchIndex1, currentBranch, activationTime):
 	
