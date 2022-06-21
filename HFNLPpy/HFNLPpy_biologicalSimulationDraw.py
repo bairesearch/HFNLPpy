@@ -70,7 +70,7 @@ def drawHopfieldGraphNode(conceptNode, drawGraphNetwork):
 #if(biologicalSimulation) exclusive code:
 	
 def drawHopfieldGraphNodeDendriticBranch(conceptNode, posX, posY, dendriticBranch, currentBranchIndex1):
-	#print("drawHopfieldGraphNodeDendriticBranch: , posX = ", posX)
+	#print("drawHopfieldGraphNodeDendriticBranch: , currentBranchIndex1 = ", currentBranchIndex1, ", posX = ", posX)
 	#print("posY = ", posY)
 	
 	colorHtml = 'green' #branch: green	#'OR #ffffff' invisible: white
@@ -89,6 +89,7 @@ def drawHopfieldGraphNodeDendriticBranch(conceptNode, posX, posY, dendriticBranc
 		#print("horizontalSeparation = ", horizontalSeparation)
 		#print("posXsubbranch = ", posXsubbranch)
 		posYsubbranch = posY+branchIndex1Separation
+		#print("posYsubbranch = ", posYsubbranch)
 		drawHopfieldGraphNodeDendriticBranch(conceptNode, posXsubbranch, posYsubbranch, subbranch, currentBranchIndex1+1)	
 		drawHopfieldGraphBranch(dendriticBranch, subbranch)	#draw branch edge
 

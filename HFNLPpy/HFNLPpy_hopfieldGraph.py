@@ -75,7 +75,7 @@ def generateHopfieldGraphSentenceString(sentenceIndex, sentence):
 
 def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 		
-	currentTime = calculateActivationTime(sentenceIndex)
+	activationTime = calculateActivationTime(sentenceIndex)
 
 	if(drawHopfieldGraphSentence):
 		ATNLPtf_hopfieldGraphDrawSentence.clearHopfieldGraph()
