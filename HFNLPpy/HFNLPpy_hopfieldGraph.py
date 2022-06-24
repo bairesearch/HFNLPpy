@@ -48,13 +48,15 @@ if(useDependencyParseTree):
 		identifySyntacticalDependencyRelations = True	#optional; only implementation coded (if use constituency parser, synapses are created in most distal branch segments only)
 	else:
 		identifySyntacticalDependencyRelations = True	#mandatory 
-	
-drawHopfieldGraphSentence = False
-if(drawHopfieldGraphSentence):
-	import HFNLPpy_hopfieldGraphDraw as ATNLPtf_hopfieldGraphDrawSentence
-drawHopfieldGraphNetwork = True	#draw graph for entire network (not just sentence)
-if(drawHopfieldGraphNetwork):
-	import HFNLPpy_hopfieldGraphDraw as ATNLPtf_hopfieldGraphDrawNetwork
+
+drawHopfieldGraph = True
+if(drawHopfieldGraph):
+	drawHopfieldGraphSentence = False
+	if(drawHopfieldGraphSentence):
+		import HFNLPpy_hopfieldGraphDraw as ATNLPtf_hopfieldGraphDrawSentence
+	drawHopfieldGraphNetwork = True	#default: True	#draw graph for entire network (not just sentence)
+	if(drawHopfieldGraphNetwork):
+		import HFNLPpy_hopfieldGraphDraw as ATNLPtf_hopfieldGraphDrawNetwork
 
 networkConceptNodeDict = {}
 networkSize = 0
@@ -141,17 +143,17 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 							previousContextConceptNodesList.append(sentenceConceptNodeList[w2]) 
 					createConnection(conceptNode, previousConceptNode, previousContextConceptNodesList, spatioTemporalIndex, activationTime)
 	
-	if(drawHopfieldGraphSentence):
-		for conceptNode in sentenceConceptNodeList:
-			ATNLPtf_hopfieldGraphDrawSentence.drawHopfieldGraphNodeAndConnections(conceptNode, networkSize, drawGraph=False)
-		print("ATNLPtf_hopfieldGraphDrawSentence.displayHopfieldGraph()")
-		ATNLPtf_hopfieldGraphDrawSentence.displayHopfieldGraph()
-		
-	if(drawHopfieldGraphNetwork):
-		ATNLPtf_hopfieldGraphDrawNetwork.drawHopfieldGraphNetwork(networkConceptNodeDict)
-		print("ATNLPtf_hopfieldGraphDrawNetwork.displayHopfieldGraph()")
-		ATNLPtf_hopfieldGraphDrawNetwork.displayHopfieldGraph()
-	
+	if(drawHopfieldGraph):
+		if(drawHopfieldGraphSentence):
+			for conceptNode in sentenceConceptNodeList:
+				ATNLPtf_hopfieldGraphDrawSentence.drawHopfieldGraphNodeAndConnections(conceptNode, networkSize, drawGraph=False)
+			print("ATNLPtf_hopfieldGraphDrawSentence.displayHopfieldGraph()")
+			ATNLPtf_hopfieldGraphDrawSentence.displayHopfieldGraph()
+		if(drawHopfieldGraphNetwork):
+			ATNLPtf_hopfieldGraphDrawNetwork.drawHopfieldGraphNetwork(networkConceptNodeDict)
+			print("ATNLPtf_hopfieldGraphDrawNetwork.displayHopfieldGraph()")
+			ATNLPtf_hopfieldGraphDrawNetwork.displayHopfieldGraph()
+
 	result = True			
 	return result
 
