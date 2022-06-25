@@ -34,6 +34,15 @@ biologicalPrototype = False	#add contextual connections to emulate primary conne
 biologicalSimulation = True	#simulate sequential activation of dendritic input 
 useDependencyParseTree = False
 
+def generateHopfieldGraphFileName(sentenceOrNetwork, sentenceIndex=None):
+	fileName = "hopfieldGraph"
+	if(sentenceOrNetwork):
+		fileName = fileName + "Sentence"
+	else:
+		fileName = fileName + "Network"
+		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
+	return fileName
+	
 if(biologicalSimulation):
 	import HFNLPpy_biologicalSimulation
 	biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False
@@ -49,15 +58,17 @@ if(useDependencyParseTree):
 	else:
 		identifySyntacticalDependencyRelations = True	#mandatory 
 
-drawHopfieldGraph = True
+drawHopfieldGraph = False
 if(drawHopfieldGraph):
-	drawHopfieldGraphSentence = False
+	drawHopfieldGraphPlot = True
+	drawHopfieldGraphSave = True
+	drawHopfieldGraphSentence = True
 	if(drawHopfieldGraphSentence):
 		import HFNLPpy_hopfieldGraphDraw as ATNLPtf_hopfieldGraphDrawSentence
 	drawHopfieldGraphNetwork = True	#default: True	#draw graph for entire network (not just sentence)
 	if(drawHopfieldGraphNetwork):
 		import HFNLPpy_hopfieldGraphDraw as ATNLPtf_hopfieldGraphDrawNetwork
-
+	
 networkConceptNodeDict = {}
 networkSize = 0
 
@@ -79,10 +90,11 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 		
 	activationTime = calculateActivationTime(sentenceIndex)
 
-	if(drawHopfieldGraphSentence):
-		ATNLPtf_hopfieldGraphDrawSentence.clearHopfieldGraph()
-	if(drawHopfieldGraphNetwork):
-		ATNLPtf_hopfieldGraphDrawNetwork.clearHopfieldGraph()
+	if(drawHopfieldGraph):
+		if(drawHopfieldGraphSentence):
+			ATNLPtf_hopfieldGraphDrawSentence.clearHopfieldGraph()
+		if(drawHopfieldGraphNetwork):
+			ATNLPtf_hopfieldGraphDrawNetwork.clearHopfieldGraph()
 			
 	sentenceConceptNodeList = []
 	sentenceLength = len(tokenisedSentence)
@@ -145,14 +157,15 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 	
 	if(drawHopfieldGraph):
 		if(drawHopfieldGraphSentence):
-			for conceptNode in sentenceConceptNodeList:
-				ATNLPtf_hopfieldGraphDrawSentence.drawHopfieldGraphNodeAndConnections(conceptNode, networkSize, drawGraph=False)
+			fileName = generateHopfieldGraphFileName(True, sentenceIndex)
+			ATNLPtf_hopfieldGraphDrawSentence.drawHopfieldGraphSentence(sentenceConceptNodeList, networkSize)
 			print("ATNLPtf_hopfieldGraphDrawSentence.displayHopfieldGraph()")
-			ATNLPtf_hopfieldGraphDrawSentence.displayHopfieldGraph()
+			ATNLPtf_hopfieldGraphDrawSentence.displayHopfieldGraph(drawHopfieldGraphPlot, drawHopfieldGraphSave, fileName)
 		if(drawHopfieldGraphNetwork):
+			fileName = generateHopfieldGraphFileName(False, sentenceIndex)
 			ATNLPtf_hopfieldGraphDrawNetwork.drawHopfieldGraphNetwork(networkConceptNodeDict)
 			print("ATNLPtf_hopfieldGraphDrawNetwork.displayHopfieldGraph()")
-			ATNLPtf_hopfieldGraphDrawNetwork.displayHopfieldGraph()
+			ATNLPtf_hopfieldGraphDrawNetwork.displayHopfieldGraph(drawHopfieldGraphPlot, drawHopfieldGraphSave, fileName)
 
 	result = True			
 	return result

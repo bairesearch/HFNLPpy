@@ -26,6 +26,7 @@ class HopfieldConnection:
 		self.nodeSource = nodeSource
 		self.nodeTarget = nodeTarget	#for biologicalPrototype: interpret as axon synapse
 		self.activationTime = activationTime	#last activation time (used to calculate recency)	#not currently used
+		self.activationLevel = False	#currently only used by drawBiologicalSimulationDynamic
 		self.spatioTemporalIndex = spatioTemporalIndex	#creation time (not used by biological implementation)		#for biologicalPrototype: e.g. 1) interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause); or 2) store spatiotemporal index synapses on separate dendritic branch
 		
 		self.biologicalPrototype = False

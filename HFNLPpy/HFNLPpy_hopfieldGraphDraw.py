@@ -23,6 +23,11 @@ from math import cos, sin, radians
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 
+highResolutionFigure = True
+if(highResolutionFigure):
+	saveFigDPI = 300	#approx HD	#depth per inch
+	saveFigSize = (16,9)	#(9,9)	#in inches
+	
 drawHopfieldGraphEdgeColoursWeights = True
 drawHopfieldGraphNodeColours = False	#node colours not yet coded (pos type of concept node will be different depending on connectivity/instance context)
 graphTransparency = 0.5
@@ -69,8 +74,12 @@ def drawHopfieldGraphConnection(connection):
 		hopfieldGraph.add_edge(node1.nodeName, node2.nodeName)
 	
 
-def displayHopfieldGraph():
+def displayHopfieldGraph(plot=True, save=False, fileName=None):
 	pos = nx.get_node_attributes(hopfieldGraph, 'pos')
+	
+	if(highResolutionFigure):
+		plt.figure(1, figsize=saveFigSize) 
+		
 	if(drawHopfieldGraphEdgeColoursWeights):
 		edges = hopfieldGraph.edges()
 		#colors = [hopfieldGraph[u][v]['color'] for u,v in edges]
@@ -86,8 +95,17 @@ def displayHopfieldGraph():
 			nx.draw(hopfieldGraph, pos, with_labels=True, alpha=graphTransparency, node_color=hopfieldGraphNodeColorMap)
 		else:
 			nx.draw(hopfieldGraph, pos, with_labels=True, alpha=graphTransparency)
-	plt.show()
 
+	if(save):
+		if(highResolutionFigure):
+			plt.savefig(fileName, dpi=saveFigDPI)
+		else:
+			plt.savefig(fileName)
+	if(plot):
+		plt.show()
+		
+	plt.clf()
+		
 def drawHopfieldGraphNodeConnections(hopfieldGraphNode, networkSize):
 	for connectionKey, connectionList in hopfieldGraphNode.targetConnectionDict.items():
 		for connection in connectionList:
@@ -97,6 +115,10 @@ def drawHopfieldGraphNodeAndConnections(hopfieldGraphNode, networkSize, drawGrap
 	#parse tree and generate nodes and connections
 	drawHopfieldGraphNode(hopfieldGraphNode, networkSize)
 	drawHopfieldGraphNodeConnections(hopfieldGraphNode, networkSize)
+
+def drawHopfieldGraphSentence(sentenceConceptNodeList, networkSize):
+	for conceptNode in sentenceConceptNodeList:
+		drawHopfieldGraphNodeAndConnections(conceptNode, networkSize, drawGraph=False)		
 
 def drawHopfieldGraphNetwork(networkConceptNodeDict):	
 	#generate nodes and connections

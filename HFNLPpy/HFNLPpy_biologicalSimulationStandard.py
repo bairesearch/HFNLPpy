@@ -40,10 +40,10 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict,
 		print("HFNLPpy_biologicalSimulationDrawNetwork.displayHopfieldGraph()")
 		HFNLPpy_biologicalSimulationDrawNetwork.displayHopfieldGraph()
 
-
 	activationTime = calculateActivationTime(sentenceIndex)
 	
 	somaActivationFound = False	#is conceptNeuronTarget activated by its prior context?
+	conceptNeuronSource.activationLevel = True
 	
 	for targetConnectionConceptName, connectionList in conceptNeuronSource.targetConnectionDict.items():
 		conceptNeuronTarget = networkConceptNodeDict[targetConnectionConceptName] #or connectionList[ANY].nodeTarget
@@ -51,7 +51,10 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict,
 			if(calculateNeuronActivation(connection, 0, conceptNeuronTarget.dendriticTree, activationTime)):
 				if(conceptNeuronTarget == conceptNeuron):
 					somaActivationFound = True
+				conceptNeuronTarget.activationLevel = True
 
+	resetAxonsActivation(conceptNeuronSource)
+	
 	return somaActivationFound
 	
 	
@@ -66,6 +69,7 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup(sentenceIn
 	somaActivationFound = False	#is conceptNeuron activated by its prior context?
 	for w2 in range(0, w):
 		previousConceptNeuron = sentenceConceptNodeList[w2]	#source neuron
+		previousConceptNeuron.activationLevel = True
 		if(conceptNeuron.nodeName in previousConceptNeuron.targetConnectionDict):
 			connectionList = previousConceptNeuron.targetConnectionDict[conceptNeuron.nodeName]
 			for connection in connectionList:
@@ -78,8 +82,11 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup(sentenceIn
 				#print("calculateNeuronActivation")
 				if(calculateNeuronActivation(connection, 0, targetNeuron.dendriticTree, activationTime)):
 					somaActivationFound = True
+					targetNeuron.activationLevel = True
 					#if(printVerbose):
 					#print("somaActivationFound")
+			
+			resetAxonsActivation(previousConceptNeuron)
 
 	resetDendriticTreeActivation(conceptNeuron)
 	
@@ -87,6 +94,8 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup(sentenceIn
 					
 
 def calculateNeuronActivation(connection, currentBranchIndex1, currentBranch, activationTime):
+	
+	connection.activationLevel = True
 	
 	activationFound = False
 	targetConceptNeuron = connection.nodeTarget

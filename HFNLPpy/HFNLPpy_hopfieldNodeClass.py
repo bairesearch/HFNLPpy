@@ -77,6 +77,7 @@ class HopfieldNode:
 		self.wordVector = wordVector	#numpy array
 		#self.posTag = posTag	#nlp in context prediction only (not certain)
 		self.graphNodeType = nodeGraphType
+		self.activationLevel = False	#currently only used by drawBiologicalSimulationDynamic
 		self.activationTime = activationTime	#last activation time (used to calculate recency)	#not currently used
 
 		#sentence artificial vars (for sentence graph only, do not generalise to network graph);	
@@ -286,10 +287,17 @@ def generateSequentialSegmentInputName(conceptNode):
 
 
 def resetDendriticTreeActivation(conceptNeuron):
+	conceptNeuron.activationLevel = False
 	resetBranchActivation(conceptNeuron.dendriticTree)
 	if(vectoriseComputationCurrentDendriticInput):
 		conceptNeuron.vectorisedBranchActivationLevelList, conceptNeuron.vectorisedBranchActivationTimeList, _ = createBatchDendriticTreeVectorised(batched=False)	#rezero tensors by regenerating them 	#do not overwrite conceptNeuron.vectorisedBranchObjectList
-	
+
+def resetAxonsActivation(conceptNeuron):
+	conceptNeuron.activationLevel = False
+	for targetConnectionConceptName, connectionList in conceptNeuron.targetConnectionDict.items():
+		for connection in connectionList:
+			connection.activationLevel = False
+
 def resetBranchActivation(currentBranch):
 
 	currentBranch.activationLevel = False

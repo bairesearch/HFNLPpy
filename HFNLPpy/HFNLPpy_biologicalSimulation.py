@@ -61,7 +61,7 @@ biologicalSimulationForward = True	#default mode	#required for drawBiologicalSim
 if(not vectoriseComputation):
 	biologicalSimulationForward = False	#orig implementation; simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup
 
-drawBiologicalSimulation = True	#default: True
+drawBiologicalSimulation = False	#default: True
 if(drawBiologicalSimulation):
 	drawBiologicalSimulationDendriticTreeSentence = True	#default: True	#draw graph for sentence neurons and their dendritic tree
 	if(drawBiologicalSimulationDendriticTreeSentence):
@@ -69,9 +69,7 @@ if(drawBiologicalSimulation):
 	drawBiologicalSimulationDendriticTreeNetwork = True	#default: True	#draw graph for entire network (not just sentence)
 	if(drawBiologicalSimulationDendriticTreeNetwork):
 		import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawNetwork
-else:
-	drawBiologicalSimulationDendriticTreeSentence = False
-	drawBiologicalSimulationDendriticTreeNetwork = False
+
 
 #if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 
@@ -142,6 +140,7 @@ def addPredictiveSequenceToNeuronSyntacticalBranchDP(sentenceIndex, sentenceConc
 def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList):
 
 	#cannot clear now as HFNLPpy_biologicalSimulationDrawSentence/HFNLPpy_biologicalSimulationDrawNetwork memory structure is not independent (diagnose reason for this);
+	#if(drawBiologicalSimulation):
 	#if(drawBiologicalSimulationDendriticTreeSentence):
 	#	HFNLPpy_biologicalSimulationDrawSentence.clearHopfieldGraph()
 	#if(drawBiologicalSimulationDendriticTreeNetwork):
