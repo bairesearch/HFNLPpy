@@ -35,6 +35,7 @@ if(vectoriseComputation):
 		debugVectorisedBranchObjectList = False
 else:
 	vectoriseComputationCurrentDendriticInput = False
+	debugVectorisedBranchObjectList = False
 	
 recordSequentialSegmentInputActivationLevels = True	#required for draw of active simulation
 if(vectoriseComputation):
@@ -66,7 +67,7 @@ subsequenceLengthCalibration = 1.0
 numberOfHorizontalSubBranchesRequiredForActivation = 2	#calibrate
 activationRepolarisationTime = 1	#calibrate
 
-resetSequentialSegments = True
+resetSequentialSegments = False
 
 
 class HopfieldNode:
@@ -79,7 +80,7 @@ class HopfieldNode:
 		self.graphNodeType = nodeGraphType
 		self.activationLevel = False	#currently only used by drawBiologicalSimulationDynamic
 		self.activationTime = activationTime	#last activation time (used to calculate recency)	#not currently used
-
+		
 		#sentence artificial vars (for sentence graph only, do not generalise to network graph);	
 		self.w = w
 		self.sentenceIndex = sentenceIndex
@@ -91,6 +92,8 @@ class HopfieldNode:
 		#self.targetConnectionList = []
 
 		if(biologicalSimulation):
+			self.activationTimeWord = None
+
 			#if(biologicalSimulationDraw):
 			#required to assign independent names to each;
 			self.currentBranchIndexNeuron = 0
@@ -173,6 +176,10 @@ def calculateActivationTime(sentenceIndex):
 	activationTime = sentenceIndex
 	return activationTime
 	
+def calculateActivationTimeSequence(wordIndex):
+	activationTime = wordIndex
+	return activationTime
+	
 #creation time
 def calculateSpatioTemporalIndex(sentenceIndex):
 	#for biologicalPrototype: e.g. 1) interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause); or 2) store spatiotemporal index synapses on separate dendritic branch
@@ -206,7 +213,7 @@ class DendriticBranch:
 
 		self.sequentialSegments = [SequentialSegment(conceptNode, self, i) for i in range(numberOfBranchSequentialSegments)]	#[SequentialSegment(conceptNode, self, i)]*numberOfBranchSequentialSegments
 		self.activationLevel = False
-		self.activationTime = None
+		self.activationTime = None	#within sequence/sentence activation time
 		
 		#if(vectoriseComputationCurrentDendriticInput):
 		#	self.sequentialSegmentInputIndex = None
@@ -215,7 +222,7 @@ class SequentialSegment:
 	def __init__(self, conceptNode, branch, sequentialSegmentIndex):
 		self.inputs = []
 		self.activationLevel = False
-		self.activationTime = None
+		self.activationTime = None	#within sequence/sentence activation time
 		self.branch = branch
 		self.sequentialSegmentIndex = sequentialSegmentIndex 
 
@@ -235,7 +242,7 @@ class SequentialSegmentInput:
 	def __init__(self, conceptNode, SequentialSegment, sequentialSegmentInputIndex):
 		self.input = None
 		self.sequentialSegment = SequentialSegment
-		self.firstInputInSequence = False
+		self.firstInputInSequence = False	#within sequence/sentence activation time
 		
 		if(recordSequentialSegmentInputActivationLevels):
 			self.activationLevel = False	#input has been temporarily triggered for activation (only affects dendritic signal if sequentiality requirements met)
@@ -315,15 +322,20 @@ def printIndentation(level):
 		print('\t', end='')
 
 	
-def verifyRepolarised(currentSequentialSegmentIndex, activationTime, sequentialSegmentActivationTimePrevious):
-	repolarised = False
-	if(currentSequentialSegmentIndex == 0):
-		repolarised = True	#CHECKTHIS: do not require repolarisation time for first sequential segment in branch
-	else:
-		if(activationTime > sequentialSegmentActivationTimePrevious+activationRepolarisationTime):
+def verifyRepolarised(currentSequentialSegment, activationTime):
+	if(currentSequentialSegment.activationLevel):
+		repolarised = False
+		if(activationTime >= currentSequentialSegment.activationTime+activationRepolarisationTime):
+			#do not reactivate sequential segment if already activated by same source neuron
 			repolarised = True
+	else:
+		repolarised = True
 	return repolarised
 	
 	
-		
+def verifySequentialActivationTime(currentSequentialSegmentActivationTime, previousSequentialSegmentActivationTime):
+	sequentiality = False
+	if(currentSequentialSegmentActivationTime > previousSequentialSegmentActivationTime):
+		sequentiality = True
+	return sequentiality
 

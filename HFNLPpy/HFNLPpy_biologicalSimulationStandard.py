@@ -40,7 +40,7 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict,
 		print("HFNLPpy_biologicalSimulationDrawNetwork.displayHopfieldGraph()")
 		HFNLPpy_biologicalSimulationDrawNetwork.displayHopfieldGraph()
 
-	activationTime = calculateActivationTime(sentenceIndex)
+	activationTime = calculateActivationTimeSequence(wSource)
 	
 	somaActivationFound = False	#is conceptNeuronTarget activated by its prior context?
 	conceptNeuronSource.activationLevel = True
@@ -48,7 +48,7 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict,
 	for targetConnectionConceptName, connectionList in conceptNeuronSource.targetConnectionDict.items():
 		conceptNeuronTarget = networkConceptNodeDict[targetConnectionConceptName] #or connectionList[ANY].nodeTarget
 		for connection in connectionList:
-			if(calculateNeuronActivation(connection, 0, conceptNeuronTarget.dendriticTree, activationTime)):
+			if(calculateNeuronActivationStandard(connection, 0, conceptNeuronTarget.dendriticTree, activationTime)[0]):
 				if(conceptNeuronTarget == conceptNeuron):
 					somaActivationFound = True
 				conceptNeuronTarget.activationLevel = True
@@ -63,15 +63,14 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup(sentenceIn
 
 	#if(printVerbose):
 	print("simulateBiologicalHFnetworkSequenceNodeTrain: w = ", w, ", conceptNeuron = ", conceptNeuron.nodeName)
-
-	activationTime = calculateActivationTime(sentenceIndex)
 	
 	somaActivationFound = False	#is conceptNeuron activated by its prior context?
-	for w2 in range(0, w):
-		previousConceptNeuron = sentenceConceptNodeList[w2]	#source neuron
-		previousConceptNeuron.activationLevel = True
-		if(conceptNeuron.nodeName in previousConceptNeuron.targetConnectionDict):
-			connectionList = previousConceptNeuron.targetConnectionDict[conceptNeuron.nodeName]
+	for wSource in range(0, w):
+		activationTime = calculateActivationTimeSequence(wSource)
+		conceptNeuronSource = sentenceConceptNodeList[wSource]	#source neuron
+		conceptNeuronSource.activationLevel = True
+		if(conceptNeuron.nodeName in conceptNeuronSource.targetConnectionDict):
+			connectionList = conceptNeuronSource.targetConnectionDict[conceptNeuron.nodeName]	#only trace connections between source neuron and target neuron
 			for connection in connectionList:
 				targetNeuron = connection.nodeTarget	#targetNeuron will be the same for all connection in connectionList (if targetConnectionConceptName == conceptNeuron)
 				if(targetNeuron != conceptNeuron):
@@ -79,48 +78,58 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup(sentenceIn
 					exit()
 
 				#FUTURE: vectoriseComputationCurrentDendriticInput: perform parallel processing (add target concept synapse/sequentialSegment/branch to tensor)
-				#print("calculateNeuronActivation")
-				if(calculateNeuronActivation(connection, 0, targetNeuron.dendriticTree, activationTime)):
+				#print("calculateNeuronActivationStandard")
+				if(calculateNeuronActivationStandard(connection, 0, targetNeuron.dendriticTree, activationTime)[0]):
 					somaActivationFound = True
 					targetNeuron.activationLevel = True
 					#if(printVerbose):
 					#print("somaActivationFound")
 			
-			resetAxonsActivation(previousConceptNeuron)
+			resetAxonsActivation(conceptNeuronSource)
 
 	resetDendriticTreeActivation(conceptNeuron)
 	
 	return somaActivationFound
 					
 
-def calculateNeuronActivation(connection, currentBranchIndex1, currentBranch, activationTime):
+def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBranch, activationTime):
 	
 	connection.activationLevel = True
 	
-	activationFound = False
+	#activationFound = False
 	targetConceptNeuron = connection.nodeTarget
 		
 	#calculate subbranch activations:
 	subbranchesActive = False
+	subbranchesActivationTimeMax = 0	 #alternatively set -1; initial activation time of dendritic sequence set artificially low such that passSegmentActivationTimeTests automatically pass (not required (as passSegmentActivationTimeTests are ignored for currentSequentialSegmentInput.firstInputInSequence)
 	if(len(currentBranch.subbranches) > 0):
 		numberOfBranch2active = 0
 		for subbranch in currentBranch.subbranches:	
-			subbranchActive = calculateNeuronActivation(connection, currentBranchIndex1+1, subbranch, activationTime)
+			subbranchActive, subbranchActivationTime = calculateNeuronActivationStandard(connection, currentBranchIndex1+1, subbranch, activationTime)
 			if(subbranchActive):
 				numberOfBranch2active += 1
+				if(subbranchActivationTime > subbranchesActivationTimeMax):
+					subbranchesActivationTimeMax = subbranchActivationTime
 		if(numberOfBranch2active >= numberOfHorizontalSubBranchesRequiredForActivation):	#must conform with branch merge method *
 			subbranchesActive = True
 	else:
 	 	subbranchesActive = True
-		
+	
+	sequentialSegmentActivationLevel = subbranchesActive	#initialise sequential segment activation to subbranchesActive
+	sequentialSegmentActivationTime = subbranchesActivationTimeMax
+	
 	#calculate branch segment activations:
-	for currentSequentialSegmentIndex, currentSequentialSegment in enumerate(currentBranch.sequentialSegments):
-		sequentialSegmentActivationLevel = currentSequentialSegment.activationLevel
-		sequentialSegmentActivationTime = currentSequentialSegment.activationTime
-		if(currentSequentialSegmentIndex == 0):
-			sequentialSegmentActivationLevel = True	#no sequential requirement @index0
+	for currentSequentialSegmentIndex, currentSequentialSegment in reversed(list(enumerate(currentBranch.sequentialSegments))):
+		
+		sequentialSegmentAlreadyActive = False
+		if(sequentialSegmentActivationLevel):	#only accept sequential segment activation if previous was activated
+			if(currentSequentialSegment.activationLevel):
+				if(verifySequentialActivationTime(currentSequentialSegment.activationTime, sequentialSegmentActivationTime)):
+					sequentialSegmentAlreadyActive = True
+					sequentialSegmentActivationLevel = currentSequentialSegment.activationLevel
+					sequentialSegmentActivationTime = currentSequentialSegment.activationTime
+			
 		sequentialSegmentActivationLevelNew = False
-
 		for currentSequentialSegmentInputIndex, currentSequentialSegmentInput in enumerate(currentSequentialSegment.inputs):
 			if(connection.nodeTargetSequentialSegmentInput == currentSequentialSegmentInput):
 				if(recordSequentialSegmentInputActivationLevels):
@@ -132,13 +141,12 @@ def calculateNeuronActivation(connection, currentBranchIndex1, currentBranch, ac
 				passSegmentActivationTimeTests = False
 				if(currentSequentialSegmentInput.firstInputInSequence):
 					passSegmentActivationTimeTests = True	#if input corresponds to first in sequence, then enforce no previous dendritic activation requirements
-					subbranchesActive = True
 				else:
 					if(sequentialSegmentActivationLevel):	#previous sequential segment was activated
-						if(verifyRepolarised(currentSequentialSegmentIndex, activationTime, sequentialSegmentActivationTime)):	#ensure that the segment isnt in a repolarisation state (ie it can be activated)
-							#if(activationTime > previousVerticalBranchActivationTime):	#guaranteed
-							if(subbranchesActive):
-								passSegmentActivationTimeTests = True	#previous (ie more distal) branch was active
+						if(verifySequentialActivationTime(activationTime, sequentialSegmentActivationTime)):
+							if(verifyRepolarised(currentSequentialSegment, activationTime)):	#ensure that the segment isnt in a repolarisation state (ie it can be activated)
+								#if(activationTime > previousVerticalBranchActivationTime):	#guaranteed
+								passSegmentActivationTimeTests = True	#sequentialSegmentActivationLevel implies subbranchesActive: previous (ie more distal) branch was active
 				if(passSegmentActivationTimeTests):
 					sequentialSegmentActivationLevelNew = True
 					sequentialSegmentActivationTimeNew = activationTime
@@ -147,36 +155,38 @@ def calculateNeuronActivation(connection, currentBranchIndex1, currentBranch, ac
 			if(printVerbose):
 				printIndentation(currentBranchIndex1+1)
 				print("activate currentSequentialSegment, connection.nodeSource = ", connection.nodeSource.nodeName, ", connection.nodeTarget = ", connection.nodeTarget.nodeName)
-			if(resetSequentialSegments):
-				if(currentSequentialSegmentIndex == 0):
-					resetBranchActivation(currentBranch)
-					numberOfSequentialSegmentsActive = 0
-			numberOfSequentialSegmentsActive += 1	#CHECKTHIS
+			#if(resetSequentialSegments):
+			#	if(currentSequentialSegmentIndex == 0):
+			#		resetBranchActivation(currentBranch)
+			#		numberOfSequentialSegmentsActive = 0
 			sequentialSegmentActivationLevel = True
 			sequentialSegmentActivationTime = activationTime
 			currentSequentialSegment.activationLevel = sequentialSegmentActivationLevel
 			currentSequentialSegment.activationTime = sequentialSegmentActivationTime
-
+		if(sequentialSegmentActivationLevel):
+			numberOfSequentialSegmentsActive += 1	#CHECKTHIS
+			
 	sequentialSegmentActivationLevelLast = sequentialSegmentActivationLevel
 	sequentialSegmentActivationTimeLast = sequentialSegmentActivationTime
 	#sequentialSegmentActivationLevelLastNew = sequentialSegmentActivationLevelLast
-	sequentialSegmentsActive = False
-	if(sequentialSegmentActivationLevelLast):
-		if(printVerbose):
-			printIndentation(currentBranchIndex1+1)
-			print("activate currentBranch, connection.nodeSource = ", connection.nodeSource.nodeName, ", connection.nodeTarget = ", connection.nodeTarget.nodeName)
-		branch2ActivationLevel = sequentialSegmentActivationLevelLast	#activate branch2	#activate whole currentSequentialSegment
-		branch2ActivationTime = sequentialSegmentActivationTimeLast
-		currentBranch.activationLevel = branch2ActivationLevel
-		currentBranch.activationTime = branch2ActivationTime
-		sequentialSegmentsActive = True	
+	#sequentialSegmentsActive = False
+	
+	#overwrite activation level of branch if last sequential segment inactive	#OLD: if(sequentialSegmentActivationLevelLast):	
+	if(printVerbose):
+		printIndentation(currentBranchIndex1+1)
+		print("activate currentBranch, connection.nodeSource = ", connection.nodeSource.nodeName, ", connection.nodeTarget = ", connection.nodeTarget.nodeName)
+	branchActivationLevel = sequentialSegmentActivationLevelLast	#activate branch2	#activate whole currentSequentialSegment
+	branchActivationTime = sequentialSegmentActivationTimeLast
+	currentBranch.activationLevel = branchActivationLevel
+	currentBranch.activationTime = branchActivationTime
+	#sequentialSegmentsActive = True	
 
-	if(subbranchesActive and sequentialSegmentsActive):
+	if(branchActivationLevel):
 		if(printVerbose):
 			printIndentation(currentBranchIndex1+1)
 			print("activationFound")
-		activationFound = True
+		#activationFound = True
 			
-	return activationFound							
+	return branchActivationLevel, branchActivationTime							
 	
 	

@@ -74,7 +74,7 @@ if(drawBiologicalSimulation):
 #if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 
 #def simulateBiologicalHFnetworkSequenceSyntacticalBranchCPTrain(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, CPbranchHeadNode):
-#	activationTime = calculateActivationTime(sentenceIndex)
+#	activationTime = 0
 #	somaActivationFound = False
 #	if(calculateNeuronActivationSyntacticalBranchCP(sentenceConceptNodeList, CPbranchHeadNode, CPbranchHeadNode, activationTime)):
 #		somaActivationFound = True	
@@ -84,7 +84,7 @@ if(drawBiologicalSimulation):
 #		addPredictiveSequenceToNeuronSyntacticalBranchCP(sentenceConceptNodeList, CPbranchHeadNode, sentenceIndex)
 		
 def simulateBiologicalHFnetworkSequenceSyntacticalBranchDPTrain(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPbranchHeadNode):
-	activationTime = calculateActivationTime(sentenceIndex)
+	activationTime = 0
 	somaActivationFound = False
 	if(calculateNeuronActivationSyntacticalBranchDP(sentenceConceptNodeList, DPbranchHeadNode, DPbranchHeadNode, activationTime)):
 		somaActivationFound = True	
@@ -98,7 +98,7 @@ def calculateNeuronActivationSyntacticalBranchDP(sentenceIndex, sentenceConceptN
 	conceptNode = sentenceConceptNodeList[DPbranchHeadNode.w]
 	for DPdependentNode in DPgovernorNode.DPdependentList:
 		previousContextConceptNode = sentenceConceptNodeList[DPdependentNode.w]
-		calculateNeuronActivationSyntacticalBranchDP(sentenceIndex, sentenceConceptNodeList, DPdependentNode, DPbranchHeadNode, activationTime)
+		calculateNeuronActivationSyntacticalBranchDP(sentenceIndex, sentenceConceptNodeList, DPdependentNode, DPbranchHeadNode, activationTime-1)
 		
 		if(conceptNeuron.nodeName in previousContextConceptNode.targetConnectionDict):
 			connectionList = previousContextConceptNode.targetConnectionDict[conceptNeuron.nodeName]
@@ -115,7 +115,7 @@ def calculateNeuronActivationSyntacticalBranchDP(sentenceIndex, sentenceConceptN
 			
 def addPredictiveSequenceToNeuronSyntacticalBranchDP(sentenceIndex, sentenceConceptNodeList, DPgovernorNode, currentBranchIndex1, conceptNeuron, dendriticBranch):
 
-	activationTime = calculateActivationTime(sentenceIndex)
+	activationTime = 0	#unactivated
 	spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
 	
 	#headNode in DP = current conceptNode (so not encoded in dendritic tree)
@@ -175,7 +175,12 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 			else:
 				#if(printVerbose):
 				print("!somaActivationFound: addPredictiveSequenceToNeuron")
-				addPredictiveSequenceToNeuron(conceptNeuronTarget, w, sentenceConceptNodeList, sentenceIndex, conceptNeuronTarget.dendriticTree, wTarget, 0)
+				if(wTarget > 0):	#do not create (recursive) connection from conceptNode to conceptNode branchIndex1=0
+					dendriticBranchMaxW = wTarget-1 
+					expectFurtherSubbranches = True
+					if(wTarget == 1):
+						expectFurtherSubbranches = False
+					addPredictiveSequenceToNeuron(conceptNeuronTarget, sentenceConceptNodeList, sentenceIndex, conceptNeuronTarget.dendriticTree, dendriticBranchMaxW, 0, expectFurtherSubbranches)
 		
 	for w, conceptNeuron in enumerate(sentenceConceptNodeList):
 		if(vectoriseComputationCurrentDendriticInput):
@@ -195,25 +200,23 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 
 						
 		
-def addPredictiveSequenceToNeuron(conceptNeuron, w, sentenceConceptNodeList, sentenceIndex, dendriticBranch, dendriticBranchMaxW, branchIndex1, expectFurtherSubbranches=True):
+def addPredictiveSequenceToNeuron(conceptNeuron, sentenceConceptNodeList, sentenceIndex, dendriticBranch, dendriticBranchMaxW, branchIndex1, expectFurtherSubbranches=True):
 	
-	activationTime = calculateActivationTime(sentenceIndex)
+	activationTime = 0	#unactivated
 	spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
 	numberOfWordsInSequence = len(sentenceConceptNodeList)
 	
 	#no prediction found for previous sequence; generate prediction for conceptNeuron (encode subsequences in dendrite)
 	#print("addPredictiveSequenceToNeuron:")
 	
-	if(branchIndex1 > 0):
-		#do not create (recursive) connection from conceptNode to conceptNode branchIndex1=0
-		previousContextConceptNode = sentenceConceptNodeList[dendriticBranchMaxW]
-		currentSequentialSegmentIndex = 0	#biologicalSimulation implementation does not currently use local sequential segments (encode sequentiality in branch structure only)
-		currentSequentialSegment = dendriticBranch.sequentialSegments[currentSequentialSegmentIndex]
-		newSequentialSegmentSegmentInputIndex = calculateNewSequentialSegmentInputIndex(currentSequentialSegment)
-		#print("addPredictiveSynapseToNeuron ", conceptNeuron.nodeName, " branchIndex1 = ", branchIndex1)
-		currentSequentialSegmentInput = SequentialSegmentInput(conceptNeuron, currentSequentialSegment, newSequentialSegmentSegmentInputIndex)
-		currentSequentialSegment.inputs.append(currentSequentialSegmentInput)
-		addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=True, biologicalSynapse=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
+	previousContextConceptNode = sentenceConceptNodeList[dendriticBranchMaxW]
+	currentSequentialSegmentIndex = 0	#biologicalSimulation implementation does not currently use local sequential segments (encode sequentiality in branch structure only)
+	currentSequentialSegment = dendriticBranch.sequentialSegments[currentSequentialSegmentIndex]
+	newSequentialSegmentSegmentInputIndex = calculateNewSequentialSegmentInputIndex(currentSequentialSegment)
+	#print("addPredictiveSynapseToNeuron ", conceptNeuron.nodeName, " branchIndex1 = ", branchIndex1)
+	currentSequentialSegmentInput = SequentialSegmentInput(conceptNeuron, currentSequentialSegment, newSequentialSegmentSegmentInputIndex)
+	currentSequentialSegment.inputs.append(currentSequentialSegmentInput)
+	addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=True, biologicalSynapse=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
 
 	if(expectFurtherSubbranches):
 		for subbranchIndex, subbranch in enumerate(dendriticBranch.subbranches):
@@ -235,11 +238,10 @@ def addPredictiveSequenceToNeuron(conceptNeuron, w, sentenceConceptNodeList, sen
 			if(len(subbranch.subbranches) == 0):
 				expectFurtherSubbranches = False
 				#print("no further subbranches")
-			addPredictiveSequenceToNeuron(conceptNeuron, w, sentenceConceptNodeList, sentenceIndex, subbranch, dendriticSubBranchMaxW, branchIndex1+1, expectFurtherSubbranches)
+			addPredictiveSequenceToNeuron(conceptNeuron, sentenceConceptNodeList, sentenceIndex, subbranch, dendriticSubBranchMaxW, branchIndex1+1, expectFurtherSubbranches)
 	else:
-		if(branchIndex1 > 0):
-			currentSequentialSegmentInput.firstInputInSequence = True
-			#print("setting currentSequentialSegmentInput.firstInputInSequence, branchIndex1 = ", branchIndex1)
+		currentSequentialSegmentInput.firstInputInSequence = True
+		#print("setting currentSequentialSegmentInput.firstInputInSequence, branchIndex1 = ", branchIndex1)
 
 #adds predictive synapse such that subsequences occur in order
 def addPredictiveSynapseToNeuron(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=False, biologicalSynapse=False, nodeTargetSequentialSegmentInput=None):
