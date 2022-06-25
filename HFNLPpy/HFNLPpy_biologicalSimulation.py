@@ -53,15 +53,11 @@ if(debugCalculateNeuronActivationParallel):
 	wSourceDebug = 5
 	wTargetDebug = wSourceDebug+1
 
-alwaysAddPredictionInputFromPreviousConcept = False
-if(vectoriseComputation):
-	alwaysAddPredictionInputFromPreviousConcept = True #ensures that simulateBiologicalHFnetworkSequenceNodeTrainParallel:conceptNeuronBatchIndexFound
+#alwaysAddPredictionInputFromPreviousConcept = False
+#if(vectoriseComputation):
+#	alwaysAddPredictionInputFromPreviousConcept = True #ensures that simulateBiologicalHFnetworkSequenceNodeTrainParallel:conceptNeuronBatchIndexFound
 
-biologicalSimulationForward = True	#default mode	#required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic
-if(not vectoriseComputation):
-	biologicalSimulationForward = False	#orig implementation; simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup
-
-drawBiologicalSimulation = False	#default: True
+drawBiologicalSimulation = True	#default: True
 if(drawBiologicalSimulation):
 	drawBiologicalSimulationDendriticTreeSentence = True	#default: True	#draw graph for sentence neurons and their dendritic tree
 	if(drawBiologicalSimulationDendriticTreeSentence):
@@ -225,10 +221,10 @@ def addPredictiveSequenceToNeuron(conceptNeuron, sentenceConceptNodeList, senten
 			lengthOfSubsequence = int(np.random.exponential()*subsequenceLengthCalibration)	#the more proximal the previous context, the more likely to form a synapse
 			#lengthOfSubsequence = max(1, lengthOfSubsequence)
 			lengthOfSubsequence = lengthOfSubsequence + 1	#ensure >= 1
-			if(alwaysAddPredictionInputFromPreviousConcept):
-				if(branchIndex1 == 0):
-					if(subbranchIndex == 0):
-						lengthOfSubsequence = 1	#ensures lengthOfSubsequence=1 for at least one subbranch
+			#if(alwaysAddPredictionInputFromPreviousConcept):
+			#	if(branchIndex1 == 0):
+			#		if(subbranchIndex == 0):
+			#			lengthOfSubsequence = 1	#ensures lengthOfSubsequence=1 for at least one subbranch
 			#print("lengthOfSubsequence = ", lengthOfSubsequence)
 			dendriticSubBranchMaxW = dendriticBranchMaxW-lengthOfSubsequence
 			#print("dendriticSubBranchMaxW = ", dendriticSubBranchMaxW)

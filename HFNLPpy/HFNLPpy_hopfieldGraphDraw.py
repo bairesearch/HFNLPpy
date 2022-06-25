@@ -103,8 +103,8 @@ def displayHopfieldGraph(plot=True, save=False, fileName=None):
 			plt.savefig(fileName)
 	if(plot):
 		plt.show()
-		
-	plt.clf()
+	else:	
+		plt.clf()
 		
 def drawHopfieldGraphNodeConnections(hopfieldGraphNode, networkSize):
 	for connectionKey, connectionList in hopfieldGraphNode.targetConnectionDict.items():

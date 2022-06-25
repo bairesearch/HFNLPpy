@@ -29,17 +29,6 @@ printVerbose = False
 
 def simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wSource, conceptNeuronSource, w, conceptNeuron):
 	
-	if(drawBiologicalSimulationDendriticTreeSentence):
-		HFNLPpy_biologicalSimulationDrawSentence.clearHopfieldGraph()
-		HFNLPpy_biologicalSimulationDrawSentence.drawHopfieldGraphSentence(sentenceConceptNodeList)
-		print("HFNLPpy_biologicalSimulationDrawSentence.displayHopfieldGraph()")
-		HFNLPpy_biologicalSimulationDrawSentence.displayHopfieldGraph()
-	if(drawBiologicalSimulationDendriticTreeNetwork):
-		HFNLPpy_biologicalSimulationDrawNetwork.clearHopfieldGraph()
-		HFNLPpy_biologicalSimulationDrawNetwork.drawHopfieldGraphNetwork(networkConceptNodeDict)
-		print("HFNLPpy_biologicalSimulationDrawNetwork.displayHopfieldGraph()")
-		HFNLPpy_biologicalSimulationDrawNetwork.displayHopfieldGraph()
-
 	activationTime = calculateActivationTimeSequence(wSource)
 	
 	somaActivationFound = False	#is conceptNeuronTarget activated by its prior context?
@@ -54,7 +43,9 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict,
 				conceptNeuronTarget.activationLevel = True
 
 	resetAxonsActivation(conceptNeuronSource)
-	
+	if(resetWsourceNeuronDendriteAfterActivation):
+		resetDendriticTreeActivation(conceptNeuronSource)
+			
 	return somaActivationFound
 	
 	
@@ -163,8 +154,8 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 			sequentialSegmentActivationTime = activationTime
 			currentSequentialSegment.activationLevel = sequentialSegmentActivationLevel
 			currentSequentialSegment.activationTime = sequentialSegmentActivationTime
-		if(sequentialSegmentActivationLevel):
-			numberOfSequentialSegmentsActive += 1	#CHECKTHIS
+		#if(sequentialSegmentActivationLevel):
+		#	numberOfSequentialSegmentsActive += 1	#CHECKTHIS
 			
 	sequentialSegmentActivationLevelLast = sequentialSegmentActivationLevel
 	sequentialSegmentActivationTimeLast = sequentialSegmentActivationTime

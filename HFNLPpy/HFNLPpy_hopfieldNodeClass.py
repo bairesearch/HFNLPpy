@@ -23,7 +23,20 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import numpy as np
 
-vectoriseComputation = True	#parallel processing for optimisation
+
+	
+storeConceptNodesByLemma = True	#else store by word (morphology included)
+
+graphNodeTypeConcept = 1	#base/input neuron (network neuron)
+
+#if(biologicalImplementationReuseSynapticSubstrateForIdenticalSubsequences):
+graphNodeTypeStart = 5	#start of sequence - used by biologicalImplementationReuseSynapticSubstrateForIdenticalSubsequences only
+nodeNameStart = "SEQUENCESTARTNODE"
+
+
+
+#if(biologicalSimulation):
+vectoriseComputation = False	#parallel processing for optimisation
 if(vectoriseComputation):
 	vectoriseComputationCurrentDendriticInput = True	#mandatory - default behaviour
 	if(vectoriseComputationCurrentDendriticInput):
@@ -36,6 +49,12 @@ if(vectoriseComputation):
 else:
 	vectoriseComputationCurrentDendriticInput = False
 	debugVectorisedBranchObjectList = False
+
+biologicalSimulationForward = True	#default mode	#required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic
+if(not vectoriseComputation):
+	biologicalSimulationForward = True	#False; orig implementation; simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup
+if(biologicalSimulationForward):
+	resetWsourceNeuronDendriteAfterActivation = True
 	
 recordSequentialSegmentInputActivationLevels = True	#required for draw of active simulation
 if(vectoriseComputation):
@@ -43,22 +62,12 @@ if(vectoriseComputation):
 		vectoriseComputionUseSequentialSegmentInputActivationLevels	= False	#optional - not yet implemented (allows sequential segment activation to be dependent on summation of individual local inputs)
 		if(vectoriseComputionUseSequentialSegmentInputActivationLevels):
 			numberOfSequentialSegmentInputs = 100	#max number available
-			
-storeConceptNodesByLemma = True	#else store by word (morphology included)
-
-graphNodeTypeConcept = 1	#base/input neuron (network neuron)
-
-#if(biologicalImplementationReuseSynapticSubstrateForIdenticalSubsequences):
-graphNodeTypeStart = 5	#start of sequence - used by biologicalImplementationReuseSynapticSubstrateForIdenticalSubsequences only
-nodeNameStart = "SEQUENCESTARTNODE"
-
-#if(biologicalSimulation):
+	
 numberOfBranches1 = 3	#number of vertical branches
 numberOfBranches2 = 2	#number of new horizontal branches created at each vertical branch
 #[3,3,3]	#number of new horizontal branches created at each vertical branch
 numberOfBranchSequentialSegments = 1	#1+	#sequential inputs (FUTURE: if > 1: each branch segment may require sequential inputs)
 #numberOfBranchSequentialSegmentInputs = 1	#1+	#nonSequentialInputs	#in current implementation (non-parallel generative network) number of inputs at sequential segment is dynamically increased on demand #not used; currently encode infinite number of
-
 
 #probabilityOfSubsequenceThreshold = 0.01	#FUTURE: calibrate depending on number of branches/sequentialSegments etc
 
@@ -68,6 +77,7 @@ numberOfHorizontalSubBranchesRequiredForActivation = 2	#calibrate
 activationRepolarisationTime = 1	#calibrate
 
 resetSequentialSegments = False
+
 
 
 class HopfieldNode:
