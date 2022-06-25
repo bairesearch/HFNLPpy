@@ -47,9 +47,11 @@ branchIndex2Separation = conceptNeuronIndexSeparation/numberOfBranches2	#horizon
 sequentialSegmentIndexSeparation = branchIndex1Separation	#10.0/numberOfBranchSequentialSegments/2.0
 sequentialSegmentInputIndexSeparation = 0.5
 
+spineSeparation = 0.2
 nodeSize = 0.5	#node diameter
 nodeSizeDraw = 10.0	#node diameter
-conceptNodeSizeDraw = 1000.0	#node diameter
+conceptNodeSizeDrawNetwork = 100.0	#node diameter
+conceptNodeSizeDrawSentence = 1000.0	#node diameter
 
 drawDendriticBranchOrthogonal = True
 
@@ -74,7 +76,10 @@ def drawHopfieldGraphNode(conceptNode, drawGraphNetwork):
 	hopfieldGraph.add_node(conceptNode.nodeName, pos=(posX, posY))
 	if(drawHopfieldGraphNodeColours):
 		hopfieldGraphNodeColorMap.append(colorHtml)
-		hopfieldGraphNodeSizeMap.append(conceptNodeSizeDraw)
+		if(drawGraphNetwork):
+			hopfieldGraphNodeSizeMap.append(conceptNodeSizeDrawNetwork)
+		else:
+			hopfieldGraphNodeSizeMap.append(conceptNodeSizeDrawSentence)
 	hopfieldGraphConceptNodesList.append(conceptNode.nodeName)
 
 	#if(biologicalSimulation) exclusive code:
@@ -126,7 +131,7 @@ def drawHopfieldGraphNodeSequentialSegment(currentBranchIndex1, conceptNode, pos
 	drawHopfieldGraphSequentialSegment(currentBranchIndex1, sequentialSegment, currentSequentialSegmentIndex, previousBranch, drawOrthogonalBranchNode=drawOrthogonalBranchNode, orthogonalNodeName=orthogonalNodeName)	#draw sequential segment edge
 
 	for currentSequentialSegmentInputIndex, currentSequentialSegmentInput in enumerate(sequentialSegment.inputs):
-		posYsegmentInput = posY+currentSequentialSegmentInputIndex*sequentialSegmentInputIndexSeparation - branchIndex1Separation + nodeSize	#+nodeSize to separate visualisation from sequential segment node	#-branchIndex1Separation to position first input of first sequential segment at base of branch
+		posYsegmentInput = posY+(currentSequentialSegmentInputIndex*sequentialSegmentInputIndexSeparation*spineSeparation) - branchIndex1Separation + nodeSize	#+nodeSize to separate visualisation from sequential segment node	#-branchIndex1Separation to position first input of first sequential segment at base of branch
 		drawHopfieldGraphNodeSequentialSegmentInput(conceptNode, posX, posYsegmentInput, currentSequentialSegmentInput, currentSequentialSegmentInputIndex)
 		
 def drawHopfieldGraphNodeSequentialSegmentInput(conceptNode, posX, posY, sequentialSegmentInput, currentSequentialSegmentInputIndex):

@@ -57,7 +57,7 @@ if(debugCalculateNeuronActivationParallel):
 #if(vectoriseComputation):
 #	alwaysAddPredictionInputFromPreviousConcept = True #ensures that simulateBiologicalHFnetworkSequenceNodeTrainParallel:conceptNeuronBatchIndexFound
 
-drawBiologicalSimulation = True	#default: True
+drawBiologicalSimulation = False	#default: True
 if(drawBiologicalSimulation):
 	drawBiologicalSimulationDendriticTreeSentence = True	#default: True	#draw graph for sentence neurons and their dendritic tree
 	if(drawBiologicalSimulationDendriticTreeSentence):
@@ -143,7 +143,9 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 	#	HFNLPpy_biologicalSimulationDrawNetwork.clearHopfieldGraph()
 	
 	sentenceLength = len(sentenceConceptNodeList)
-					
+	
+	connectionTargetNeuronSet = set()	#for posthoc network deactivation
+	
 	for w in range(sentenceLength):
 		searchForPrediction = False
 		somaActivationFound = False
@@ -155,9 +157,9 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 				conceptNeuronSource = sentenceConceptNodeList[wSource]
 				conceptNeuronTarget = sentenceConceptNodeList[wTarget]
 				if(vectoriseComputationCurrentDendriticInput):
-					somaActivationFound = HFNLPpy_biologicalSimulationVectorised.simulateBiologicalHFnetworkSequenceNodeTrainParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget)
+					somaActivationFound = HFNLPpy_biologicalSimulationVectorised.simulateBiologicalHFnetworkSequenceNodeTrainParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)
 				else:
-					somaActivationFound = HFNLPpy_biologicalSimulationStandard.simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget)					
+					somaActivationFound = HFNLPpy_biologicalSimulationStandard.simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)					
 		else:
 			searchForPrediction = True
 			wTarget = w
@@ -177,9 +179,12 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 					if(wTarget == 1):
 						expectFurtherSubbranches = False
 					addPredictiveSequenceToNeuron(conceptNeuronTarget, sentenceConceptNodeList, sentenceIndex, conceptNeuronTarget.dendriticTree, dendriticBranchMaxW, 0, expectFurtherSubbranches)
-		
-	for w, conceptNeuron in enumerate(sentenceConceptNodeList):
-		if(vectoriseComputationCurrentDendriticInput):
+	
+	#reset dendritic trees
+	if(biologicalSimulationForward):
+	#OLD: if(vectoriseComputationCurrentDendriticInput):
+		for conceptNeuron in connectionTargetNeuronSet:
+		#OLD: for w, conceptNeuron in enumerate(sentenceConceptNodeList):
 			resetDendriticTreeActivation(conceptNeuron)
 
 	if(drawBiologicalSimulation):

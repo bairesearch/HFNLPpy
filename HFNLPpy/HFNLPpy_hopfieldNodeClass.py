@@ -36,7 +36,7 @@ nodeNameStart = "SEQUENCESTARTNODE"
 
 
 #if(biologicalSimulation):
-vectoriseComputation = False	#parallel processing for optimisation
+vectoriseComputation = True	#parallel processing for optimisation
 if(vectoriseComputation):
 	vectoriseComputationCurrentDendriticInput = True	#mandatory - default behaviour
 	if(vectoriseComputationCurrentDendriticInput):

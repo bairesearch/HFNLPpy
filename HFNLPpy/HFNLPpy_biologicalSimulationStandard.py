@@ -27,7 +27,7 @@ printVerbose = False
 
 
 
-def simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wSource, conceptNeuronSource, w, conceptNeuron):
+def simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wSource, conceptNeuronSource, w, conceptNeuron, connectionTargetNeuronSet):
 	
 	activationTime = calculateActivationTimeSequence(wSource)
 	
@@ -36,6 +36,7 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict,
 	
 	for targetConnectionConceptName, connectionList in conceptNeuronSource.targetConnectionDict.items():
 		conceptNeuronTarget = networkConceptNodeDict[targetConnectionConceptName] #or connectionList[ANY].nodeTarget
+		connectionTargetNeuronSet.add(conceptNeuronTarget)
 		for connection in connectionList:
 			if(calculateNeuronActivationStandard(connection, 0, conceptNeuronTarget.dendriticTree, activationTime)[0]):
 				if(conceptNeuronTarget == conceptNeuron):

@@ -33,7 +33,7 @@ activationLevelOnFirstInputInSequence = 2
 
 #if(biologicalSimulationForward):	#required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic
 if(vectoriseComputation):		#dynamic draw should use vectoriseComputation, as this activates all target neuron synapses of wSource simultaneously 
-	drawBiologicalSimulationDynamic = False	#draw dynamic activation levels of biological simulation (save to file)
+	drawBiologicalSimulationDynamic = True	#draw dynamic activation levels of biological simulation (save to file)
 	if(drawBiologicalSimulationDynamic):
 		drawBiologicalSimulationDynamicPlot = True	#default: False
 		drawBiologicalSimulationDynamicSave = False	#default: True	#save to file
@@ -75,7 +75,7 @@ if(debugCalculateNeuronActivationParallel):
 	wSourceDebug = 5
 	wTargetDebug = wSourceDebug+1
 
-def simulateBiologicalHFnetworkSequenceNodeTrainParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wSource, conceptNeuronSource, w, conceptNeuron):
+def simulateBiologicalHFnetworkSequenceNodeTrainParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wSource, conceptNeuronSource, w, conceptNeuron, connectionTargetNeuronSet):
 	
 	#construct batch dendritic tree templates for parallel processing;
 	numberOfVerticalBranches = calculateNumberOfVerticalBranches(numberOfBranches1)
@@ -108,6 +108,7 @@ def simulateBiologicalHFnetworkSequenceNodeTrainParallel(networkConceptNodeDict,
 		#add target neuron to batch processing tensor
 		#if(vectoriseComputationIndependentBranches):	#only coded algorithm
 		conceptNeuronTarget = networkConceptNodeDict[targetConnectionConceptName] #or connectionList[ANY].nodeTarget
+		connectionTargetNeuronSet.add(conceptNeuronTarget)
 		batchNeuronsList.append(conceptNeuronTarget)
 		for connection in connectionList:
 			connection.activationLevel = True
@@ -178,6 +179,8 @@ def setVectorisedBranchActivation(conceptNeuronTarget, currentSequentialSegmentI
 			
 	activationValue = generateSequentialSegmentInputActivationValue(currentSequentialSegmentInput)
 	#print("activationValue = ", activationValue)
+	#print("activationTime = ", activationTime)
+	#print("currentSequentialSegment.nodeName = ", currentSequentialSegment.nodeName)
 	
 	if(vectoriseComputionUseSequentialSegmentInputActivationLevels):
 		#if(verifyRepolarised(currentSequentialSegmentIndex, activationTime, currentSequentialSegmentInput.activationTime)):
@@ -191,12 +194,12 @@ def setVectorisedBranchActivation(conceptNeuronTarget, currentSequentialSegmentI
 		if(recordSequentialSegmentInputActivationLevels):
 			currentSequentialSegmentInput.activationLevel = True
 			currentSequentialSegmentInput.activationTime = activationTime
-		if(verifyRepolarised(currentSequentialSegment, activationTime)):
-			#print("setting currentSequentialSegment.activationLevel")
-			#currentSequentialSegment.activationLevel = True	#sequential segment activation levels within the object structure will be set by drawBiologicalSimulationDynamic only (such that they can be drawn in order of batchIndex1)
-			#currentSequentialSegment.activationTime = activationTime	#sequential segment activation levels within the object structure will be set by drawBiologicalSimulationDynamic only (such that they can be drawn in order of batchIndex1)
-			conceptNeuronTarget.vectorisedBranchActivationLevelList[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].assign(activationValue)
-			conceptNeuronTarget.vectorisedBranchActivationTimeList[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].assign(activationTime)
+		#if(verifyRepolarised(currentSequentialSegment, activationTime)):
+		#print("setting currentSequentialSegment.activationLevel")
+		#currentSequentialSegment.activationLevel = True	#sequential segment activation levels within the object structure will be set by drawBiologicalSimulationDynamic only (such that they can be drawn in order of batchIndex1)
+		#currentSequentialSegment.activationTime = activationTime	#sequential segment activation levels within the object structure will be set by drawBiologicalSimulationDynamic only (such that they can be drawn in order of batchIndex1)
+		conceptNeuronTarget.vectorisedBranchActivationLevelList[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].assign(activationValue)
+		conceptNeuronTarget.vectorisedBranchActivationTimeList[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].assign(activationTime)
 
 def generateSequentialSegmentInputActivationValue(currentSequentialSegmentInput):
 	if(currentSequentialSegmentInput.firstInputInSequence):
@@ -221,7 +224,7 @@ def calculateNeuronActivationParallel(networkConceptNodeDict, sentenceIndex, sen
 		if(recordVectorisedBranchObjectList):
 			vectorisedBranchObjectBatch = vectorisedBranchObjectBatchList[branchIndex1]
 
-		#print("\tbranchIndex1 = ", branchIndex1)
+		print("\tbranchIndex1 = ", branchIndex1)
 			#print("\tvectorisedBranchActivationLevelBatch = ", vectorisedBranchActivationLevelBatch)
 			#print("\tvectorisedBranchActivationTimeBatch = ", vectorisedBranchActivationTimeBatch)
 				
@@ -232,50 +235,58 @@ def calculateNeuronActivationParallel(networkConceptNodeDict, sentenceIndex, sen
 		for sequentialSegmentIndex in reversed(range(numberOfBranchSequentialSegments)):
 			vectorisedBranchActivationLevelBatchSequentialSegment = vectorisedBranchActivationLevelBatch[:, :, :, sequentialSegmentIndex]
 			vectorisedBranchActivationTimeBatchSequentialSegment = vectorisedBranchActivationTimeBatch[:, :, :, sequentialSegmentIndex]
-			#print("vectorisedBranchActivationLevelBatchSequentialSegment = ", vectorisedBranchActivationLevelBatchSequentialSegment)
-			#print("1 vectorisedBranchActivationLevelBatchSequentialSegments = ", vectorisedBranchActivationLevelBatchSequentialSegments)
+			print("vectorisedBranchActivationLevelBatchSequentialSegment = ", vectorisedBranchActivationLevelBatchSequentialSegment)
+			print("1 vectorisedBranchActivationLevelBatchSequentialSegments = ", vectorisedBranchActivationLevelBatchSequentialSegments)
 			vectorisedBranchActivationLevelBatchSequentialSegments = tf.add(vectorisedBranchActivationLevelBatchSequentialSegments, vectorisedBranchActivationLevelBatchSequentialSegment)	#note if firstSequentialSegmentInSequence (ie sequentialSegmentActivationLevel=2), and higher branch input is zero, then sequential segment will still activate
-			#print("2 vectorisedBranchActivationLevelBatchSequentialSegments = ", vectorisedBranchActivationLevelBatchSequentialSegments)
+			print("2 vectorisedBranchActivationLevelBatchSequentialSegments = ", vectorisedBranchActivationLevelBatchSequentialSegments)
 			vectorisedBranchActivationLevelBatchSequentialSegments = tf.greater(vectorisedBranchActivationLevelBatchSequentialSegments, 1)	#or greater_equal(vectorisedBranchActivationLevelBatchSequentialSegments, 2)
-			#print("3 vectorisedBranchActivationLevelBatchSequentialSegments = ", vectorisedBranchActivationLevelBatchSequentialSegments)
-			#print("vectorisedBranchActivationTimeBatchSequentialSegment = ", vectorisedBranchActivationTimeBatchSequentialSegment)
-			#print("vectorisedBranchActivationTimeBatchSequentialSegments = ", vectorisedBranchActivationTimeBatchSequentialSegments)
+			print("3 vectorisedBranchActivationLevelBatchSequentialSegments = ", vectorisedBranchActivationLevelBatchSequentialSegments)
+			print("vectorisedBranchActivationTimeBatchSequentialSegment = ", vectorisedBranchActivationTimeBatchSequentialSegment)
+			print("vectorisedBranchActivationTimeBatchSequentialSegments = ", vectorisedBranchActivationTimeBatchSequentialSegments)
 			vectorisedBranchActivationLevelBatchSequentialSegmentFirstInputInSequence = tf.equal(vectorisedBranchActivationLevelBatchSequentialSegment, activationLevelOnFirstInputInSequence)
+			print("vectorisedBranchActivationLevelBatchSequentialSegmentFirstInputInSequence = ", vectorisedBranchActivationLevelBatchSequentialSegmentFirstInputInSequence)
 			vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests = tf.greater(vectorisedBranchActivationTimeBatchSequentialSegment, vectorisedBranchActivationTimeBatchSequentialSegments)	#ensure activationTime of sequentialSegment is greater than that of previous sequential segments/subbranch - equivalent to verifySequentialActivationTime
 			vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests = tf.logical_or(vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests, vectorisedBranchActivationLevelBatchSequentialSegmentFirstInputInSequence)
-			#print("4 vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests = ", vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests)
+			print("4 vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests = ", vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests)
 			vectorisedBranchActivationLevelBatchSequentialSegments = tf.logical_and(vectorisedBranchActivationLevelBatchSequentialSegments, vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests)
-			#print("4 vectorisedBranchActivationLevelBatchSequentialSegments = ", vectorisedBranchActivationLevelBatchSequentialSegments)
+			print("4 vectorisedBranchActivationLevelBatchSequentialSegments = ", vectorisedBranchActivationLevelBatchSequentialSegments)
 			vectorisedBranchActivationLevelBatchSequentialSegments = tf.cast(vectorisedBranchActivationLevelBatchSequentialSegments, tf.float32)
-			#print("5 vectorisedBranchActivationLevelBatchSequentialSegments = ", vectorisedBranchActivationLevelBatchSequentialSegments)	
+			print("5 vectorisedBranchActivationLevelBatchSequentialSegments = ", vectorisedBranchActivationLevelBatchSequentialSegments)	
 			vectorisedBranchActivationTimeBatchSequentialSegments = vectorisedBranchActivationTimeBatchSequentialSegment
 			
 			if(drawBiologicalSimulationDynamic):
-				if(recordVectorisedBranchObjectList):
-					vectorisedBranchObjectBatchSequentialSegment = vectorisedBranchObjectBatch[:, :, :, sequentialSegmentIndex]
-				for batchIndex in range(vectorisedBranchObjectBatchSequentialSegment.shape[0]):
-					for horizontalBranchIndex in range(vectorisedBranchObjectBatchSequentialSegment.shape[1]):
-						for branchIndex2 in range(vectorisedBranchObjectBatchSequentialSegment.shape[2]):
-							sequentialSegment = vectorisedBranchObjectBatchSequentialSegment[batchIndex, horizontalBranchIndex, branchIndex2]
-							activationLevel = vectorisedBranchActivationLevelBatchSequentialSegments[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
-							#print("sequentialSegment.branch.branchIndex1 = ", sequentialSegment.branch.branchIndex1)
-							#print("sequentialSegment.nodeName = ", sequentialSegment.nodeName)
-							#print("\t\tactivationLevel = ", activationLevel)
-							sequentialSegment.activationLevel = bool(activationLevel)
-							if(sequentialSegmentIndex == 0):
-								sequentialSegment.branch.activationLevel = sequentialSegment.activationLevel
-					
-				if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
-					fileName = generateBiologicalSimulationDynamicFileName(True, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
-					HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()
-					HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList)
-					HFNLPpy_biologicalSimulationDrawSentenceDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
-				if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
-					generateBiologicalSimulationDynamicFileName(False, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
-					HFNLPpy_biologicalSimulationDrawNetworkDynamic.clearHopfieldGraph()
-					HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict)
-					HFNLPpy_biologicalSimulationDrawNetworkDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)				
-				
+				if(sentenceIndex == 3 and wTarget==15):	#temp debug requirement
+					if(recordVectorisedBranchObjectList):
+						vectorisedBranchObjectBatchSequentialSegment = vectorisedBranchObjectBatch[:, :, :, sequentialSegmentIndex]
+					for batchIndex in range(vectorisedBranchObjectBatchSequentialSegment.shape[0]):
+						for horizontalBranchIndex in range(vectorisedBranchObjectBatchSequentialSegment.shape[1]):
+							for branchIndex2 in range(vectorisedBranchObjectBatchSequentialSegment.shape[2]):
+								sequentialSegment = vectorisedBranchObjectBatchSequentialSegment[batchIndex, horizontalBranchIndex, branchIndex2]
+								activationLevel = vectorisedBranchActivationLevelBatchSequentialSegments[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
+								activationTimeSeg = vectorisedBranchActivationTimeBatchSequentialSegments[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
+								activationLevel = bool(activationLevel)
+								#print("activationLevel = ", activationLevel)
+								#print("sequentialSegment.branch.branchIndex1 = ", sequentialSegment.branch.branchIndex1)
+								#print("sequentialSegment.nodeName = ", sequentialSegment.nodeName)
+								#print("\t\tactivationLevel = ", activationLevel)
+								sequentialSegment.activationLevel = bool(activationLevel)
+								if(activationLevel):
+									sequentialSegment.activationTime = activationTimeSeg
+									#print("activationTimeSeg = ", activationTimeSeg)
+								if(sequentialSegmentIndex == 0):
+									sequentialSegment.branch.activationLevel = sequentialSegment.activationLevel
+
+					if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
+						fileName = generateBiologicalSimulationDynamicFileName(True, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
+						HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()
+						HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList)
+						HFNLPpy_biologicalSimulationDrawSentenceDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
+					if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
+						fileName = generateBiologicalSimulationDynamicFileName(False, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
+						HFNLPpy_biologicalSimulationDrawNetworkDynamic.clearHopfieldGraph()
+						HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict)
+						HFNLPpy_biologicalSimulationDrawNetworkDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)				
+
 				
 		if(debugCalculateNeuronActivationParallel):	
 			if(wSource==wSourceDebug and wTarget==wTargetDebug):
@@ -297,16 +308,17 @@ def calculateNeuronActivationParallel(networkConceptNodeDict, sentenceIndex, sen
 		batchNeuron.activationLevel = somaActivationLevel
 		
 	if(drawBiologicalSimulationDynamic):
-		if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
-			fileName = generateBiologicalSimulationFileName(True, wSource, sentenceIndex)
-			HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()
-			HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList)
-			HFNLPpy_biologicalSimulationDrawSentenceDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
-		if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
-			generateBiologicalSimulationFileName(False, wSource, sentenceIndex)
-			HFNLPpy_biologicalSimulationDrawNetworkDynamic.clearHopfieldGraph()
-			HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict)
-			HFNLPpy_biologicalSimulationDrawNetworkDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)		
+		if(sentenceIndex == 3 and wTarget==15):	#temp debug requirement
+			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
+				fileName = generateBiologicalSimulationFileName(True, wSource, sentenceIndex)
+				HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()
+				HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList)
+				HFNLPpy_biologicalSimulationDrawSentenceDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
+			if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
+				generateBiologicalSimulationFileName(False, wSource, sentenceIndex)
+				HFNLPpy_biologicalSimulationDrawNetworkDynamic.clearHopfieldGraph()
+				HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict)
+				HFNLPpy_biologicalSimulationDrawNetworkDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)		
 	
 
 	somaActivationFound = vectorisedSomaActivationLevel[conceptNeuronBatchIndex].numpy()	#is target neuron activated?
