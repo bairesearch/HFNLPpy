@@ -62,8 +62,14 @@ if(vectoriseComputation):
 	if(recordSequentialSegmentInputActivationLevels):
 		vectoriseComputionUseSequentialSegmentInputActivationLevels	= False	#optional - not yet implemented (allows sequential segment activation to be dependent on summation of individual local inputs)
 		if(vectoriseComputionUseSequentialSegmentInputActivationLevels):
+			vectoriseComputionUseSequentialSegmentBuffer = False
 			numberOfSequentialSegmentInputs = 100	#max number available
-	
+		else:
+			if(preventReactivationOfSequentialSegments):
+				vectoriseComputionUseSequentialSegmentBuffer = True	#mandatory
+			else:
+				vectoriseComputionUseSequentialSegmentBuffer = False	#optional
+			
 numberOfBranches1 = 3	#number of vertical branches
 numberOfBranches2 = 2	#number of new horizontal branches created at each vertical branch
 #[3,3,3]	#number of new horizontal branches created at each vertical branch
@@ -114,7 +120,7 @@ class HopfieldNode:
 			if(vectoriseComputationCurrentDendriticInput):
 				self.vectorisedBranchActivationLevelList, self.vectorisedBranchActivationTimeList, self.vectorisedBranchObjectList = createBatchDendriticTreeVectorised(batched=False)	#shape [numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments]
 				#vectorisedBranchObjectList required for drawBiologicalSimulationDynamic only
-
+				
 			self.dendriticTree = createDendriticTree(self, numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments)
 
 			if(debugVectorisedBranchObjectList):

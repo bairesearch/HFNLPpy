@@ -57,7 +57,7 @@ if(debugCalculateNeuronActivationParallel):
 #if(vectoriseComputation):
 #	alwaysAddPredictionInputFromPreviousConcept = True #ensures that simulateBiologicalHFnetworkSequenceNodeTrainParallel:conceptNeuronBatchIndexFound
 
-drawBiologicalSimulation = False	#default: True
+drawBiologicalSimulation = True	#default: True
 if(drawBiologicalSimulation):
 	drawBiologicalSimulationDendriticTreeSentence = True	#default: True	#draw graph for sentence neurons and their dendritic tree
 	if(drawBiologicalSimulationDendriticTreeSentence):
