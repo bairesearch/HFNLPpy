@@ -33,7 +33,8 @@ graphNodeTypeConcept = 1	#base/input neuron (network neuron)
 graphNodeTypeStart = 5	#start of sequence - used by biologicalImplementationReuseSynapticSubstrateForIdenticalSubsequences only
 nodeNameStart = "SEQUENCESTARTNODE"
 
-
+preventReactivationOfSequentialSegments = True	#prevent reactivation of sequential segments (equates to a long repolarisation time of ~= sentenceLength)	#algorithmTimingWorkaround2
+algorithmTimingWorkaround1 = False	#insufficient workaround
 
 #if(biologicalSimulation):
 vectoriseComputation = True	#parallel processing for optimisation
@@ -345,7 +346,11 @@ def verifyRepolarised(currentSequentialSegment, activationTime):
 	
 def verifySequentialActivationTime(currentSequentialSegmentActivationTime, previousSequentialSegmentActivationTime):
 	sequentiality = False
-	if(currentSequentialSegmentActivationTime > previousSequentialSegmentActivationTime):
-		sequentiality = True
+	if(algorithmTimingWorkaround1):
+		if(currentSequentialSegmentActivationTime >= previousSequentialSegmentActivationTime):
+			sequentiality = True	
+	else:
+		if(currentSequentialSegmentActivationTime > previousSequentialSegmentActivationTime):
+			sequentiality = True
 	return sequentiality
 

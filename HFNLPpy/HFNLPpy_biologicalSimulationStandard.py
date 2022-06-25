@@ -116,47 +116,48 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 		sequentialSegmentAlreadyActive = False
 		if(sequentialSegmentActivationLevel):	#only accept sequential segment activation if previous was activated
 			if(currentSequentialSegment.activationLevel):
-				if(verifySequentialActivationTime(currentSequentialSegment.activationTime, sequentialSegmentActivationTime)):
+				if(verifySequentialActivationTime(currentSequentialSegment.activationTime, sequentialSegmentActivationTime)):	#this test should not be required with preventReactivationOfSequentialSegments
 					sequentialSegmentAlreadyActive = True
 					sequentialSegmentActivationLevel = currentSequentialSegment.activationLevel
 					sequentialSegmentActivationTime = currentSequentialSegment.activationTime
-			
-		sequentialSegmentActivationLevelNew = False
-		for currentSequentialSegmentInputIndex, currentSequentialSegmentInput in enumerate(currentSequentialSegment.inputs):
-			if(connection.nodeTargetSequentialSegmentInput == currentSequentialSegmentInput):
-				if(recordSequentialSegmentInputActivationLevels):
-					currentSequentialSegmentInput.activationLevel = True
-					currentSequentialSegmentInput.activationTime = activationTime
+		
+		if(not preventReactivationOfSequentialSegments or not sequentialSegmentAlreadyActive):
+			sequentialSegmentActivationLevelNew = False
+			for currentSequentialSegmentInputIndex, currentSequentialSegmentInput in enumerate(currentSequentialSegment.inputs):
+				if(connection.nodeTargetSequentialSegmentInput == currentSequentialSegmentInput):
+					if(recordSequentialSegmentInputActivationLevels):
+						currentSequentialSegmentInput.activationLevel = True
+						currentSequentialSegmentInput.activationTime = activationTime
+					if(printVerbose):
+						printIndentation(currentBranchIndex1+1)
+						print("activate currentSequentialSegmentInput, connection.nodeSource = ", connection.nodeSource.nodeName, ", connection.nodeTarget = ", connection.nodeTarget.nodeName)
+					passSegmentActivationTimeTests = False
+					if(currentSequentialSegmentInput.firstInputInSequence):
+						passSegmentActivationTimeTests = True	#if input corresponds to first in sequence, then enforce no previous dendritic activation requirements
+					else:
+						if(sequentialSegmentActivationLevel):	#previous sequential segment was activated
+							if(verifySequentialActivationTime(activationTime, sequentialSegmentActivationTime)):
+								if(verifyRepolarised(currentSequentialSegment, activationTime)):	#ensure that the segment isnt in a repolarisation state (ie it can be activated)
+									#if(activationTime > previousVerticalBranchActivationTime):	#guaranteed
+									passSegmentActivationTimeTests = True	#sequentialSegmentActivationLevel implies subbranchesActive: previous (ie more distal) branch was active
+					if(passSegmentActivationTimeTests):
+						sequentialSegmentActivationLevelNew = True
+						sequentialSegmentActivationTimeNew = activationTime
+
+			if(sequentialSegmentActivationLevelNew):
 				if(printVerbose):
 					printIndentation(currentBranchIndex1+1)
-					print("activate currentSequentialSegmentInput, connection.nodeSource = ", connection.nodeSource.nodeName, ", connection.nodeTarget = ", connection.nodeTarget.nodeName)
-				passSegmentActivationTimeTests = False
-				if(currentSequentialSegmentInput.firstInputInSequence):
-					passSegmentActivationTimeTests = True	#if input corresponds to first in sequence, then enforce no previous dendritic activation requirements
-				else:
-					if(sequentialSegmentActivationLevel):	#previous sequential segment was activated
-						if(verifySequentialActivationTime(activationTime, sequentialSegmentActivationTime)):
-							if(verifyRepolarised(currentSequentialSegment, activationTime)):	#ensure that the segment isnt in a repolarisation state (ie it can be activated)
-								#if(activationTime > previousVerticalBranchActivationTime):	#guaranteed
-								passSegmentActivationTimeTests = True	#sequentialSegmentActivationLevel implies subbranchesActive: previous (ie more distal) branch was active
-				if(passSegmentActivationTimeTests):
-					sequentialSegmentActivationLevelNew = True
-					sequentialSegmentActivationTimeNew = activationTime
-
-		if(sequentialSegmentActivationLevelNew):
-			if(printVerbose):
-				printIndentation(currentBranchIndex1+1)
-				print("activate currentSequentialSegment, connection.nodeSource = ", connection.nodeSource.nodeName, ", connection.nodeTarget = ", connection.nodeTarget.nodeName)
-			#if(resetSequentialSegments):
-			#	if(currentSequentialSegmentIndex == 0):
-			#		resetBranchActivation(currentBranch)
-			#		numberOfSequentialSegmentsActive = 0
-			sequentialSegmentActivationLevel = True
-			sequentialSegmentActivationTime = activationTime
-			currentSequentialSegment.activationLevel = sequentialSegmentActivationLevel
-			currentSequentialSegment.activationTime = sequentialSegmentActivationTime
-		#if(sequentialSegmentActivationLevel):
-		#	numberOfSequentialSegmentsActive += 1	#CHECKTHIS
+					print("activate currentSequentialSegment, connection.nodeSource = ", connection.nodeSource.nodeName, ", connection.nodeTarget = ", connection.nodeTarget.nodeName)
+				#if(resetSequentialSegments):
+				#	if(currentSequentialSegmentIndex == 0):
+				#		resetBranchActivation(currentBranch)
+				#		numberOfSequentialSegmentsActive = 0
+				sequentialSegmentActivationLevel = True
+				sequentialSegmentActivationTime = activationTime
+				currentSequentialSegment.activationLevel = sequentialSegmentActivationLevel
+				currentSequentialSegment.activationTime = sequentialSegmentActivationTime
+			#if(sequentialSegmentActivationLevel):
+			#	numberOfSequentialSegmentsActive += 1	#CHECKTHIS
 			
 	sequentialSegmentActivationLevelLast = sequentialSegmentActivationLevel
 	sequentialSegmentActivationTimeLast = sequentialSegmentActivationTime
