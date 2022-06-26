@@ -22,6 +22,8 @@ import numpy as np
 
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
+from HFNLPpy_biologicalSimulationNode import *
+
 
 printVerbose = False
 

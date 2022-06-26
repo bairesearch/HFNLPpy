@@ -61,7 +61,7 @@ if(useDependencyParseTree):
 drawHopfieldGraph = True
 if(drawHopfieldGraph):
 	drawHopfieldGraphPlot = True
-	drawHopfieldGraphSave = True
+	drawHopfieldGraphSave = False
 	drawHopfieldGraphSentence = True
 	if(drawHopfieldGraphSentence):
 		import HFNLPpy_hopfieldGraphDraw as ATNLPtf_hopfieldGraphDrawSentence

@@ -23,6 +23,7 @@ import numpy as np
 
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
+from HFNLPpy_biologicalSimulationNode import *
 
 
 
@@ -35,8 +36,8 @@ activationLevelOnFirstInputInSequence = 2
 if(vectoriseComputation):		#dynamic draw should use vectoriseComputation, as this activates all target neuron synapses of wSource simultaneously 
 	drawBiologicalSimulationDynamic = False	#draw dynamic activation levels of biological simulation (save to file)
 	if(drawBiologicalSimulationDynamic):
-		drawBiologicalSimulationDynamicPlot = False	#default: False
-		drawBiologicalSimulationDynamicSave = True	#default: True	#save to file
+		drawBiologicalSimulationDynamicPlot = True	#default: False
+		drawBiologicalSimulationDynamicSave = False	#default: True	#save to file
 		drawBiologicalSimulationDendriticTreeSentenceDynamic = True	#default: True	#draw graph for sentence neurons and their dendritic tree
 		if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
 			import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawSentenceDynamic

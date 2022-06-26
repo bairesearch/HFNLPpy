@@ -25,6 +25,7 @@ plt.ioff()	# Turn interactive plotting off
 from math import cos, sin, radians
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
+from HFNLPpy_biologicalSimulationNode import *
 
 highResolutionFigure = True
 if(highResolutionFigure):
