@@ -34,8 +34,6 @@ graphNodeTypeConcept = 1	#base/input neuron (network neuron)
 graphNodeTypeStart = 5	#start of sequence - used by biologicalImplementationReuseSynapticSubstrateForIdenticalSubsequences only
 nodeNameStart = "SEQUENCESTARTNODE"
 
-preventReactivationOfSequentialSegments = True	#prevent reactivation of sequential segments (equates to a long repolarisation time of ~= sentenceLength)	#algorithmTimingWorkaround2
-algorithmTimingWorkaround1 = False	#insufficient workaround
 
 
 class HopfieldNode:
@@ -66,10 +64,6 @@ class HopfieldNode:
 #last access time	
 def calculateActivationTime(sentenceIndex):
 	activationTime = sentenceIndex
-	return activationTime
-	
-def calculateActivationTimeSequence(wordIndex):
-	activationTime = wordIndex
 	return activationTime
 	
 #creation time
