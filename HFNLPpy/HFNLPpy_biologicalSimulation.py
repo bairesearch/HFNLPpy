@@ -58,7 +58,7 @@ if(debugCalculateNeuronActivationParallel):
 #if(vectoriseComputation):
 #	alwaysAddPredictionInputFromPreviousConcept = True #ensures that simulateBiologicalHFnetworkSequenceNodeTrainParallel:conceptNeuronBatchIndexFound
 
-drawBiologicalSimulation = True	#default: True
+drawBiologicalSimulation = False	#default: True
 if(drawBiologicalSimulation):
 	drawBiologicalSimulationDendriticTreeSentence = True	#default: True	#draw graph for sentence neurons and their dendritic tree
 	if(drawBiologicalSimulationDendriticTreeSentence):
@@ -165,7 +165,7 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 			searchForPrediction = True
 			wTarget = w
 			conceptNeuronTarget = sentenceConceptNodeList[wTarget]
-			somaActivationFound = HFNLPpy_biologicalSimulationStandard.simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup(sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget)
+			somaActivationFound = HFNLPpy_biologicalSimulationStandard.simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget)
 
 		if(searchForPrediction):
 			if(somaActivationFound):

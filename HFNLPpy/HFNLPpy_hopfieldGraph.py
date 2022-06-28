@@ -58,7 +58,7 @@ if(useDependencyParseTree):
 	else:
 		identifySyntacticalDependencyRelations = True	#mandatory 
 
-drawHopfieldGraph = True
+drawHopfieldGraph = False
 if(drawHopfieldGraph):
 	drawHopfieldGraphPlot = True
 	drawHopfieldGraphSave = False

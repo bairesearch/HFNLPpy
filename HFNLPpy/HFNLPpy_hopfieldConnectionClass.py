@@ -41,3 +41,4 @@ class HopfieldConnection:
 			#for biologicalSimulation: interpret connection as unique synapse
 			self.biologicalSimulation = True
 			self.nodeTargetSequentialSegmentInput = None
+			self.weight = 1.0	#for performSummationOfSequentialSegmentInputs only
