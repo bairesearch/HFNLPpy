@@ -24,14 +24,10 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 
 
-	
-storeConceptNodesByLemma = True	#else store by word (morphology included)
 
-graphNodeTypeConcept = 1	#base/input neuron (network neuron)
+preventGenerationOfDuplicateConnections = True	#note sequentialSegment inputs will be stored as a dictionary indexed by source node name (else indexed by sequentialSegmentInputIndex)
 
-#if(biologicalImplementationReuseSynapticSubstrateForIdenticalSubsequences):
-graphNodeTypeStart = 5	#start of sequence - used by biologicalImplementationReuseSynapticSubstrateForIdenticalSubsequences only
-nodeNameStart = "SEQUENCESTARTNODE"
+storeSequentialSegmentInputIndexValues = False	#not required	#index record value not robust if inputs are removed (synaptic atrophy)	#HFNLPpy_biologicalSimulationDraw can use currentSequentialSegmentInputIndexDynamic instead
 
 preventReactivationOfSequentialSegments = True	#prevent reactivation of sequential segments (equates to a long repolarisation time of ~= sentenceLength)	#algorithmTimingWorkaround2
 algorithmTimingWorkaround1 = False	#insufficient workaround
@@ -48,7 +44,7 @@ if(vectoriseComputation):
 		vectoriseComputationIndependentBranches = True	#mandatory - default behaviour
 	batchSize = 100	#high batch size allowed since parallel processing simple/small scalar operations (on effective boolean synaptic inputs), lowered proportional to max (most distal) numberOfHorizontalBranches
 	
-	updateNeuronObjectActivationLevels = True	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
+	updateNeuronObjectActivationLevels = False	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 	if(updateNeuronObjectActivationLevels):
 		recordVectorisedBranchObjectList = True	#vectorisedBranchObjectList is required to convert vectorised activations back to denditicTree object structure (DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic:updateNeuronObjectActivationLevels (as HFNLPpy_biologicalSimulationDraw currently only supports drawing of denditicTree object structure activations)  
 	else:
@@ -155,13 +151,11 @@ class DendriticBranch:
 		self.sequentialSegments = [SequentialSegment(conceptNode, self, i) for i in range(numberOfBranchSequentialSegments)]	#[SequentialSegment(conceptNode, self, i)]*numberOfBranchSequentialSegments
 		self.activationLevel = objectAreaActivationLevelOff
 		self.activationTime = None	#within sequence/sentence activation time
-		
-		#if(vectoriseComputationCurrentDendriticInput):
-		#	self.sequentialSegmentInputIndex = None
 						
 class SequentialSegment:
 	def __init__(self, conceptNode, branch, sequentialSegmentIndex):
-		self.inputs = []
+		#self.inputs = []
+		self.inputs = {}
 		self.activationLevel = objectLocalActivationLevelOff	#only consider depolarised if activationLevel passes threshold
 		self.activationTime = None	#within sequence/sentence activation time
 		self.branch = branch
@@ -178,7 +172,7 @@ class SequentialSegment:
 				#print("conceptNode.vectorisedBranchObjectList[branch.branchIndex1][branch.horizontalBranchIndex, branch.branchIndex2, sequentialSegmentIndex].nodeName = ", conceptNode.vectorisedBranchObjectList[branch.branchIndex1][branch.horizontalBranchIndex, branch.branchIndex2, sequentialSegmentIndex].nodeName)
 					
 class SequentialSegmentInput:
-	def __init__(self, conceptNode, SequentialSegment, sequentialSegmentInputIndex):
+	def __init__(self, conceptNode, SequentialSegment, sequentialSegmentInputIndex, nodeSource):
 		self.input = None
 		self.sequentialSegment = SequentialSegment
 		self.firstInputInSequence = False	#within sequence/sentence activation time
@@ -187,10 +181,16 @@ class SequentialSegmentInput:
 			self.activationLevel = objectLocalActivationLevelOff	#input has been temporarily triggered for activation (only affects dendritic signal if sequentiality requirements met)
 			self.activationTime = None	#numeric	#input has been temporarily triggered for activation (only affects dendritic signal if sequentiality requirements met)
 			self.sequentialSegmentInputIndex = sequentialSegmentInputIndex
+		
+		#if(preventGenerationOfDuplicateConnections):
+		self.nodeSource = nodeSource
 			
 		#if(biologicalSimulationDraw):
 		self.nodeName = generateSequentialSegmentInputName(conceptNode)
-		self.sequentialSegmentInputIndex = None	#not required	#index record value not robust if inputs are removed (synaptic atrophy)
+		if(storeSequentialSegmentInputIndexValues):
+			self.sequentialSegmentInputIndex = sequentialSegmentInputIndex	#not required	#index record value not robust if inputs are removed (synaptic atrophy)
+		else:
+			self.sequentialSegmentInputIndex = None
 		self.conceptNode = conceptNode	#not required (as can lookup SequentialSegment.branch.conceptNode)
 		
 
@@ -312,8 +312,11 @@ def resetDendriticTreeActivation(conceptNeuron):
 def resetAxonsActivation(conceptNeuron):
 	conceptNeuron.activationLevel = objectAreaActivationLevelOff
 	for targetConnectionConceptName, connectionList in conceptNeuron.targetConnectionDict.items():
-		for connection in connectionList:
-			connection.activationLevel = objectAreaActivationLevelOff
+		resetAxonsActivationConnectionList(connectionList)
+
+def resetAxonsActivationConnectionList(connectionList):
+	for connection in connectionList:
+		connection.activationLevel = objectAreaActivationLevelOff
 
 def resetBranchActivation(currentBranch):
 	currentBranch.activationLevel = objectAreaActivationLevelOff
@@ -321,7 +324,8 @@ def resetBranchActivation(currentBranch):
 	for sequentialSegment in currentBranch.sequentialSegments:
 		sequentialSegment.activationLevel = objectLocalActivationLevelOff
 		if(recordSequentialSegmentInputActivationLevels):
-			for sequentialSegmentInput in sequentialSegment.inputs:
+			#for sequentialSegmentInput in sequentialSegment.inputs:
+			for sequentialSegmentInput in sequentialSegment.inputs.values():
 				sequentialSegmentInput.activationLevel = objectLocalActivationLevelOff
 										
 	for subbranch in currentBranch.subbranches:	
@@ -413,3 +417,16 @@ def generateBiologicalSimulationDynamicFileName(sentenceOrNetwork, wSource, bran
 	fileName = fileName + "sequentialSegmentIndex" + str(sequentialSegmentIndex)
 	return fileName
 	
+def findSequentialSegmentInputBySourceNode(sequentialSegment, sourceConceptNode):
+	foundSequentialSegmentInput = False
+	sequentialSegmentInput = None
+	#for sequentialSegmentInput in sequentialSegment.inputs:
+		#if(sequentialSegmentInput.nodeSource == sourceConceptNode):
+	if(preventGenerationOfDuplicateConnections):
+		if(sourceConceptNode.nodeName in sequentialSegment.inputs):		
+			foundSequentialSegmentInput = True	
+			sequentialSegmentInput = sequentialSegment.inputs[sourceConceptNode.nodeName]
+	else:
+		print("findSequentialSegmentInputBySourceNode error: currently requires preventGenerationOfDuplicateConnections")
+		exit()
+	return foundSequentialSegmentInput, sequentialSegmentInput

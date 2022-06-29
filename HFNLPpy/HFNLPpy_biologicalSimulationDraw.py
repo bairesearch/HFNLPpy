@@ -131,7 +131,13 @@ def drawHopfieldGraphNodeSequentialSegment(currentBranchIndex1, conceptNode, pos
 		hopfieldGraphNodeSizeMap.append(nodeSizeDraw)
 	drawHopfieldGraphSequentialSegment(currentBranchIndex1, sequentialSegment, currentSequentialSegmentIndex, previousBranch, drawOrthogonalBranchNode=drawOrthogonalBranchNode, orthogonalNodeName=orthogonalNodeName)	#draw sequential segment edge
 
-	for currentSequentialSegmentInputIndex, currentSequentialSegmentInput in enumerate(sequentialSegment.inputs):
+	#for currentSequentialSegmentInputIndex, currentSequentialSegmentInput in enumerate(sequentialSegment.inputs):
+	for currentSequentialSegmentInputIndexDynamic, currentSequentialSegmentInput in enumerate(sequentialSegment.inputs.values()):	#note currentSequentialSegmentInputIndexDynamic is valid even if inputs have been removed from dictionary (although order not guaranteed)
+		if(storeSequentialSegmentInputIndexValues):
+			currentSequentialSegmentInputIndex = currentSequentialSegmentInput.sequentialSegmentInputIndex
+		else:
+			currentSequentialSegmentInputIndex = currentSequentialSegmentInputIndexDynamic
+		#print("currentSequentialSegmentInputIndex = ", currentSequentialSegmentInputIndex)
 		posYsegmentInput = posY+(currentSequentialSegmentInputIndex*sequentialSegmentInputIndexSeparation*spineSeparation) - branchIndex1Separation + nodeSize	#+nodeSize to separate visualisation from sequential segment node	#-branchIndex1Separation to position first input of first sequential segment at base of branch
 		drawHopfieldGraphNodeSequentialSegmentInput(conceptNode, posX, posYsegmentInput, currentSequentialSegmentInput, currentSequentialSegmentInputIndex)
 		
