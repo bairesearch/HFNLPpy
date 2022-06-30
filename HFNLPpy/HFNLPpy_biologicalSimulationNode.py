@@ -25,6 +25,9 @@ import numpy as np
 
 
 
+#if(useDependencyParseTree):
+biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False	#incomplete - requires dendriticTree and syntacticalTree branches to have matching number of subnodes (2)	#speculative: directly encode precalculated syntactical structure in dendritic branches (rather than deriving syntax from commonly used dendritic subsequence encodings)	#requires useDependencyParseTree
+	
 preventGenerationOfDuplicateConnections = True	#note sequentialSegment inputs will be stored as a dictionary indexed by source node name (else indexed by sequentialSegmentInputIndex)
 
 storeSequentialSegmentInputIndexValues = False	#not required	#index record value not robust if inputs are removed (synaptic atrophy)	#HFNLPpy_biologicalSimulationDraw can use currentSequentialSegmentInputIndexDynamic instead

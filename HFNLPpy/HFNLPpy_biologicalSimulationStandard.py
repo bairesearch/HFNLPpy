@@ -40,13 +40,11 @@ if(drawBiologicalSimulationDynamic):
 		import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawNetworkDynamic
 
 
-def simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wSource, conceptNeuronSource, w, conceptNeuron, connectionTargetNeuronSet):
+def simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, w, conceptNeuron, connectionTargetNeuronSet):
 
 	#if(printVerbose):
 	print("simulateBiologicalHFnetworkSequenceNodeTrainStandard: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName)
-		
-	activationTime = calculateActivationTimeSequence(wSource)
-	
+			
 	somaActivationFound = False	#is conceptNeuronTarget activated by its prior context?
 	conceptNeuronSource.activationLevel = objectAreaActivationLevelOn
 	
@@ -76,34 +74,52 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup(networkCon
 	print("simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup: w = ", w, ", conceptNeuron = ", conceptNeuron.nodeName)
 	
 	somaActivationFound = False	#is conceptNeuron activated by its prior context?
-	for wSource in range(0, w):
+	
+	#support for simulateBiologicalHFnetworkSequenceSyntacticalBranchDPTrain:!biologicalSimulationEncodeSyntaxInDendriticBranchStructure
+	for wSource, conceptNeuronSource in enumerate(sentenceConceptNodeList):
+	#orig: for wSource in range(0, w):
+		#conceptNeuronSource = sentenceConceptNodeList[wSource]	#source neuron
 		activationTime = calculateActivationTimeSequence(wSource)
-		conceptNeuronSource = sentenceConceptNodeList[wSource]	#source neuron
-		if(conceptNeuron.nodeName in conceptNeuronSource.targetConnectionDict):
-			conceptNeuronSource.activationLevel = objectAreaActivationLevelOn
-			connectionList = conceptNeuronSource.targetConnectionDict[conceptNeuron.nodeName]	#only trace connections between source neuron and target neuron
-			for connection in connectionList:
-				connection.activationLevel = objectAreaActivationLevelOn
-				targetNeuron = connection.nodeTarget	#targetNeuron will be the same for all connection in connectionList (if targetConnectionConceptName == conceptNeuron)
-				if(targetNeuron != conceptNeuron):
-					print("simulateBiologicalHFnetworkSequenceNodeTrain error: (targetNeuron != conceptNeuron)")
-					exit()
-
-				if(calculateNeuronActivationStandard(connection, 0, targetNeuron.dendriticTree, activationTime, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)[0]):
-					somaActivationFound = True
-					targetNeuron.activationLevel = objectAreaActivationLevelOn
-					#if(printVerbose):
-					#print("somaActivationFound")
-			
-				drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)	
-
-			resetAxonsActivationConnectionList(connectionList)
-			conceptNeuronSource.activationLevel = objectAreaActivationLevelOff
+		if(simulateBiologicalHFnetworkSequenceNodeTrainStandardSpecificTarget(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, w, conceptNeuron)):
+			somaActivationFound = True
 			
 	resetDendriticTreeActivation(conceptNeuron)
 	
 	return somaActivationFound
+
+#only calculateNeuronActivation for specific target
+#parameters only used for drawBiologicalSimulationDynamic: wSource, w
+def simulateBiologicalHFnetworkSequenceNodeTrainStandardSpecificTarget(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, w, conceptNeuron):
+
+	somaActivationFound = False
+	
+	#if(printVerbose):
+	#print("simulateBiologicalHFnetworkSequenceNodeTrainStandardSpecificTarget: w = ", w, ", conceptNeuron = ", conceptNeuron.nodeName)
+
+	if(conceptNeuron.nodeName in conceptNeuronSource.targetConnectionDict):
+		conceptNeuronSource.activationLevel = objectAreaActivationLevelOn
+		connectionList = conceptNeuronSource.targetConnectionDict[conceptNeuron.nodeName]	#only trace connections between source neuron and target neuron
+		for connection in connectionList:
+			connection.activationLevel = objectAreaActivationLevelOn
+			targetNeuron = connection.nodeTarget	#targetNeuron will be the same for all connection in connectionList (if targetConnectionConceptName == conceptNeuron)
+			if(targetNeuron != conceptNeuron):
+				print("simulateBiologicalHFnetworkSequenceNodeTrain error: (targetNeuron != conceptNeuron)")
+				exit()
+
+			if(calculateNeuronActivationStandard(connection, 0, targetNeuron.dendriticTree, activationTime, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)[0]):
+				somaActivationFound = True
+				targetNeuron.activationLevel = objectAreaActivationLevelOn
+				#if(printVerbose):
+				#print("somaActivationFound")
+
+			drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)	
+
+		resetAxonsActivationConnectionList(connectionList)
+		conceptNeuronSource.activationLevel = objectAreaActivationLevelOff
+			
+	return somaActivationFound
 					
+										
 
 #parameters only used for drawBiologicalSimulationDynamic: wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList
 def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBranch, activationTime, wSource=None, networkConceptNodeDict=None, sentenceIndex=None, sentenceConceptNodeList=None):

@@ -55,14 +55,13 @@ if(debugCalculateNeuronActivationParallel):
 	wTargetDebug = wSourceDebug+1
 
 #parameters only used for drawBiologicalSimulationDynamic: sentenceIndex, sentenceConceptNodeList
-def simulateBiologicalHFnetworkSequenceNodeTrainParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wSource, conceptNeuronSource, w, conceptNeuron, connectionTargetNeuronSet):
-	activationTime = calculateActivationTimeSequence(wSource)
+def simulateBiologicalHFnetworkSequenceNodeTrainParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, w, conceptNeuron, connectionTargetNeuronSet):
 	conceptNeuronSourceList = []
 	conceptNeuronSourceList.append(conceptNeuronSource)
-	return simulateBiologicalHFnetworkSequenceNodesTrainParallel(networkConceptNodeDict, activationTime, conceptNeuronSourceList, w, conceptNeuron, connectionTargetNeuronSet, wSource, sentenceIndex, sentenceConceptNodeList)
-
+	return simulateBiologicalHFnetworkSequenceNodesTrainParallel(networkConceptNodeDict, conceptNeuronSourceList, activationTime, w, conceptNeuron, connectionTargetNeuronSet, wSource, sentenceIndex, sentenceConceptNodeList)
+	
 #parameters only used for drawBiologicalSimulationDynamic: wSource, sentenceIndex, sentenceConceptNodeList
-def simulateBiologicalHFnetworkSequenceNodesTrainParallel(networkConceptNodeDict, activationTime, conceptNeuronSourceList, w, conceptNeuron, connectionTargetNeuronSet, wSource=None, sentenceIndex=None, sentenceConceptNodeList=None):
+def simulateBiologicalHFnetworkSequenceNodesTrainParallel(networkConceptNodeDict, conceptNeuronSourceList, activationTime, w, conceptNeuron, connectionTargetNeuronSet, wSource=None, sentenceIndex=None, sentenceConceptNodeList=None):
 	
 	#construct batch dendritic tree templates for parallel processing;
 	numberOfVerticalBranches = calculateNumberOfVerticalBranches(numberOfBranches1)
