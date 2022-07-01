@@ -9,7 +9,7 @@ MIT License
 # Installation:
 conda create -n anntf2 python=3.7
 source activate anntf2
-conda install -c tensorflow tensorflow=2.3 [required for HFNLPpy_biologicalSimulationVectorised only]
+conda install -c tensorflow tensorflow=2.3 [required for HFNLPpy_biologicalSimulationPropagateVectorised only]
 conda install nltk
 conda install spacy
 conda install networkx

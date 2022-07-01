@@ -34,27 +34,20 @@ biologicalPrototype = False	#add contextual connections to emulate primary conne
 biologicalSimulation = True	#simulate sequential activation of dendritic input 
 useDependencyParseTree = False
 
-def generateHopfieldGraphFileName(sentenceOrNetwork, sentenceIndex=None):
-	fileName = "hopfieldGraph"
-	if(sentenceOrNetwork):
-		fileName = fileName + "Sentence"
-	else:
-		fileName = fileName + "Network"
-		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
-	return fileName
-	
 if(biologicalSimulation):
-	import HFNLPpy_biologicalSimulation
-
-identifySyntacticalDependencyRelations = False
+	if(useDependencyParseTree):
+		import HFNLPpy_biologicalSimulationSyntacticalGraph
+	else:
+		import HFNLPpy_biologicalSimulation
+				
 if(useDependencyParseTree):
 	import SPNLPpy_syntacticalGraph
 	if(not SPNLPpy_syntacticalGraph.useSPNLPcustomSyntacticalParser):
 		SPNLPpy_syntacticalGraph.SPNLPpy_syntacticalGraphConstituencyParserFormal.initalise(spacyWordVectorGenerator)
 	if(biologicalSimulation):
-		identifySyntacticalDependencyRelations = True	#optional; only implementation coded (if use constituency parser, synapses are created in most distal branch segments only)
+		identifySyntacticalDependencyRelations = True	#currently mandatory; only implementation coded (if use constituency parser, synapses are created in most distal branch segments only)
 	else:
-		identifySyntacticalDependencyRelations = True	#mandatory 
+		identifySyntacticalDependencyRelations = True	#mandatory 	#standard hopfield NLP graph requires words are connected (no intermediary constituency parse tree syntax nodes) 
 
 drawHopfieldGraph = False
 if(drawHopfieldGraph):
@@ -129,8 +122,8 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 			
 	if(biologicalSimulation):
 		if(useDependencyParseTree):
-			print("HFNLPpy_biologicalSimulation.simulateBiologicalHFnetworkSP")
-			HFNLPpy_biologicalSimulation.simulateBiologicalHFnetworkSP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode, identifySyntacticalDependencyRelations)		
+			print("HFNLPpy_biologicalSimulationSyntacticalGraph.simulateBiologicalHFnetworkSP")
+			HFNLPpy_biologicalSimulationSyntacticalGraph.simulateBiologicalHFnetworkSP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode, identifySyntacticalDependencyRelations)		
 		else:
 			print("HFNLPpy_biologicalSimulation.simulateBiologicalHFnetwork")
 			HFNLPpy_biologicalSimulation.simulateBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
@@ -266,3 +259,13 @@ def getNetworkIndex():
 		
 
 
+def generateHopfieldGraphFileName(sentenceOrNetwork, sentenceIndex=None):
+	fileName = "hopfieldGraph"
+	if(sentenceOrNetwork):
+		fileName = fileName + "Sentence"
+	else:
+		fileName = fileName + "Network"
+		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
+	return fileName
+	
+	

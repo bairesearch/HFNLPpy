@@ -1,4 +1,4 @@
-"""HFNLPpy_biologicalSimulationStandard.py
+"""HFNLPpy_biologicalSimulationPropagateStandard.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2020-2022 Baxter AI (baxterai.com)
@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Biological Simulation Standard
+HFNLP Biological Simulation Propagate Standard
 
 """
 
@@ -40,10 +40,10 @@ if(drawBiologicalSimulationDynamic):
 		import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawNetworkDynamic
 
 
-def simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, w, conceptNeuron, connectionTargetNeuronSet):
+def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, w, conceptNeuron, connectionTargetNeuronSet):
 
 	#if(printVerbose):
-	print("simulateBiologicalHFnetworkSequenceNodeTrainStandard: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName)
+	print("simulateBiologicalHFnetworkSequenceNodePropagateStandard: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName)
 			
 	somaActivationFound = False	#is conceptNeuronTarget activated by its prior context?
 	conceptNeuronSource.activationLevel = objectAreaActivationLevelOn
@@ -68,10 +68,10 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandard(networkConceptNodeDict,
 	
 	
 #orig method;
-def simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, w, conceptNeuron):
+def simulateBiologicalHFnetworkSequenceNodeTrainPropagateReverseLookup(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, w, conceptNeuron):
 
 	#if(printVerbose):
-	print("simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup: w = ", w, ", conceptNeuron = ", conceptNeuron.nodeName)
+	print("simulateBiologicalHFnetworkSequenceNodeTrainPropagateReverseLookup: w = ", w, ", conceptNeuron = ", conceptNeuron.nodeName)
 	
 	somaActivationFound = False	#is conceptNeuron activated by its prior context?
 	
@@ -80,7 +80,7 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup(networkCon
 	#orig: for wSource in range(0, w):
 		#conceptNeuronSource = sentenceConceptNodeList[wSource]	#source neuron
 		activationTime = calculateActivationTimeSequence(wSource)
-		if(simulateBiologicalHFnetworkSequenceNodeTrainStandardSpecificTarget(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, w, conceptNeuron)):
+		if(simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, w, conceptNeuron)):
 			somaActivationFound = True
 			
 	resetDendriticTreeActivation(conceptNeuron)
@@ -89,12 +89,12 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup(networkCon
 
 #only calculateNeuronActivation for specific target
 #parameters only used for drawBiologicalSimulationDynamic: wSource, w
-def simulateBiologicalHFnetworkSequenceNodeTrainStandardSpecificTarget(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, w, conceptNeuron):
+def simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, w, conceptNeuron):
 
 	somaActivationFound = False
 	
 	#if(printVerbose):
-	#print("simulateBiologicalHFnetworkSequenceNodeTrainStandardSpecificTarget: w = ", w, ", conceptNeuron = ", conceptNeuron.nodeName)
+	#print("simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget: w = ", w, ", conceptNeuron = ", conceptNeuron.nodeName)
 
 	if(conceptNeuron.nodeName in conceptNeuronSource.targetConnectionDict):
 		conceptNeuronSource.activationLevel = objectAreaActivationLevelOn
@@ -103,7 +103,7 @@ def simulateBiologicalHFnetworkSequenceNodeTrainStandardSpecificTarget(networkCo
 			connection.activationLevel = objectAreaActivationLevelOn
 			targetNeuron = connection.nodeTarget	#targetNeuron will be the same for all connection in connectionList (if targetConnectionConceptName == conceptNeuron)
 			if(targetNeuron != conceptNeuron):
-				print("simulateBiologicalHFnetworkSequenceNodeTrain error: (targetNeuron != conceptNeuron)")
+				print("simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget error: (targetNeuron != conceptNeuron)")
 				exit()
 
 			if(calculateNeuronActivationStandard(connection, 0, targetNeuron.dendriticTree, activationTime, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)[0]):
@@ -180,7 +180,7 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 				passSegmentActivationTimeTests = False
 				if(currentSequentialSegmentInput.firstInputInSequence):
 					#print("passSegmentActivationTimeTests")
-					passSegmentActivationTimeTests = True	#if input corresponds to first in sequence, then enforce no previous dendritic activation requirements	#CHECKTHIS - check implementation compatibility with performSummationOfSequentialSegmentInputs (HFNLPpy_biologicalSimulationVectorised currently uses a different requirement that is also dependent on input activation levels)
+					passSegmentActivationTimeTests = True	#if input corresponds to first in sequence, then enforce no previous dendritic activation requirements	#CHECKTHIS - check implementation compatibility with performSummationOfSequentialSegmentInputs (HFNLPpy_biologicalSimulationPropagateVectorised currently uses a different requirement that is also dependent on input activation levels)
 				else:
 					if(sequentialSegmentActivationStatePrior):	#previous sequential segment/subbranch was activated		#only accept sequential segment activation if previous was activated
 						if(verifySequentialActivationTime(activationTime, sequentialSegmentActivationTimePrior)):	#ignore existing activation level if it occured at an earlier/same time than/as sequentialSegmentActivationTimePrior

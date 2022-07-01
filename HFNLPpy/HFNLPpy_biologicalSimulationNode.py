@@ -24,9 +24,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 
 
-
-#if(useDependencyParseTree):
-biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False	#incomplete - requires dendriticTree and syntacticalTree branches to have matching number of subnodes (2)	#speculative: directly encode precalculated syntactical structure in dendritic branches (rather than deriving syntax from commonly used dendritic subsequence encodings)	#requires useDependencyParseTree
 	
 preventGenerationOfDuplicateConnections = True	#note sequentialSegment inputs will be stored as a dictionary indexed by source node name (else indexed by sequentialSegmentInputIndex)
 
@@ -81,7 +78,7 @@ else:
 if(vectoriseComputation):
 	biologicalSimulationForward = True	#mandatory (only implementation) #required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic
 else:
-	biologicalSimulationForward = True	#optional	#orig implementation; False (simulateBiologicalHFnetworkSequenceNodeTrainStandardReverseLookup)
+	biologicalSimulationForward = True	#optional	#orig implementation; False (simulateBiologicalHFnetworkSequenceNodeTrainPropagateReverseLookup)
 if(biologicalSimulationForward):
 	resetWsourceNeuronDendriteAfterActivation = True
 
@@ -90,7 +87,7 @@ if(vectoriseComputation):
 	if(updateNeuronObjectActivationLevels):
 		recordSequentialSegmentInputActivationLevels = True	#required for draw of active simulation - required by drawBiologicalSimulationDynamic:updateNeuronObjectActivationLevels	
 else:
-	recordSequentialSegmentInputActivationLevels = True	#optional (not required by HFNLPpy_biologicalSimulationStandard processing, and dynamic draw is not supported)
+	recordSequentialSegmentInputActivationLevels = True	#optional (not required by HFNLPpy_biologicalSimulationPropagateStandard processing, and dynamic draw is not supported)
 if(vectoriseComputation):
 	if(recordSequentialSegmentInputActivationLevels):
 		vectoriseComputionUseSequentialSegmentInputActivationLevels	= False	#not yet implemented	#not required as local segment inputs must fire simultaneously; so they can be stored as a segment scalar value	#only ever used in buffer processing

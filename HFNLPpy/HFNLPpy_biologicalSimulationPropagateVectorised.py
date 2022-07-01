@@ -1,4 +1,4 @@
-"""HFNLPpy_biologicalSimulationVectorised.py
+"""HFNLPpy_biologicalSimulationPropagateVectorised.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2020-2022 Baxter AI (baxterai.com)
@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Biological Simulation Vectorised
+HFNLP Biological Simulation Propagate Vectorised
 
 """
 
@@ -55,13 +55,13 @@ if(debugCalculateNeuronActivationParallel):
 	wTargetDebug = wSourceDebug+1
 
 #parameters only used for drawBiologicalSimulationDynamic: sentenceIndex, sentenceConceptNodeList
-def simulateBiologicalHFnetworkSequenceNodeTrainParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, w, conceptNeuron, connectionTargetNeuronSet):
+def simulateBiologicalHFnetworkSequenceNodePropagateParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, w, conceptNeuron, connectionTargetNeuronSet):
 	conceptNeuronSourceList = []
 	conceptNeuronSourceList.append(conceptNeuronSource)
-	return simulateBiologicalHFnetworkSequenceNodesTrainParallel(networkConceptNodeDict, conceptNeuronSourceList, activationTime, w, conceptNeuron, connectionTargetNeuronSet, wSource, sentenceIndex, sentenceConceptNodeList)
+	return simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNodeDict, conceptNeuronSourceList, activationTime, w, conceptNeuron, connectionTargetNeuronSet, wSource, sentenceIndex, sentenceConceptNodeList)
 	
 #parameters only used for drawBiologicalSimulationDynamic: wSource, sentenceIndex, sentenceConceptNodeList
-def simulateBiologicalHFnetworkSequenceNodesTrainParallel(networkConceptNodeDict, conceptNeuronSourceList, activationTime, w, conceptNeuron, connectionTargetNeuronSet, wSource=None, sentenceIndex=None, sentenceConceptNodeList=None):
+def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNodeDict, conceptNeuronSourceList, activationTime, w, conceptNeuron, connectionTargetNeuronSet, wSource=None, sentenceIndex=None, sentenceConceptNodeList=None):
 	
 	#construct batch dendritic tree templates for parallel processing;
 	numberOfVerticalBranches = calculateNumberOfVerticalBranches(numberOfBranches1)
@@ -89,7 +89,7 @@ def simulateBiologicalHFnetworkSequenceNodesTrainParallel(networkConceptNodeDict
 	for conceptNeuronSource in conceptNeuronSourceList:
 
 		#if(printVerbose):
-		print("simulateBiologicalHFnetworkSequenceNodeTrainParallel: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName)
+		print("simulateBiologicalHFnetworkSequenceNodePropagateParallel: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName)
 	
 		if(updateNeuronObjectActivationLevels):
 			conceptNeuronSource.activationLevel = objectAreaActivationLevelOn
@@ -306,7 +306,7 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 				vectorisedBranchActivationTimeBatchSequentialSegments = tf.add(vectorisedBranchActivationTimeBatchSequentialSegments, vectorisedBranchActivationTimeBatchSequentialSegmentExisting)
 			vectorisedBranchActivationLevelBatchList[branchIndex1][:, :, :, sequentialSegmentIndex].assign(vectorisedBranchActivationLevelBatchSequentialSegments)
 			vectorisedBranchActivationTimeBatchList[branchIndex1][:, :, :, sequentialSegmentIndex].assign(vectorisedBranchActivationTimeBatchSequentialSegments)
-			#note conceptNode.vectorisedBranchActivationLevelList/vectorisedBranchActivationTimeList will be updated at end of simulateBiologicalHFnetworkSequenceNodesTrainParallel based on vectorisedBranchActivationLevelBatchList/vectorisedBranchActivationTimeBatchList
+			#note conceptNode.vectorisedBranchActivationLevelList/vectorisedBranchActivationTimeList will be updated at end of simulateBiologicalHFnetworkSequenceNodesPropagateParallel based on vectorisedBranchActivationLevelBatchList/vectorisedBranchActivationTimeBatchList
 			
 			if(updateNeuronObjectActivationLevels):	#OLD: if(drawBiologicalSimulationDynamic):
 				#if(sentenceIndex == 3):	#temp debug requirement	#and wTarget==15
