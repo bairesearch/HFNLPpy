@@ -188,7 +188,7 @@ def setVectorisedBranchActivation(conceptNeuronTarget, connection, activationTim
 		currentSequentialSegmentInputIndex = currentSequentialSegmentInput.sequentialSegmentInputIndex
 			
 	activationValue = calculateVectorisedSequentialSegmentInputActivation(connection)
-	print("activationValue = ", activationValue)
+	#print("activationValue = ", activationValue)
 	#print("activationTime = ", activationTime)
 	#print("currentSequentialSegment.nodeName = ", currentSequentialSegment.nodeName)
 	
@@ -200,8 +200,11 @@ def setVectorisedBranchActivation(conceptNeuronTarget, connection, activationTim
 			else:
 				currentSequentialSegmentInput.activationLevel = objectLocalActivationLevelOn	#True
 			currentSequentialSegmentInput.activationTime = activationTime	
+		activationTimeFlags = vectorisedActivationTimeFlagDefault
+		if(currentSequentialSegmentInput.firstInputInSequence):
+			activationTimeFlags = vectorisedActivationTimeFlagFirstInputInSequence
 		conceptNeuronTarget.vectorisedBranchActivationLevelListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex, currentSequentialSegmentInputIndex].assign(activationValue)
-		conceptNeuronTarget.vectorisedBranchActivationTimeListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex, currentSequentialSegmentInputIndex].assign(activationTime)	
+		conceptNeuronTarget.vectorisedBranchActivationTimeListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex, currentSequentialSegmentInputIndex].assign(activationTimeFlags)	#orig: activationTime
 	else:
 		if(updateNeuronObjectActivationLevels):
 			if(weightedSequentialSegmentInputs):
@@ -209,35 +212,32 @@ def setVectorisedBranchActivation(conceptNeuronTarget, connection, activationTim
 			else:
 				currentSequentialSegmentInput.activationLevel = objectLocalActivationLevelOn	#True
 			currentSequentialSegmentInput.activationTime = activationTime
+		activationTimeFlags = vectorisedActivationTimeFlagDefault
 		if(performSummationOfSequentialSegmentInputs):
 			summationOfSequentialSegmentInputs = conceptNeuronTarget.vectorisedBranchActivationLevelListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].numpy()
-			if(summationOfSequentialSegmentInputsFirstInputInSequenceOverride):
-				if(summationOfSequentialSegmentInputs == vectorisedActivationLevelOnFirstInputInSequence):
-					activationValue = vectorisedActivationLevelOnFirstInputInSequence
-				elif(currentSequentialSegmentInput.firstInputInSequence):
-					activationValue = vectorisedActivationLevelOnFirstInputInSequence	#or activationValue (already modified)
-				else:
-					summationOfSequentialSegmentInputs = summationOfSequentialSegmentInputs + activationValue
-					activationValue = summationOfSequentialSegmentInputs	
-			#overwrite activationTime for input (all inputs should have same activation time)
+			summationOfSequentialSegmentInputs = summationOfSequentialSegmentInputs + activationValue
+			activationValue = summationOfSequentialSegmentInputs
+			firstInputInSequenceExisting = conceptNeuronTarget.vectorisedBranchActivationTimeListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].numpy()
+			if(bool(firstInputInSequenceExisting)):
+				activationTimeFlags = vectorisedActivationTimeFlagFirstInputInSequence
+		if(currentSequentialSegmentInput.firstInputInSequence):
+			activationTimeFlags = vectorisedActivationTimeFlagFirstInputInSequence
 		#if(verifyRepolarised(currentSequentialSegment, activationTime)):
-		print("activationValue = ", activationValue)
+		#print("activationValue = ", activationValue)
 		conceptNeuronTarget.vectorisedBranchActivationLevelListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].assign(activationValue)
-		conceptNeuronTarget.vectorisedBranchActivationTimeListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].assign(activationTime)
+		conceptNeuronTarget.vectorisedBranchActivationTimeListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].assign(activationTimeFlags)	#orig: activationTime (all inputs should have same activation time)
 
 def calculateVectorisedSequentialSegmentInputActivation(connection):
-	currentSequentialSegmentInput = connection.nodeTargetSequentialSegmentInput
-	#artificially increase activation value of first inputs in sequence
-	if(performSummationOfSequentialSegmentInputs and summationOfSequentialSegmentInputsFirstInputInSequenceOverride and currentSequentialSegmentInput.firstInputInSequence):
-		activationValue = vectorisedActivationLevelOnFirstInputInSequence	#not actually required now; this will be set later
-	else:
-		if(currentSequentialSegmentInput.firstInputInSequence):
-			activationValue = vectorisedActivationLevelOnFirstInputInSequence
-		else:
-			activationValue = vectorisedActivationLevelOn
-		if(weightedSequentialSegmentInputs):
-			activationValue = activationValue * calculateInputActivationLevel(connection)
+	activationValue = calculateInputActivationLevelVectorised(connection)	
 	return activationValue
+
+def calculateInputActivationLevelVectorised(connection):
+	inputActivationLevel = objectLocalActivationLevelOff
+	if(weightedSequentialSegmentInputs):
+		inputActivationLevel = connection.weight
+	else:
+		inputActivationLevel = vectorisedActivationLevelOn
+	return inputActivationLevel
 						
 								
 def generateVectorisedSequentialSegmentInputActivationBias(currentSequentialSegmentInput):
@@ -269,7 +269,7 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 		if(recordVectorisedBranchObjectList):
 			vectorisedBranchObjectBatch = vectorisedBranchObjectBatchList[branchIndex1]
 
-		print("\tbranchIndex1 = ", branchIndex1)
+		#print("\tbranchIndex1 = ", branchIndex1)
 			#print("\tvectorisedBranchActivationLevelBatch = ", vectorisedBranchActivationLevelBatch)
 			#print("\tvectorisedBranchActivationTimeBatch = ", vectorisedBranchActivationTimeBatch)
 				
@@ -307,31 +307,41 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 					vectorisedBranchActivationLevelBatchSequentialSegment = vectorisedBranchActivationLevelBatchSequentialSegmentBuffer	#overwrite current sequential segment with buffer
 					vectorisedBranchActivationTimeBatchSequentialSegment = vectorisedBranchActivationTimeBatchSequentialSegmentBuffer	#overwrite current sequential segment with buffer
 
-				#apply previous sequentialSegment/subbranch tests;		
-				vectorisedBranchActivationStateBatchSequentialSegments = tf.add(vectorisedBranchActivationStateBatchSequentialSegments, vectorisedBranchActivationLevelBatchSequentialSegment)	#note if firstSequentialSegmentInSequence (ie sequentialSegmentActivationLevel=2), and higher branch input is zero, then sequential segment will still activate
-				vectorisedBranchActivationStateBatchSequentialSegments = tf.greater(vectorisedBranchActivationStateBatchSequentialSegments, 1)
-
-				#apply time tests;
-				if(performSummationOfSequentialSegmentInputs and not summationOfSequentialSegmentInputsFirstInputInSequenceOverride):
-					print("calculateNeuronActivationParallel error: performSummationOfSequentialSegmentInputs and not summationOfSequentialSegmentInputsFirstInputInSequenceOverride; only implementation coded")
-					exit()
+				
+				#sync with calculateSequentialSegmentActivationState:
+				if(weightedSequentialSegmentInputs):
+					if(performSummationOfSequentialSegmentInputs):
+						vectorisedBranchActivationStateBatchSequentialSegment = tf.greater(vectorisedBranchActivationLevelBatchSequentialSegment, sequentialSegmentMinActivationLevel)
+					else:
+						vectorisedBranchActivationStateBatchSequentialSegment = tf.greater(vectorisedBranchActivationLevelBatchSequentialSegment, 0.0)
 				else:
-					vectorisedBranchActivationLevelBatchSequentialSegmentFirstInputInSequence = tf.equal(vectorisedBranchActivationLevelBatchSequentialSegment, vectorisedActivationLevelOnFirstInputInSequence)
+					vectorisedBranchActivationStateBatchSequentialSegment = tf.equal(vectorisedBranchActivationLevelBatchSequentialSegment, vectorisedActivationLevelOn)
+				
+				vectorisedBranchActivationFlagBatchSequentialSegmentFirstInputInSequence = tf.equal(vectorisedBranchActivationTimeBatchSequentialSegment, vectorisedActivationTimeFlagFirstInputInSequence)
+
+				#apply previous sequentialSegment/subbranch activation level tests;
+				#note if firstSequentialSegmentInSequence and higher branch input is zero, then sequential segment will still activate
+				vectorisedBranchActivationStateBatchSequentialSegments = tf.cast(vectorisedBranchActivationStateBatchSequentialSegments, tf.bool)
+				vectorisedBranchActivationStateBatchSequentialSegments = tf.logical_and(tf.logical_or(vectorisedBranchActivationStateBatchSequentialSegments, vectorisedBranchActivationFlagBatchSequentialSegmentFirstInputInSequence), vectorisedBranchActivationStateBatchSequentialSegment)	
+				
+				#apply previous sequentialSegment/subbranch activation time tests;
+				#note if firstSequentialSegmentInSequence and previous sequential segments/subbranch time tests fail, then sequential segment will still activate
 				if(algorithmTimingWorkaround1):
-					vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests = tf.greater_equal(vectorisedBranchActivationTimeBatchSequentialSegment, vectorisedBranchActivationTimeBatchSequentialSegments)	#ensure activationTime of sequentialSegment is greater than that of previous sequential segments/subbranch - equivalent to verifySequentialActivationTime			
+					vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests = tf.greater_equal(activationTime, vectorisedBranchActivationTimeBatchSequentialSegments)	#ensure activationTime of sequentialSegment is greater than that of previous sequential segments/subbranch - equivalent to verifySequentialActivationTime			
 				else:
-					vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests = tf.greater(vectorisedBranchActivationTimeBatchSequentialSegment, vectorisedBranchActivationTimeBatchSequentialSegments)	#ensure activationTime of sequentialSegment is greater than that of previous sequential segments/subbranch - equivalent to verifySequentialActivationTime
-				vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests = tf.logical_or(vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests, vectorisedBranchActivationLevelBatchSequentialSegmentFirstInputInSequence)
+					vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests = tf.greater(activationTime, vectorisedBranchActivationTimeBatchSequentialSegments)	#ensure activationTime of sequentialSegment is greater than that of previous sequential segments/subbranch - equivalent to verifySequentialActivationTime
+				vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests = tf.logical_or(vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests, vectorisedBranchActivationFlagBatchSequentialSegmentFirstInputInSequence)
 				vectorisedBranchActivationStateBatchSequentialSegments = tf.logical_and(vectorisedBranchActivationStateBatchSequentialSegments, vectorisedBranchActivationLevelBatchSequentialSegmentsTimeTests)
-				vectorisedBranchActivationStateBatchSequentialSegments = tf.cast(vectorisedBranchActivationStateBatchSequentialSegments, tf.float32)
-
+				
 				if(performSummationOfSequentialSegmentInputsAcrossBranch):
-					vectorisedBranchActivationLevelBatchSequentialSegment = tf.where(vectorisedBranchActivationLevelBatchSequentialSegmentFirstInputInSequence, x=vectorisedActivationLevelOn, y=vectorisedBranchActivationLevelBatchSequentialSegment)	#remove firstInputInSequence bias
-					vectorisedBranchActivationLevelBatchSequentialSegments = tf.multiply(vectorisedBranchActivationStateBatchSequentialSegments, vectorisedBranchActivationLevelBatchSequentialSegment)
+					vectorisedBranchActivationLevelBatchSequentialSegments = tf.where(vectorisedBranchActivationStateBatchSequentialSegments, x=vectorisedBranchActivationLevelBatchSequentialSegment, y=vectorisedActivationLevelOff)	#filter sequential segment activation level based on previous sequentialSegment/subbranch activation level/time tests
 				else:
-					vectorisedBranchActivationLevelBatchSequentialSegments = vectorisedBranchActivationStateBatchSequentialSegments
-				vectorisedBranchActivationTimeBatchSequentialSegments = vectorisedBranchActivationTimeBatchSequentialSegment
-
+					vectorisedBranchActivationLevelBatchSequentialSegments = tf.cast(vectorisedBranchActivationStateBatchSequentialSegments, tf.float32)
+					#or vectorisedBranchActivationTimeBatchSequentialSegments = activationTime (as activationTimes will be ignored for unactivated sequential segments) 
+				vectorisedBranchActivationTimeBatchSequentialSegments = tf.where(vectorisedBranchActivationStateBatchSequentialSegments, x=activationTime, y=minimumActivationTime)	#filter sequential segment activation time based on previous sequentialSegment/subbranch activation level/time tests			
+				vectorisedBranchActivationTimeBatchSequentialSegments = tf.cast(vectorisedBranchActivationTimeBatchSequentialSegments, tf.float32)
+				#print("vectorisedBranchActivationTimeBatchSequentialSegments = ", vectorisedBranchActivationTimeBatchSequentialSegments)
+				
 				if(preventReactivationOfSequentialSegments):
 					vectorisedBranchActivationLevelBatchSequentialSegments = tf.add(vectorisedBranchActivationLevelBatchSequentialSegments, vectorisedBranchActivationLevelBatchSequentialSegmentExisting)		#merge contents of mutually exclusive indices together
 					vectorisedBranchActivationTimeBatchSequentialSegments = tf.add(vectorisedBranchActivationTimeBatchSequentialSegments, vectorisedBranchActivationTimeBatchSequentialSegmentExisting)	#merge contents of mutually exclusive indices together

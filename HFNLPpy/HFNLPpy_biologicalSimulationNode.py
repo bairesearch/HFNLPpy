@@ -26,26 +26,26 @@ import numpy as np
 
 vectoriseComputation = True	#parallel processing for optimisation
 
-
-expectFirstBranchSequentialSegmentConnection = True	#True:default	#False: orig implementation
-performSummationOfSequentialSegmentInputsAcrossBranch = False
 supportForNonBinarySubbranchSize = False
+performSummationOfSequentialSegmentInputsAcrossBranch = False
 weightedSequentialSegmentInputs = False
+allowNegativeActivationTimes = False	#calculateNeuronActivationSyntacticalBranchDPflat current implementation does not require allowNegativeActivationTimes
+expectFirstBranchSequentialSegmentConnection = True	#True:default	#False: orig implementation
 
 biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False	#determines HFNLPpy_hopfieldGraph:useDependencyParseTree	#speculative: directly encode precalculated syntactical structure in dendritic branches (rather than deriving syntax from commonly used dendritic subsequence encodings)
 if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 	expectFirstBranchSequentialSegmentConnection = False	#False: required for biologicalSimulationEncodeSyntaxInDendriticBranchStructure	
 	supportForNonBinarySubbranchSize = True	#required by useDependencyParseTree:biologicalSimulationEncodeSyntaxInDendriticBranchStructure with non-binary dependency/constituency parse trees
-	if(supportForNonBinarySubbranchSize):
-		performSummationOfSequentialSegmentInputsAcrossBranch = True
-		if(performSummationOfSequentialSegmentInputsAcrossBranch):
-			weightedSequentialSegmentInputs = True
-			#performSummationOfSequentialSegmentInputsAcrossBranch does not support numberOfBranchSequentialSegments>1 as branch summation occurs using the final sequentialSegment activationLevel of each subbranch
-			#performSummationOfSequentialSegmentInputsAcrossBranch does not support performSummationOfSequentialSegmentInputs [even with summationOfSequentialSegmentInputsFirstInputInSequenceOverride] (or multiple simultaneous inputs at a sequential segment) as this will arbitrarily overwrite the precise sequentialSegment activationLevel of a subbranch
 	allowNegativeActivationTimes = True
-	debugBiologicalSimulationEncodeSyntaxInDendriticBranchStructure = True	#reduce number of subbranches to support and draw simpler dependency tree (use with drawBiologicalSimulationDynamic)
-else:
-	allowNegativeActivationTimes = False	#calculateNeuronActivationSyntacticalBranchDPflat current implementation does not require allowNegativeActivationTimes
+
+if(supportForNonBinarySubbranchSize):
+	performSummationOfSequentialSegmentInputsAcrossBranch = True
+	debugBiologicalSimulationEncodeSyntaxInDendriticBranchStructure = False	#reduce number of subbranches to support and draw simpler dependency tree (use with drawBiologicalSimulationDynamic)
+	if(performSummationOfSequentialSegmentInputsAcrossBranch):
+		weightedSequentialSegmentInputs = True
+		#performSummationOfSequentialSegmentInputsAcrossBranch does not support numberOfBranchSequentialSegments>1 as branch summation occurs using the final sequentialSegment activationLevel of each subbranch
+		#performSummationOfSequentialSegmentInputsAcrossBranch does not support performSummationOfSequentialSegmentInputs (or multiple simultaneous inputs at a sequential segment) as this will arbitrarily overwrite the precise sequentialSegment activationLevel of a subbranch
+
 
 if(allowNegativeActivationTimes):
 	minimumActivationTime = -1000
@@ -62,10 +62,7 @@ algorithmTimingWorkaround1 = False	#insufficient workaround
 performSummationOfSequentialSegmentInputs = False #allows sequential segment activation to be dependent on summation of individual local inputs #support multiple source neurons fired simultaneously	#consider renaming to performSummationOfSequentialSegmentInputsLocal
 if(performSummationOfSequentialSegmentInputs):
 	weightedSequentialSegmentInputs = True
-	if(vectoriseComputation):
-		summationOfSequentialSegmentInputsFirstInputInSequenceOverride = True	#optional #False: orig HFNLPpy_biologicalSimulationPropagateVectorised method
-	else:
-		summationOfSequentialSegmentInputsFirstInputInSequenceOverride = True	#mandatory (only implementation coded) #True: orig HFNLPpy_biologicalSimulationPropagateStandard method
+	#summationOfSequentialSegmentInputsFirstInputInSequenceOverride = True	#mandatory (only implementation coded) #True: orig HFNLPpy_biologicalSimulationPropagateStandard method	 #False: orig HFNLPpy_biologicalSimulationPropagateVectorised method
 if(weightedSequentialSegmentInputs):
 	sequentialSegmentMinActivationLevel = 1.0	#requirement: greater or equal to sequentialSegmentMinActivationLevel
 else:
@@ -103,12 +100,8 @@ else:
 	objectLocalActivationLevelOn = True	
 vectorisedActivationLevelOff = 0.0
 vectorisedActivationLevelOn = 1.0
-if(weightedSequentialSegmentInputs):
-	vectorisedActivationLevelOnFirstInputInSequence = sequentialSegmentMinActivationLevel+1	#CHECKTHIS: requires calibration 
-	#how to favour first inputs in sequence when multiple local inputs are required? #how to favour first inputs in sequence when connection.weights are applied to input activation levels?
-	#if(summationOfSequentialSegmentInputsFirstInputInSequenceOverride): vectorisedActivationLevelOnFirstInputInSequence will be treated as a special override value irrespective of weights
-else:
-	vectorisedActivationLevelOnFirstInputInSequence = 2.0	#this is set to be equivalent to an active previous sequentialSegment/subbranch (1.0) and an active current sequential segment (1.0)
+vectorisedActivationTimeFlagDefault = 0	#boolean flag (not a numeric activation time)
+vectorisedActivationTimeFlagFirstInputInSequence = 1	#boolean flag (not a numeric activation time)
 	
 
 if(vectoriseComputation):

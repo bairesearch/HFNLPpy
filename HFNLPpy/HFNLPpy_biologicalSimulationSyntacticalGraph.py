@@ -194,7 +194,7 @@ def addPredictiveSequenceToNeuronSyntacticalBranchDP(conceptNeuron, sentenceInde
 			if(createNewConnection):
 				if(performSummationOfSequentialSegmentInputsAcrossBranch):
 					weight = sequentialSegmentMinActivationLevel * (numberOfHorizontalSubBranchesRequiredForActivation/numberOfSubbranchesToConnect)
-					print("previousContextConceptNode = ", previousContextConceptNode.nodeName, ", conceptNeuron = ", conceptNeuron.nodeName, ", weight = ", weight)
+					#print("previousContextConceptNode = ", previousContextConceptNode.nodeName, ", conceptNeuron = ", conceptNeuron.nodeName, ", weight = ", weight)
 				else:
 					weight = sequentialSegmentMinActivationLevel
 				newSequentialSegmentSegmentInputIndex = HFNLPpy_biologicalSimulationGenerate.calculateNewSequentialSegmentInputIndex(currentSequentialSegment)

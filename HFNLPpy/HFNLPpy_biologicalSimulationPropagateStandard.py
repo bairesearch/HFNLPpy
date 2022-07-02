@@ -197,11 +197,7 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 					passSegmentActivationTimeTests = False
 					if(currentSequentialSegmentInput.firstInputInSequence):
 						#print("passSegmentActivationTimeTests")
-						if(performSummationOfSequentialSegmentInputs and not summationOfSequentialSegmentInputsFirstInputInSequenceOverride):
-							print("calculateNeuronActivationStandard error: performSummationOfSequentialSegmentInputs and not summationOfSequentialSegmentInputsFirstInputInSequenceOverride; only implementation coded")
-							exit()
-						else:
-							passSegmentActivationTimeTests = True	#if input corresponds to first in sequence, then enforce no previous dendritic activation requirements
+						passSegmentActivationTimeTests = True	#if input corresponds to first in sequence, then enforce no previous dendritic activation requirements
 					else:
 						if(sequentialSegmentActivationStatePrior):	#previous sequential segment/subbranch was activated		#only accept sequential segment activation if previous was activated
 							if(verifySequentialActivationTime(activationTime, sequentialSegmentActivationTimePrior)):	#ignore existing activation level if it occured at an earlier/same time than/as sequentialSegmentActivationTimePrior
