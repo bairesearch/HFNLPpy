@@ -36,23 +36,25 @@ def addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptN
 	#no prediction found for previous sequence; generate prediction for conceptNeuron (encode subsequences in dendrite)
 	#print("addPredictiveSequenceToNeuron:")
 
-	previousContextConceptNode = sentenceConceptNodeList[dendriticBranchMaxW]
-	currentSequentialSegmentIndex = 0	#biologicalSimulation implementation does not currently use local sequential segments (encode sequentiality in branch structure only)
-	currentSequentialSegment = dendriticBranch.sequentialSegments[currentSequentialSegmentIndex]
-	createNewConnection, existingSequentialSegmentInput = verifyCreateNewConnection(currentSequentialSegment, previousContextConceptNode)
-	if(createNewConnection):
-		newSequentialSegmentSegmentInputIndex = calculateNewSequentialSegmentInputIndex(currentSequentialSegment)
-		#print("addPredictiveSynapseToNeuron ", conceptNeuron.nodeName, " branchIndex1 = ", branchIndex1)
-		currentSequentialSegmentInput = SequentialSegmentInput(conceptNeuron, currentSequentialSegment, newSequentialSegmentSegmentInputIndex, previousContextConceptNode)
-		#currentSequentialSegment.inputs.append(currentSequentialSegmentInput)
-		if(preventGenerationOfDuplicateConnections):
-			currentSequentialSegment.inputs[previousContextConceptNode.nodeName] = currentSequentialSegmentInput			
+	if((branchIndex1 > 0) or expectFirstBranchSequentialSegmentConnection):
+		previousContextConceptNode = sentenceConceptNodeList[dendriticBranchMaxW]
+		currentSequentialSegmentIndex = 0	#biologicalSimulation implementation does not currently use local sequential segments (encode sequentiality in branch structure only)
+		currentSequentialSegment = dendriticBranch.sequentialSegments[currentSequentialSegmentIndex]
+		createNewConnection, existingSequentialSegmentInput = verifyCreateNewConnection(currentSequentialSegment, previousContextConceptNode)
+		if(createNewConnection):
+			weight = sequentialSegmentMinActivationLevel
+			newSequentialSegmentSegmentInputIndex = calculateNewSequentialSegmentInputIndex(currentSequentialSegment)
+			#print("addPredictiveSynapseToNeuron ", conceptNeuron.nodeName, " branchIndex1 = ", branchIndex1)
+			currentSequentialSegmentInput = SequentialSegmentInput(conceptNeuron, currentSequentialSegment, newSequentialSegmentSegmentInputIndex, previousContextConceptNode)
+			#currentSequentialSegment.inputs.append(currentSequentialSegmentInput)
+			if(preventGenerationOfDuplicateConnections):
+				currentSequentialSegment.inputs[previousContextConceptNode.nodeName] = currentSequentialSegmentInput			
+			else:
+				#print("newSequentialSegmentSegmentInputIndex = ", newSequentialSegmentSegmentInputIndex)
+				currentSequentialSegment.inputs[newSequentialSegmentSegmentInputIndex] = currentSequentialSegmentInput
+			addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=weight, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
 		else:
-			#print("newSequentialSegmentSegmentInputIndex = ", newSequentialSegmentSegmentInputIndex)
-			currentSequentialSegment.inputs[newSequentialSegmentSegmentInputIndex] = currentSequentialSegmentInput
-		addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=True, biologicalSynapse=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
-	else:
-		currentSequentialSegmentInput = existingSequentialSegmentInput
+			currentSequentialSegmentInput = existingSequentialSegmentInput
 		
 	if(expectFurtherSubbranches):
 		for subbranchIndex, subbranch in enumerate(dendriticBranch.subbranches):
@@ -76,8 +78,8 @@ def addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptN
 
 
 #adds predictive synapse such that subsequences occur in order
-def addPredictiveSynapseToNeuron(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=False, biologicalSynapse=False, nodeTargetSequentialSegmentInput=None):
-	HFNLPpy_hopfieldOperations.addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=biologicalPrototype, weight=weight, subsequenceConnection=subsequenceConnection, contextConnection=contextConnection, contextConnectionSANIindex=contextConnectionSANIindex, biologicalSimulation=biologicalSimulation, biologicalSynapse=biologicalSynapse, nodeTargetSequentialSegmentInput=nodeTargetSequentialSegmentInput)
+def addPredictiveSynapseToNeuron(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=False, nodeTargetSequentialSegmentInput=None):
+	HFNLPpy_hopfieldOperations.addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=biologicalPrototype, weight=weight, subsequenceConnection=subsequenceConnection, contextConnection=contextConnection, contextConnectionSANIindex=contextConnectionSANIindex, biologicalSimulation=biologicalSimulation, nodeTargetSequentialSegmentInput=nodeTargetSequentialSegmentInput)
 																							
 def calculateNewSequentialSegmentInputIndex(currentSequentialSegment):
 	newSequentialSegmentSegmentInputIndex = len(currentSequentialSegment.inputs)

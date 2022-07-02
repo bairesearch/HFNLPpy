@@ -42,9 +42,12 @@ hopfieldGraphNodeSizeMap = []
 hopfieldGraphConceptNodesList = []	#primary nodes for label assignment
 
 #require calibration (depends on numberOfBranches1/numberOfBranches2/numberOfBranchSequentialSegments):
-conceptNeuronIndexSeparation = 20.0
+conceptNeuronIndexSeparation = 10.0*numberOfBranches2
 branchIndex1Separation = 10.0/numberOfBranches1	#vertical separation
-branchIndex2Separation = conceptNeuronIndexSeparation/numberOfBranches2	#horizontal separation at branchIndex=1 (will decrease at higher vertical separation)
+if(supportForNonBinarySubbranchSize):
+	branchIndex2Separation = conceptNeuronIndexSeparation/numberOfBranches2/1.5
+else:
+	branchIndex2Separation = conceptNeuronIndexSeparation/numberOfBranches2	#horizontal separation at branchIndex=1 (will decrease at higher vertical separation)
 sequentialSegmentIndexSeparation = branchIndex1Separation	#10.0/numberOfBranchSequentialSegments/2.0
 sequentialSegmentInputIndexSeparation = 0.5
 
@@ -115,7 +118,7 @@ def drawHopfieldGraphNodeDendriticBranch(conceptNode, posX, posY, dendriticBranc
 		
 	for currentBranchIndex2, subbranch in enumerate(dendriticBranch.subbranches):	
 		horizontalSeparation = branchIndex2Separation/(pow(2, currentBranchIndex1))	#normalise/shorten at greater distance from soma
-		posXsubbranch = posX-(horizontalSeparation/2) + currentBranchIndex2*horizontalSeparation
+		posXsubbranch = posX-(horizontalSeparation*((numberOfBranches2-1)/2)) + currentBranchIndex2*horizontalSeparation
 		#print("currentBranchIndex2 = ", currentBranchIndex2)
 		#print("horizontalSeparation = ", horizontalSeparation)
 		#print("posXsubbranch = ", posXsubbranch)

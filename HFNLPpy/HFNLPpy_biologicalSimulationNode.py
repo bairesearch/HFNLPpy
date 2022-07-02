@@ -24,7 +24,34 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 
 
-	
+vectoriseComputation = True	#parallel processing for optimisation
+
+
+expectFirstBranchSequentialSegmentConnection = True	#True:default	#False: orig implementation
+performSummationOfSequentialSegmentInputsAcrossBranch = False
+supportForNonBinarySubbranchSize = False
+weightedSequentialSegmentInputs = False
+
+biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False	#determines HFNLPpy_hopfieldGraph:useDependencyParseTree	#speculative: directly encode precalculated syntactical structure in dendritic branches (rather than deriving syntax from commonly used dendritic subsequence encodings)
+if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
+	expectFirstBranchSequentialSegmentConnection = False	#False: required for biologicalSimulationEncodeSyntaxInDendriticBranchStructure	
+	supportForNonBinarySubbranchSize = True	#required by useDependencyParseTree:biologicalSimulationEncodeSyntaxInDendriticBranchStructure with non-binary dependency/constituency parse trees
+	if(supportForNonBinarySubbranchSize):
+		performSummationOfSequentialSegmentInputsAcrossBranch = True
+		if(performSummationOfSequentialSegmentInputsAcrossBranch):
+			weightedSequentialSegmentInputs = True
+			#performSummationOfSequentialSegmentInputsAcrossBranch does not support numberOfBranchSequentialSegments>1 as branch summation occurs using the final sequentialSegment activationLevel of each subbranch
+			#performSummationOfSequentialSegmentInputsAcrossBranch does not support performSummationOfSequentialSegmentInputs [even with summationOfSequentialSegmentInputsFirstInputInSequenceOverride] (or multiple simultaneous inputs at a sequential segment) as this will arbitrarily overwrite the precise sequentialSegment activationLevel of a subbranch
+	allowNegativeActivationTimes = True
+	debugBiologicalSimulationEncodeSyntaxInDendriticBranchStructure = True	#reduce number of subbranches to support and draw simpler dependency tree (use with drawBiologicalSimulationDynamic)
+else:
+	allowNegativeActivationTimes = False	#calculateNeuronActivationSyntacticalBranchDPflat current implementation does not require allowNegativeActivationTimes
+
+if(allowNegativeActivationTimes):
+	minimumActivationTime = -1000
+else:
+	minimumActivationTime = 0	#alternatively set -1;	#initial activation time of dendritic sequence set artificially low such that passSegmentActivationTimeTests automatically pass (not required (as passSegmentActivationTimeTests are ignored for currentSequentialSegmentInput.firstInputInSequence)
+		
 preventGenerationOfDuplicateConnections = True	#note sequentialSegment inputs will be stored as a dictionary indexed by source node name (else indexed by sequentialSegmentInputIndex)
 
 storeSequentialSegmentInputIndexValues = False	#not required	#index record value not robust if inputs are removed (synaptic atrophy)	#HFNLPpy_biologicalSimulationDraw can use currentSequentialSegmentInputIndexDynamic instead
@@ -32,11 +59,18 @@ storeSequentialSegmentInputIndexValues = False	#not required	#index record value
 preventReactivationOfSequentialSegments = True	#prevent reactivation of sequential segments (equates to a long repolarisation time of ~= sentenceLength)	#algorithmTimingWorkaround2
 algorithmTimingWorkaround1 = False	#insufficient workaround
 
-performSummationOfSequentialSegmentInputs = False #allows sequential segment activation to be dependent on summation of individual local inputs #support multiple source neurons fired simultaneously
+performSummationOfSequentialSegmentInputs = False #allows sequential segment activation to be dependent on summation of individual local inputs #support multiple source neurons fired simultaneously	#consider renaming to performSummationOfSequentialSegmentInputsLocal
 if(performSummationOfSequentialSegmentInputs):
+	weightedSequentialSegmentInputs = True
+	if(vectoriseComputation):
+		summationOfSequentialSegmentInputsFirstInputInSequenceOverride = True	#optional #False: orig HFNLPpy_biologicalSimulationPropagateVectorised method
+	else:
+		summationOfSequentialSegmentInputsFirstInputInSequenceOverride = True	#mandatory (only implementation coded) #True: orig HFNLPpy_biologicalSimulationPropagateStandard method
+if(weightedSequentialSegmentInputs):
 	sequentialSegmentMinActivationLevel = 1.0	#requirement: greater or equal to sequentialSegmentMinActivationLevel
-	
-vectoriseComputation = True	#parallel processing for optimisation
+else:
+	sequentialSegmentMinActivationLevel = 1	#always 1 (not used)
+
 if(vectoriseComputation):
 	import tensorflow as tf
 	vectoriseComputationCurrentDendriticInput = True	#mandatory - default behaviour
@@ -44,7 +78,7 @@ if(vectoriseComputation):
 		vectoriseComputationIndependentBranches = True	#mandatory - default behaviour
 	batchSize = 100	#high batch size allowed since parallel processing simple/small scalar operations (on effective boolean synaptic inputs), lowered proportional to max (most distal) numberOfHorizontalBranches
 	
-	updateNeuronObjectActivationLevels = False	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
+	updateNeuronObjectActivationLevels = True	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 	if(updateNeuronObjectActivationLevels):
 		recordVectorisedBranchObjectList = True	#vectorisedBranchObjectList is required to convert vectorised activations back to denditicTree object structure (DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic:updateNeuronObjectActivationLevels (as HFNLPpy_biologicalSimulationDraw currently only supports drawing of denditicTree object structure activations)  
 	else:
@@ -59,7 +93,7 @@ else:
 #"area" = activation level for dendritic branches/somas/axons
 objectAreaActivationLevelOff = False
 objectAreaActivationLevelOn = True
-if(performSummationOfSequentialSegmentInputs):
+if(weightedSequentialSegmentInputs):
 	#numeric (sequential segment only consider depolarised if sequential requirements met and summed activationLevel of sequential inputs passes threshold)
 	objectLocalActivationLevelOff = 0.0
 	objectLocalActivationLevelOn = sequentialSegmentMinActivationLevel		
@@ -69,16 +103,18 @@ else:
 	objectLocalActivationLevelOn = True	
 vectorisedActivationLevelOff = 0.0
 vectorisedActivationLevelOn = 1.0
-if(performSummationOfSequentialSegmentInputs):
-	vectorisedActivationLevelOnFirstInputInSequence = sequentialSegmentMinActivationLevel+1	#CHECKTHIS: requires calibration #how to favour first inputs in sequence when multiple local inputs are required? #how to favour first inputs in sequence when connection.weights are applied to input activation levels?
+if(weightedSequentialSegmentInputs):
+	vectorisedActivationLevelOnFirstInputInSequence = sequentialSegmentMinActivationLevel+1	#CHECKTHIS: requires calibration 
+	#how to favour first inputs in sequence when multiple local inputs are required? #how to favour first inputs in sequence when connection.weights are applied to input activation levels?
+	#if(summationOfSequentialSegmentInputsFirstInputInSequenceOverride): vectorisedActivationLevelOnFirstInputInSequence will be treated as a special override value irrespective of weights
 else:
-	vectorisedActivationLevelOnFirstInputInSequence = 2.0
+	vectorisedActivationLevelOnFirstInputInSequence = 2.0	#this is set to be equivalent to an active previous sequentialSegment/subbranch (1.0) and an active current sequential segment (1.0)
 	
 
 if(vectoriseComputation):
 	biologicalSimulationForward = True	#mandatory (only implementation) #required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic
 else:
-	biologicalSimulationForward = True	#optional	#orig implementation; False (simulateBiologicalHFnetworkSequenceNodeTrainPropagateReverseLookup)
+	biologicalSimulationForward = True	#optional	#orig implementation; False (simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup)
 if(biologicalSimulationForward):
 	resetWsourceNeuronDendriteAfterActivation = True
 
@@ -94,9 +130,15 @@ if(vectoriseComputation):
 		if(vectoriseComputionUseSequentialSegmentInputActivationLevels):
 			numberOfSequentialSegmentInputs = 100	#max number available
 
-			
+
 numberOfBranches1 = 3	#number of vertical branches -1
-numberOfBranches2 = 2	#number of new horizontal branches created at each vertical branch
+if(supportForNonBinarySubbranchSize):
+	if(debugBiologicalSimulationEncodeSyntaxInDendriticBranchStructure):
+		numberOfBranches2 = 4
+	else:
+		numberOfBranches2 = 8	#number of new horizontal branches created at each vertical branch	#must sync with max number subbrances of constituency/dependency parser	#if dependencyParser: maximum number of dependents per governor
+else:
+	numberOfBranches2 = 2	#number of new horizontal branches created at each vertical branch
 	#[1,2,4,8]	#number of new horizontal branches created at each vertical branch
 numberOfBranchSequentialSegments = 1	#1+	#sequential inputs (FUTURE: if > 1: each branch segment may require sequential inputs)
 #numberOfBranchSequentialSegmentInputs = 1	#1+	#nonSequentialInputs	#in current implementation (non-parallel generative network) number of inputs at sequential segment is dynamically increased on demand #not used; currently encode infinite number of
@@ -128,7 +170,7 @@ def biologicalSimulationNodePropertiesInitialisation(conceptNode):
 		if(recordVectorisedBranchObjectList):
 			conceptNode.vectorisedBranchActivationLevelList, conceptNode.vectorisedBranchActivationTimeList, conceptNode.vectorisedBranchObjectList = createDendriticTreeVectorised(batched=False, createVectorisedBranchObjectList=recordVectorisedBranchObjectList, storeSequentialSegmentInputActivationLevels=False)	#shape [numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments]
 			#vectorisedBranchActivationLevelList always stores effective boolean 1/0 values (since their activations are calculated across all wSource of same activationTime simultaneously); could be converted to dtype=tf.bool
-			#vectorisedBranchActivationLevelListBuffer will store variable numeric values, biased for first inputs in sequences (likewise performSummationOfSequentialSegmentInputs:vectorisedBranchActivationLevelListBuffer will store numeric values of the synaptic input activation levels being accumulated prior to batch processing)
+			#vectorisedBranchActivationLevelListBuffer will store variable numeric values, biased for first inputs in sequences (likewise weightedSequentialSegmentInputs:vectorisedBranchActivationLevelListBuffer will store numeric values of the synaptic input activation levels being accumulated prior to batch processing)
 		else:
 			conceptNode.vectorisedBranchActivationLevelList, conceptNode.vectorisedBranchActivationTimeList = createDendriticTreeVectorised(batched=False, createVectorisedBranchObjectList=recordVectorisedBranchObjectList, storeSequentialSegmentInputActivationLevels=False)	#shape [numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments]
 		#vectorisedBranchObjectList required for drawBiologicalSimulationDynamic only
@@ -361,18 +403,25 @@ def calculateActivationTimeSequence(wordIndex):
 	return activationTime
 
 def calculateInputActivationLevel(connection):
-	if(performSummationOfSequentialSegmentInputs):
+	inputActivationLevel = objectLocalActivationLevelOff
+	if(weightedSequentialSegmentInputs):
 		inputActivationLevel = connection.weight
 	else:
 		inputActivationLevel = objectLocalActivationLevelOn
 	return inputActivationLevel
 
 def calculateSequentialSegmentActivationState(activationLevel):
-	if(performSummationOfSequentialSegmentInputs):
-		if(activationLevel >= sequentialSegmentMinActivationLevel):
-			activationState = objectAreaActivationLevelOn
+	if(weightedSequentialSegmentInputs):
+		if(performSummationOfSequentialSegmentInputs):
+			if(activationLevel >= sequentialSegmentMinActivationLevel):
+				activationState = objectAreaActivationLevelOn
+			else:
+				activationState = objectAreaActivationLevelOff
 		else:
-			activationState = objectAreaActivationLevelOff
+			if(activationLevel > 0):
+				activationState = objectAreaActivationLevelOn
+			else:
+				activationState = objectAreaActivationLevelOff			
 	else:
 		if(activationLevel):
 			activationState = objectAreaActivationLevelOn
@@ -382,7 +431,7 @@ def calculateSequentialSegmentActivationState(activationLevel):
 
 def sequentialSegmentActivationLevelAboveZero(activationLevel):
 	result = False
-	if(performSummationOfSequentialSegmentInputs):
+	if(weightedSequentialSegmentInputs):
 		if(activationLevel > 0):
 			result = True
 		else:

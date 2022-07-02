@@ -68,10 +68,10 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 	
 	
 #orig method;
-def simulateBiologicalHFnetworkSequenceNodeTrainPropagateReverseLookup(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, w, conceptNeuron):
+def simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, w, conceptNeuron):
 
 	#if(printVerbose):
-	print("simulateBiologicalHFnetworkSequenceNodeTrainPropagateReverseLookup: w = ", w, ", conceptNeuron = ", conceptNeuron.nodeName)
+	print("simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup: w = ", w, ", conceptNeuron = ", conceptNeuron.nodeName)
 	
 	somaActivationFound = False	#is conceptNeuron activated by its prior context?
 	
@@ -131,84 +131,115 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 		
 	#calculate subbranch activations:
 	subbranchesActive = objectAreaActivationLevelOff
-	subbranchesActivationTimeMax = 0	 #alternatively set -1; initial activation time of dendritic sequence set artificially low such that passSegmentActivationTimeTests automatically pass (not required (as passSegmentActivationTimeTests are ignored for currentSequentialSegmentInput.firstInputInSequence)
+	subbranchesActivationTimeMax = minimumActivationTime
 	if(len(currentBranch.subbranches) > 0):
-		numberOfBranch2active = 0
+		if(performSummationOfSequentialSegmentInputsAcrossBranch):
+			branch2activationSum = 0.0		
+		else:
+			numberOfBranch2active = 0
 		for subbranch in currentBranch.subbranches:	
-			subbranchActive, subbranchActivationTime = calculateNeuronActivationStandard(connection, currentBranchIndex1+1, subbranch, activationTime, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
+			subbranchActive = False
+			subbranchActiveLevel, subbranchActivationTime = calculateNeuronActivationStandard(connection, currentBranchIndex1+1, subbranch, activationTime, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
+			if(performSummationOfSequentialSegmentInputsAcrossBranch):
+				if(subbranchActiveLevel > objectLocalActivationLevelOff):
+					subbranchActive = objectAreaActivationLevelOn
+					branch2activationSum = branch2activationSum + subbranchActiveLevel
+			else:
+				if(subbranchActiveLevel):
+					subbranchActive = objectAreaActivationLevelOn
+					numberOfBranch2active += 1
 			if(subbranchActive):
-				numberOfBranch2active += 1
 				if(subbranchActivationTime > subbranchesActivationTimeMax):
 					subbranchesActivationTimeMax = subbranchActivationTime
-		#print("numberOfBranch2active = ", numberOfBranch2active)
-		if(numberOfBranch2active >= numberOfHorizontalSubBranchesRequiredForActivation):	#must conform with branch merge method *
-			subbranchesActive = objectAreaActivationLevelOn
-			#print("subbranchesActivationTimeMax = ", subbranchesActivationTimeMax)
+		if(performSummationOfSequentialSegmentInputsAcrossBranch):
+			#print("Subbranches: currentBranchIndex1 = ", currentBranchIndex1, ", connection.nodeTarget = ", connection.nodeTarget.nodeName, ", connection.nodeSource = ", connection.nodeSource.nodeName, ", branch2activationSum = ", branch2activationSum, ", subbranchesActivationTimeMax = ", subbranchesActivationTimeMax, ", activationTime = ", activationTime)
+			if(branch2activationSum >= numberOfHorizontalSubBranchesRequiredForActivation):
+				subbranchesActive = objectAreaActivationLevelOn
+		else:
+			if(numberOfBranch2active >= numberOfHorizontalSubBranchesRequiredForActivation):	#must conform with branch merge method *
+				subbranchesActive = objectAreaActivationLevelOn
 	else:
-	 	subbranchesActive = objectAreaActivationLevelOn
-	
+		subbranchesActive = objectAreaActivationLevelOn
+		#subbranchesActivationTimeMax = 0
+		
+	sequentialSegmentActivationLevelPrior = objectLocalActivationLevelOff
 	sequentialSegmentActivationStatePrior = subbranchesActive	#initialise prior sequential segment activation state to subbranchesActive
 	sequentialSegmentActivationTimePrior = subbranchesActivationTimeMax
 	
-	#calculate branch segment activations:
 	for currentSequentialSegmentIndex, currentSequentialSegment in reversed(list(enumerate(currentBranch.sequentialSegments))):
+		if((currentBranchIndex1 > 0) or expectFirstBranchSequentialSegmentConnection):
+			#calculate branch segment activations:
 
-		sequentialSegmentActivationState = objectAreaActivationLevelOff
-		sequentialSegmentActivationLevel = objectLocalActivationLevelOff	#current activation level
-		sequentialSegmentActivationTime = None	#current activation time
-			
-		sequentialSegmentAlreadyActive = False
-		if(sequentialSegmentActivationLevelAboveZero(currentSequentialSegment.activationLevel)):	#required to ensure currentSequentialSegment.activationTime is valid
-			#if(not(sequentialSegmentActivationStatePrior) or verifySequentialActivationTime(currentSequentialSegment.activationTime, sequentialSegmentActivationTimePrior)):	#ignore existing activation level if it occured at an earlier/same time than/as sequentialSegmentActivationTimePrior	#this test should not be required with preventReactivationOfSequentialSegments
-			if(calculateSequentialSegmentActivationState(currentSequentialSegment.activationLevel)):
-				sequentialSegmentAlreadyActive = True
-				sequentialSegmentActivationState = objectAreaActivationLevelOn
-			sequentialSegmentActivationLevel = currentSequentialSegment.activationLevel
-			sequentialSegmentActivationTime = currentSequentialSegment.activationTime
-					
-		if(not preventReactivationOfSequentialSegments or not sequentialSegmentAlreadyActive):
-			foundConnectionSynapse, currentSequentialSegmentInput = findConnectionSynapseInSequentialSegment(currentSequentialSegment, connection)
-			if(foundConnectionSynapse):
-				inputActivationLevel = calculateInputActivationLevel(connection)
-				if(recordSequentialSegmentInputActivationLevels):
-					currentSequentialSegmentInput.activationLevel = inputActivationLevel
-					currentSequentialSegmentInput.activationTime = activationTime
-				if(printVerbose):
-					printIndentation(currentBranchIndex1+1)
-					print("activate currentSequentialSegmentInput, connection.nodeSource = ", connection.nodeSource.nodeName, ", connection.nodeTarget = ", connection.nodeTarget.nodeName)
+			sequentialSegmentActivationState = objectAreaActivationLevelOff
+			sequentialSegmentActivationLevel = objectLocalActivationLevelOff	#current activation level
+			sequentialSegmentActivationTime = None	#current activation time
 
-				passSegmentActivationTimeTests = False
-				if(currentSequentialSegmentInput.firstInputInSequence):
-					#print("passSegmentActivationTimeTests")
-					passSegmentActivationTimeTests = True	#if input corresponds to first in sequence, then enforce no previous dendritic activation requirements	#CHECKTHIS - check implementation compatibility with performSummationOfSequentialSegmentInputs (HFNLPpy_biologicalSimulationPropagateVectorised currently uses a different requirement that is also dependent on input activation levels)
-				else:
-					if(sequentialSegmentActivationStatePrior):	#previous sequential segment/subbranch was activated		#only accept sequential segment activation if previous was activated
-						if(verifySequentialActivationTime(activationTime, sequentialSegmentActivationTimePrior)):	#ignore existing activation level if it occured at an earlier/same time than/as sequentialSegmentActivationTimePrior
-							#if(verifyRepolarised(currentSequentialSegment, activationTime)):	#ensure that the segment isnt in a repolarisation state (ie it can be activated)
-							passSegmentActivationTimeTests = True	#sequentialSegmentActivationLevel implies subbranchesActive: previous (ie more distal) branch was active
+			sequentialSegmentAlreadyActive = False
+			if(sequentialSegmentActivationLevelAboveZero(currentSequentialSegment.activationLevel)):	#required to ensure currentSequentialSegment.activationTime is valid
+				#if(not(sequentialSegmentActivationStatePrior) or verifySequentialActivationTime(currentSequentialSegment.activationTime, sequentialSegmentActivationTimePrior)):	#ignore existing activation level if it occured at an earlier/same time than/as sequentialSegmentActivationTimePrior	#this test should not be required with preventReactivationOfSequentialSegments
+				if(calculateSequentialSegmentActivationState(currentSequentialSegment.activationLevel)):
+					sequentialSegmentAlreadyActive = True
+					sequentialSegmentActivationState = objectAreaActivationLevelOn
+				sequentialSegmentActivationLevel = currentSequentialSegment.activationLevel
+				sequentialSegmentActivationTime = currentSequentialSegment.activationTime
 
-				if(passSegmentActivationTimeTests):
-					if(performSummationOfSequentialSegmentInputs):
-						sequentialSegmentActivationLevel = sequentialSegmentActivationLevel + inputActivationLevel
-						sequentialSegmentActivationTime = activationTime	#CHECKTHIS: always record latest activation time for sequential segment activation
-						sequentialSegmentActivationState = calculateSequentialSegmentActivationState(sequentialSegmentActivationLevel)
+			if(not preventReactivationOfSequentialSegments or not sequentialSegmentAlreadyActive):
+				foundConnectionSynapse, currentSequentialSegmentInput = findConnectionSynapseInSequentialSegment(currentSequentialSegment, connection)
+				if(foundConnectionSynapse):
+					inputActivationLevel = calculateInputActivationLevel(connection)
+					if(recordSequentialSegmentInputActivationLevels):
+						currentSequentialSegmentInput.activationLevel = inputActivationLevel
+						currentSequentialSegmentInput.activationTime = activationTime
+					if(printVerbose):
+						printIndentation(currentBranchIndex1+1)
+						print("activate currentSequentialSegmentInput, connection.nodeSource = ", connection.nodeSource.nodeName, ", connection.nodeTarget = ", connection.nodeTarget.nodeName)
+
+					passSegmentActivationTimeTests = False
+					if(currentSequentialSegmentInput.firstInputInSequence):
+						#print("passSegmentActivationTimeTests")
+						if(performSummationOfSequentialSegmentInputs and not summationOfSequentialSegmentInputsFirstInputInSequenceOverride):
+							print("calculateNeuronActivationStandard error: performSummationOfSequentialSegmentInputs and not summationOfSequentialSegmentInputsFirstInputInSequenceOverride; only implementation coded")
+							exit()
+						else:
+							passSegmentActivationTimeTests = True	#if input corresponds to first in sequence, then enforce no previous dendritic activation requirements
 					else:
-						sequentialSegmentActivationLevel = inputActivationLevel
-						sequentialSegmentActivationTime = activationTime
-						sequentialSegmentActivationState = objectAreaActivationLevelOn
-					currentSequentialSegment.activationLevel = sequentialSegmentActivationLevel
-					currentSequentialSegment.activationTime = sequentialSegmentActivationTime
-					#print("currentSequentialSegment.activationLevel = ", currentSequentialSegment.activationLevel)
+						if(sequentialSegmentActivationStatePrior):	#previous sequential segment/subbranch was activated		#only accept sequential segment activation if previous was activated
+							if(verifySequentialActivationTime(activationTime, sequentialSegmentActivationTimePrior)):	#ignore existing activation level if it occured at an earlier/same time than/as sequentialSegmentActivationTimePrior
+								#if(verifyRepolarised(currentSequentialSegment, activationTime)):	#ensure that the segment isnt in a repolarisation state (ie it can be activated)
+								passSegmentActivationTimeTests = True	#sequentialSegmentActivationLevel implies subbranchesActive: previous (ie more distal) branch was active
 
-					drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex)
-		
+					if(passSegmentActivationTimeTests):
+						if(performSummationOfSequentialSegmentInputs):
+							sequentialSegmentActivationLevel = sequentialSegmentActivationLevel + inputActivationLevel
+							sequentialSegmentActivationTime = activationTime	#CHECKTHIS: always record latest activation time for sequential segment activation
+							sequentialSegmentActivationState = calculateSequentialSegmentActivationState(sequentialSegmentActivationLevel)
+						else:
+							#printIndentation(currentBranchIndex1+1)
+							#print("passSegmentActivationTimeTests: activate currentSequentialSegmentInput, connection.nodeSource = ", connection.nodeSource.nodeName, ", connection.nodeTarget = ", connection.nodeTarget.nodeName, ", inputActivationLevel = ", inputActivationLevel, ", activationTime = ", activationTime)
+							sequentialSegmentActivationLevel = inputActivationLevel
+							sequentialSegmentActivationTime = activationTime
+							sequentialSegmentActivationState = objectAreaActivationLevelOn
+						currentSequentialSegment.activationLevel = sequentialSegmentActivationLevel
+						currentSequentialSegment.activationTime = sequentialSegmentActivationTime
+
+						drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex)
+		else:
+			sequentialSegmentActivationState = sequentialSegmentActivationStatePrior
+			sequentialSegmentActivationLevel = calculateSequentialSegmentActivationState(sequentialSegmentActivationState)
+			sequentialSegmentActivationTime = sequentialSegmentActivationTimePrior
+			currentSequentialSegment.activationLevel = sequentialSegmentActivationLevel
+			currentSequentialSegment.activationTime = sequentialSegmentActivationTime
+
+		sequentialSegmentActivationLevelPrior = sequentialSegmentActivationLevel		
 		sequentialSegmentActivationStatePrior = sequentialSegmentActivationState
 		sequentialSegmentActivationTimePrior = sequentialSegmentActivationTime
-		#print("sequentialSegmentActivationStatePrior = ", sequentialSegmentActivationStatePrior)
 
-			
-	#overwrite activation level of branch if last sequential segment inactive	#OLD: if(sequentialSegmentActivationLevelLast):	
-	branchActivationLevel = sequentialSegmentActivationStatePrior	#activate branch2	#activate whole currentSequentialSegment
+	#	print("branch: currentBranchIndex1 = ", currentBranchIndex1, ", connection.nodeTarget = ", connection.nodeTarget.nodeName, ", connection.nodeSource = ", connection.nodeSource.nodeName, ", sequentialSegmentActivationLevelPrior = ", sequentialSegmentActivationLevelPrior)
+
+	if(performSummationOfSequentialSegmentInputsAcrossBranch):
+		branchActivationLevel = sequentialSegmentActivationLevelPrior
+	else:
+		branchActivationLevel = sequentialSegmentActivationStatePrior	#activate branch2	#activate whole currentSequentialSegment
 	branchActivationTime = sequentialSegmentActivationTimePrior
 	currentBranch.activationLevel = branchActivationLevel
 	currentBranch.activationTime = branchActivationTime
