@@ -46,7 +46,35 @@ def clearHopfieldGraph():
 	if(drawHopfieldGraphNodeColours):
 		hopfieldGraphNodeColorMap.clear()
 
-def drawHopfieldGraphNode(node, networkSize, sentenceIndex=0):
+def drawHopfieldGraphSentence(sentenceConceptNodeList, networkSize):
+	#need to draw all conceptNodes before creating connections
+	drawGraphNetwork = False
+	for conceptNode in sentenceConceptNodeList:
+		drawHopfieldGraphNode(conceptNode, networkSize)
+	for conceptNode in sentenceConceptNodeList:
+		drawHopfieldGraphNodeConnections(conceptNode, drawGraphNetwork, sentenceConceptNodeList)	
+
+def drawHopfieldGraphNetwork(networkConceptNodeDict):	
+	#generate nodes and connections
+	drawGraphNetwork = True
+	networkSize = len(networkConceptNodeDict)
+	#need to draw all conceptNodes before creating connections
+	for conceptNodeKey, conceptNode in networkConceptNodeDict.items():
+		drawHopfieldGraphNode(conceptNode, networkSize)
+	for conceptNodeKey, conceptNode in networkConceptNodeDict.items():
+		drawHopfieldGraphNodeConnections(conceptNode, drawGraphNetwork)	
+			
+def drawHopfieldGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList=None):
+	for connectionKey, connectionList in hopfieldGraphNode.targetConnectionDict.items():
+		for connection in connectionList:
+			drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
+			
+#def drawHopfieldGraphNodeAndConnections(hopfieldGraphNode, networkSize, drawGraphNetwork, sentenceConceptNodeList=None):	
+#	#parse tree and generate nodes and connections
+#	drawHopfieldGraphNode(hopfieldGraphNode, networkSize)
+#	drawHopfieldGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList)
+	
+def drawHopfieldGraphNode(node, networkSize):
 	colorHtml = "NA"	#node colours yet coded (pos type of node will be different depending on connectivity/instance context)
 	hopfieldGraphAngle = node.networkIndex/networkSize*360
 	#print("hopfieldGraphAngle = ", hopfieldGraphAngle)
@@ -55,23 +83,24 @@ def drawHopfieldGraphNode(node, networkSize, sentenceIndex=0):
 	if(drawHopfieldGraphNodeColours):
 		hopfieldGraphNodeColorMap.append(colorHtml)
 
-def drawHopfieldGraphConnection(connection):
+def drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList=None):
 	node1 = connection.nodeSource
 	node2 = connection.nodeTarget
 	spatioTemporalIndex = connection.spatioTemporalIndex
-	if(drawHopfieldGraphEdgeColoursWeights):
-		if(connection.biologicalPrototype):
-			if(connection.contextConnection):
-				color = 'blue'
+	if(drawGraphNetwork or (node2 in sentenceConceptNodeList)):	#if HFNLPpy_hopfieldGraphDraw: ensure target node is in sentence (such that connection can be drawn) - see drawHopfieldGraphNodeConnections
+		if(drawHopfieldGraphEdgeColoursWeights):
+			if(connection.biologicalPrototype):
+				if(connection.contextConnection):
+					color = 'blue'
+				else:
+					color = 'red'
+				weight = connection.weight
 			else:
 				color = 'red'
-			weight = connection.weight
+				weight = 1.0
+			hopfieldGraph.add_edge(node1.nodeName, node2.nodeName, color=color, weight=weight)	#FUTURE: consider setting color based on spatioTemporalIndex
 		else:
-			color = 'red'
-			weight = 1.0
-		hopfieldGraph.add_edge(node1.nodeName, node2.nodeName, color=color, weight=weight)	#FUTURE: consider setting color based on spatioTemporalIndex
-	else:
-		hopfieldGraph.add_edge(node1.nodeName, node2.nodeName)
+			hopfieldGraph.add_edge(node1.nodeName, node2.nodeName)
 	
 
 def displayHopfieldGraph(plot=True, save=False, fileName=None):
@@ -105,28 +134,6 @@ def displayHopfieldGraph(plot=True, save=False, fileName=None):
 		plt.show()
 	else:	
 		plt.clf()
-		
-def drawHopfieldGraphNodeConnections(hopfieldGraphNode, networkSize):
-	for connectionKey, connectionList in hopfieldGraphNode.targetConnectionDict.items():
-		for connection in connectionList:
-			drawHopfieldGraphConnection(connection)
-			
-def drawHopfieldGraphNodeAndConnections(hopfieldGraphNode, networkSize, drawGraph=False):	
-	#parse tree and generate nodes and connections
-	drawHopfieldGraphNode(hopfieldGraphNode, networkSize)
-	drawHopfieldGraphNodeConnections(hopfieldGraphNode, networkSize)
-
-def drawHopfieldGraphSentence(sentenceConceptNodeList, networkSize):
-	for conceptNode in sentenceConceptNodeList:
-		drawHopfieldGraphNodeAndConnections(conceptNode, networkSize, drawGraph=False)		
-
-def drawHopfieldGraphNetwork(networkConceptNodeDict):	
-	#generate nodes and connections
-	networkSize = len(networkConceptNodeDict)
-	for conceptNodeKey, conceptNode in networkConceptNodeDict.items():
-	#for conceptNode in conceptNodeList:
-		#print("conceptNode.lemma = ", conceptNode.lemma)
-		drawHopfieldGraphNodeAndConnections(conceptNode, networkSize, drawGraph=True)
 
 def pointOnCircle(radius, angleDegrees, centre=[0,0]):
 	angle = radians(angleDegrees)

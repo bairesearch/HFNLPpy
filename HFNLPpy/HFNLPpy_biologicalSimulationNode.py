@@ -26,6 +26,13 @@ import numpy as np
 
 vectoriseComputation = True	#parallel processing for optimisation
 
+seedHFnetworkSubsequence = False #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkWithSubsequenceLength words of target sequence as seed subsequence)
+if(seedHFnetworkSubsequence):
+	#seedHFnetworkSubsequence does not currently support biologicalSimulationEncodeSyntaxInDendriticBranchStructure
+	#seedHFnetworkSubsequence requires resetWsourceNeuronDendriteAfterActivation
+	seedHFnetworkWithSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
+	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
+	
 supportForNonBinarySubbranchSize = False
 performSummationOfSequentialSegmentInputsAcrossBranch = False
 weightedSequentialSegmentInputs = False
@@ -73,9 +80,9 @@ if(vectoriseComputation):
 	vectoriseComputationCurrentDendriticInput = True	#mandatory - default behaviour
 	if(vectoriseComputationCurrentDendriticInput):
 		vectoriseComputationIndependentBranches = True	#mandatory - default behaviour
-	batchSize = 100	#high batch size allowed since parallel processing simple/small scalar operations (on effective boolean synaptic inputs), lowered proportional to max (most distal) numberOfHorizontalBranches
+	batchSizeDefault = 100	#high batch size allowed since parallel processing simple/small scalar operations (on effective boolean synaptic inputs), lowered proportional to max (most distal) numberOfHorizontalBranches	#not used (createDendriticTreeVectorised is never called with batched=True)
 	
-	updateNeuronObjectActivationLevels = True	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
+	updateNeuronObjectActivationLevels = False	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 	if(updateNeuronObjectActivationLevels):
 		recordVectorisedBranchObjectList = True	#vectorisedBranchObjectList is required to convert vectorised activations back to denditicTree object structure (DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic:updateNeuronObjectActivationLevels (as HFNLPpy_biologicalSimulationDraw currently only supports drawing of denditicTree object structure activations)  
 	else:
@@ -129,7 +136,7 @@ if(supportForNonBinarySubbranchSize):
 	if(debugBiologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 		numberOfBranches2 = 4
 	else:
-		numberOfBranches2 = 8	#number of new horizontal branches created at each vertical branch	#must sync with max number subbrances of constituency/dependency parser	#if dependencyParser: maximum number of dependents per governor
+		numberOfBranches2 = 20	#8	#number of new horizontal branches created at each vertical branch	#must sync with max number subbrances of constituency/dependency parser	#if dependencyParser: maximum number of dependents per governor
 else:
 	numberOfBranches2 = 2	#number of new horizontal branches created at each vertical branch
 	#[1,2,4,8]	#number of new horizontal branches created at each vertical branch
@@ -244,15 +251,15 @@ def createDendriticTreeVectorised(batched, createVectorisedBranchObjectList, sto
 		#tf.Variable designation is required for assign() operations
 		if(batched):
 			if(storeSequentialSegmentInputActivationLevels):
-				vectorisedBranchActivationLevel = tf.Variable(tf.zeros([batchSize, numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments, numberOfSequentialSegmentInputs]))
-				vectorisedBranchActivationTime = tf.Variable(tf.zeros([batchSize, numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments, numberOfSequentialSegmentInputs]))
+				vectorisedBranchActivationLevel = tf.Variable(tf.zeros([batchSizeDefault, numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments, numberOfSequentialSegmentInputs]))
+				vectorisedBranchActivationTime = tf.Variable(tf.zeros([batchSizeDefault, numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments, numberOfSequentialSegmentInputs]))
 				if(createVectorisedBranchObjectList):
-					vectorisedBranchObject = np.empty(shape=(batchSize, numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments, numberOfSequentialSegmentInputs), dtype=object)			
+					vectorisedBranchObject = np.empty(shape=(batchSizeDefault, numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments, numberOfSequentialSegmentInputs), dtype=object)			
 			else:
-				vectorisedBranchActivationLevel = tf.Variable(tf.zeros([batchSize, numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments]))
-				vectorisedBranchActivationTime = tf.Variable(tf.zeros([batchSize, numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments]))
+				vectorisedBranchActivationLevel = tf.Variable(tf.zeros([batchSizeDefault, numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments]))
+				vectorisedBranchActivationTime = tf.Variable(tf.zeros([batchSizeDefault, numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments]))
 				if(createVectorisedBranchObjectList):
-					vectorisedBranchObject = np.empty(shape=(batchSize, numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments), dtype=object)
+					vectorisedBranchObject = np.empty(shape=(batchSizeDefault, numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments), dtype=object)
 		else:
 			if(storeSequentialSegmentInputActivationLevels):
 				vectorisedBranchActivationLevel = tf.Variable(tf.zeros([numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments, numberOfSequentialSegmentInputs]))
@@ -342,7 +349,12 @@ def resetDendriticTreeActivation(conceptNeuron):
 	conceptNeuron.activationLevel = objectAreaActivationLevelOff
 	resetBranchActivation(conceptNeuron.dendriticTree)
 	if(vectoriseComputationCurrentDendriticInput):
-		conceptNeuron.vectorisedBranchActivationLevelList, conceptNeuron.vectorisedBranchActivationTimeList = createDendriticTreeVectorised(batched=False, createVectorisedBranchObjectList=False, storeSequentialSegmentInputActivationLevels=False)	#rezero tensors by regenerating them 	#do not overwrite conceptNeuron.vectorisedBranchObjectList
+		resetDendriticTreeActivationVectorised(conceptNeuron)
+		
+def resetDendriticTreeActivationVectorised(conceptNeuron):
+	conceptNeuron.activationLevel = objectAreaActivationLevelOff
+	conceptNeuron.vectorisedBranchActivationLevelList, conceptNeuron.vectorisedBranchActivationTimeList = createDendriticTreeVectorised(batched=False, createVectorisedBranchObjectList=False, storeSequentialSegmentInputActivationLevels=False)	#rezero tensors by regenerating them 	#do not overwrite conceptNeuron.vectorisedBranchObjectList
+
 
 def resetAxonsActivation(conceptNeuron):
 	conceptNeuron.activationLevel = objectAreaActivationLevelOff

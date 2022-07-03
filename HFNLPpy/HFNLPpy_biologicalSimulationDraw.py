@@ -72,16 +72,6 @@ def clearHopfieldGraph():
 		hopfieldGraphNodeSizeMap.clear()
 	hopfieldGraphConceptNodesList.clear()	#for labels
 
-def drawHopfieldGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList=None):
-	for connectionKey, connectionList in hopfieldGraphNode.targetConnectionDict.items():
-		for connection in connectionList:
-			drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
-			
-def drawHopfieldGraphNodeAndConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList=None):	
-	#parse tree and generate nodes and connections
-	drawHopfieldGraphNode(hopfieldGraphNode, drawGraphNetwork)
-	drawHopfieldGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList)
-
 def drawHopfieldGraphSentence(sentenceConceptNodeList, wTarget=None):	
 	sentenceConceptNodeList = list(set(sentenceConceptNodeList))	#generate a unique list from a list (in the event a sentence contains multiple instances of the same word/lemma)
 	
@@ -111,6 +101,16 @@ def drawHopfieldGraphNetwork(networkConceptNodeDict, wTarget=None):
 	for conceptNodeKey, conceptNode in networkConceptNodeDict.items():
 		if(not debugOnlyDrawTargetNeuron):
 			drawHopfieldGraphNodeConnections(conceptNode, drawGraphNetwork)
+
+def drawHopfieldGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList=None):
+	for connectionKey, connectionList in hopfieldGraphNode.targetConnectionDict.items():
+		for connection in connectionList:
+			drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
+			
+#def drawHopfieldGraphNodeAndConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList=None):	
+#	#parse tree and generate nodes and connections
+#	drawHopfieldGraphNode(hopfieldGraphNode, drawGraphNetwork)
+#	drawHopfieldGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList)
 		
 def drawHopfieldGraphNode(conceptNode, drawGraphNetwork):
 	if(conceptNode.activationLevel):

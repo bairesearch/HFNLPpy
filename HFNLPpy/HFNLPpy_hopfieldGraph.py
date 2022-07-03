@@ -43,6 +43,7 @@ if(biologicalSimulation):
 	if(useDependencyParseTree):
 		import HFNLPpy_biologicalSimulationSyntacticalGraph
 	else:
+		from HFNLPpy_biologicalSimulationNode import seedHFnetworkSubsequence
 		import HFNLPpy_biologicalSimulation
 else:
 	useDependencyParseTree = True
@@ -68,7 +69,7 @@ if(useDependencyParseTree):
 	else:
 		identifySyntacticalDependencyRelations = True	#mandatory 	#standard hopfield NLP graph requires words are connected (no intermediary constituency parse tree syntax nodes) 
 
-drawHopfieldGraph = False
+drawHopfieldGraph = True
 if(drawHopfieldGraph):
 	drawHopfieldGraphPlot = True
 	drawHopfieldGraphSave = False
@@ -83,10 +84,11 @@ networkConceptNodeDict = {}
 networkSize = 0
 
 def generateHopfieldGraphNetwork(articles):
+	numberOfSentences = len(articles)
 	for sentenceIndex, sentence in enumerate(articles):
-		generateHopfieldGraphSentenceString(sentenceIndex, sentence)	
+		generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences)	
 
-def generateHopfieldGraphSentenceString(sentenceIndex, sentence):
+def generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences):
 	print("\n\ngenerateHopfieldGraphSentenceString: sentenceIndex = ", sentenceIndex, "; ", sentence)
 
 	tokenisedSentence = tokeniseSentence(sentence)
@@ -94,9 +96,9 @@ def generateHopfieldGraphSentenceString(sentenceIndex, sentence):
 	print("sentenceLength = ", sentenceLength)
 	
 	if(sentenceLength > 1):
-		return generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence)
+		return generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSentences)
 
-def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
+def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSentences):
 		
 	activationTime = calculateActivationTime(sentenceIndex)
 
@@ -138,14 +140,23 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence):
 			if(printVerbose):
 				print("create new conceptNode; ", conceptNode.lemma)
 		sentenceConceptNodeList.append(conceptNode)
-			
+						
 	if(biologicalSimulation):
-		if(useDependencyParseTree):
-			print("HFNLPpy_biologicalSimulationSyntacticalGraph.simulateBiologicalHFnetworkSP")
-			HFNLPpy_biologicalSimulationSyntacticalGraph.simulateBiologicalHFnetworkSP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode, identifySyntacticalDependencyRelations)		
-		else:
-			print("HFNLPpy_biologicalSimulation.simulateBiologicalHFnetwork")
-			HFNLPpy_biologicalSimulation.simulateBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
+	
+		trainSentence = True
+		if(seedHFnetworkSubsequence):
+			if(sentenceIndex == numberOfSentences-1):
+				trainSentence = False
+				seedSentenceConceptNodeList = sentenceConceptNodeList
+				HFNLPpy_biologicalSimulation.seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceConceptNodeList)
+				
+		if(trainSentence):		
+			if(useDependencyParseTree):
+				print("HFNLPpy_biologicalSimulationSyntacticalGraph.simulateBiologicalHFnetworkSP")
+				HFNLPpy_biologicalSimulationSyntacticalGraph.trainBiologicalHFnetworkSP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode, identifySyntacticalDependencyRelations)		
+			else:
+				print("HFNLPpy_biologicalSimulation.simulateBiologicalHFnetwork")
+				HFNLPpy_biologicalSimulation.trainBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
 	else:
 		#connection vars;
 		if(useDependencyParseTree):
