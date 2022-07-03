@@ -403,7 +403,7 @@ def calculateInputActivationLevel(connection):
 		inputActivationLevel = objectLocalActivationLevelOn
 	return inputActivationLevel
 
-def calculateSequentialSegmentActivationState(activationLevel):
+def calculateSequentialSegmentActivationState(activationLevel, vectorised=False):
 	if(weightedSequentialSegmentInputs):
 		if(performSummationOfSequentialSegmentInputs):
 			if(activationLevel >= sequentialSegmentMinActivationLevel):
@@ -416,10 +416,16 @@ def calculateSequentialSegmentActivationState(activationLevel):
 			else:
 				activationState = objectAreaActivationLevelOff			
 	else:
-		if(activationLevel):
-			activationState = objectAreaActivationLevelOn
+		if(vectorised):
+			if(activationLevel == vectorisedActivationLevelOn):
+				activationState = objectAreaActivationLevelOn
+			else:
+				activationState = objectAreaActivationLevelOff		
 		else:
-			activationState = objectAreaActivationLevelOff
+			if(activationLevel):
+				activationState = objectAreaActivationLevelOn
+			else:
+				activationState = objectAreaActivationLevelOff
 	return activationState
 
 def sequentialSegmentActivationLevelAboveZero(activationLevel):

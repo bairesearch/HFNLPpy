@@ -208,8 +208,12 @@ def addPredictiveSequenceToNeuronSyntacticalBranchDP(conceptNeuron, sentenceInde
 			else:
 				currentSequentialSegmentInput = existingSequentialSegmentInput
 
+			expectFurtherSubbranches = True
 			if(len(DPdependentNode.DPdependentList) == 0):
 				expectFurtherSubbranches = False
+			if(len(dendriticBranchSub.subbranches) == 0):
+				expectFurtherSubbranches = False
+			if(not expectFurtherSubbranches):
 				currentSequentialSegmentInput.firstInputInSequence = True
 
 			addPredictiveSequenceToNeuronSyntacticalBranchDP(conceptNeuron, sentenceIndex, sentenceConceptNodeList, DPdependentNode, dendriticBranchSub, currentBranchIndex1+1)
@@ -296,10 +300,14 @@ def addPredictiveSequenceToNeuronSyntacticalBranchCP(conceptNeuron, sentenceInde
 			else:
 				currentSequentialSegmentInput = existingSequentialSegmentInput
 
+			expectFurtherSubbranches = True
 			if(len(CPsourceNode.CPgraphNodeSourceList) == 0):
 				expectFurtherSubbranches = False
+			if(len(dendriticBranchSub.subbranches) == 0):
+				expectFurtherSubbranches = False
+			if(not expectFurtherSubbranches):
 				currentSequentialSegmentInput.firstInputInSequence = True
-
+				
 			addPredictiveSequenceToNeuronSyntacticalBranchDP(conceptNeuron, sentenceIndex, sentenceConceptNodeList, CPsourceNode, dendriticBranchSub, currentBranchIndex1+1)
 			currentBranchIndex2 += 1
 			
