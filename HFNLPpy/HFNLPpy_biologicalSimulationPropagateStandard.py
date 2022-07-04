@@ -82,7 +82,7 @@ def simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup(networkConcept
 	
 	somaActivationFound = False	#is conceptNeuronTarget activated by its prior context?
 	
-	#support for simulateBiologicalHFnetworkSequenceSyntacticalBranchDPTrain:!biologicalSimulationEncodeSyntaxInDendriticBranchStructure
+	#support for simulateBiologicalHFnetworkSequenceSyntacticalBranchDPTrain:!biologicalSimulationEncodeSyntaxInDendriticBranchStructureDirect
 	for wSource, conceptNeuronSource in enumerate(sentenceConceptNodeList):
 	#orig: for wSource in range(0, wTarget):
 		#conceptNeuronSource = sentenceConceptNodeList[wSource]	#source neuron

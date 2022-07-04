@@ -26,25 +26,32 @@ import numpy as np
 
 vectoriseComputation = True	#parallel processing for optimisation
 
-seedHFnetworkSubsequence = False #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkWithSubsequenceLength words of target sequence as seed subsequence)
+seedHFnetworkSubsequence = False #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
 if(seedHFnetworkSubsequence):
 	#seedHFnetworkSubsequence does not currently support biologicalSimulationEncodeSyntaxInDendriticBranchStructure
 	#seedHFnetworkSubsequence requires resetWsourceNeuronDendriteAfterActivation
-	seedHFnetworkWithSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
+	seedHFnetworkSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
 	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
 	
 supportForNonBinarySubbranchSize = False
 performSummationOfSequentialSegmentInputsAcrossBranch = False
 weightedSequentialSegmentInputs = False
-allowNegativeActivationTimes = False	#calculateNeuronActivationSyntacticalBranchDPflat current implementation does not require allowNegativeActivationTimes
+allowNegativeActivationTimes = False	#calculateNeuronActivationSyntacticalBranchDPlinear current implementation does not require allowNegativeActivationTimes
 expectFirstBranchSequentialSegmentConnection = True	#True:default	#False: orig implementation
 
-biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False	#determines HFNLPpy_hopfieldGraph:useDependencyParseTree	#speculative: directly encode precalculated syntactical structure in dendritic branches (rather than deriving syntax from commonly used dendritic subsequence encodings)
+biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False	#determines HFNLPpy_hopfieldGraph:useDependencyParseTree	#speculative: use precalculated syntactical structure to generate dendritic branch connections (rather than deriving syntax from commonly used dendritic subsequence encodings)
 if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
-	expectFirstBranchSequentialSegmentConnection = False	#False: required for biologicalSimulationEncodeSyntaxInDendriticBranchStructure	
-	supportForNonBinarySubbranchSize = True	#required by useDependencyParseTree:biologicalSimulationEncodeSyntaxInDendriticBranchStructure with non-binary dependency/constituency parse trees
-	allowNegativeActivationTimes = True
-
+	biologicalSimulationEncodeSyntaxInDendriticBranchStructureDirect = True	#speculative: directly encode precalculated syntactical structure into dendritic branches
+	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructureDirect):
+		expectFirstBranchSequentialSegmentConnection = False
+		supportForNonBinarySubbranchSize = True	#required by useDependencyParseTree:biologicalSimulationEncodeSyntaxInDendriticBranchStructureDirect with non-binary dependency/constituency parse trees
+		allowNegativeActivationTimes = True
+	else:
+		#implied biologicalSimulationEncodeSyntaxInDendriticBranchStructureLinear = True	#speculative: convert precalculated syntactical structure to linear subsequences before encoding into dendritic branches
+		biologicalSimulationEncodeSyntaxInDendriticBranchStructureLinearHierarchical = False	#incomplete #adds the most distant nodes to the start of a linear contextConceptNodesList - will still perform propagate/predict in reverse order of tree crawl
+		#if(not biologicalSimulationEncodeSyntaxInDendriticBranchStructureLinearHierarchical):
+		#	implied biologicalSimulationEncodeSyntaxInDendriticBranchStructureLinearCrawl = True: adds the nodes in reverse order of tree crawl to a linear contextConceptNodesList) - will also perform propagate/predict in reverse order of tree crawl
+			
 if(supportForNonBinarySubbranchSize):
 	performSummationOfSequentialSegmentInputsAcrossBranch = True
 	debugBiologicalSimulationEncodeSyntaxInDendriticBranchStructure = False	#reduce number of subbranches to support and draw simpler dependency tree (use with drawBiologicalSimulationDynamic)

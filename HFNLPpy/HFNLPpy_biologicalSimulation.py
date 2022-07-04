@@ -83,7 +83,7 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, targetSentenc
 		else:
 			connectionTargetNeuronSetLocal = set()	#for posthoc network deactivation
 			activationTime = calculateActivationTimeSequence(wSource)
-			if(wSource < seedHFnetworkWithSubsequenceLength):
+			if(wSource < seedHFnetworkSubsequenceLength):
 				somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSetLocal)
 			else:
 				somaActivationFound = simulateBiologicalHFnetworkSequenceNodesPropagateForward(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSourceList, connectionTargetNeuronSetLocal)
@@ -186,7 +186,7 @@ def simulateBiologicalHFnetworkSequenceNodePropagateForwardFull(networkConceptNo
 	somaActivationFound = False
 	connectionTargetNeuronSet = set()	#for posthoc network deactivation
 	
-	for wSource, conceptNeuronSource in enumerate(sentenceConceptNodeList):	#support for simulateBiologicalHFnetworkSequenceSyntacticalBranchDPTrain:!biologicalSimulationEncodeSyntaxInDendriticBranchStructure
+	for wSource, conceptNeuronSource in enumerate(sentenceConceptNodeList):	#support for simulateBiologicalHFnetworkSequenceSyntacticalBranchDPTrain:!biologicalSimulationEncodeSyntaxInDendriticBranchStructureFormat
 	#orig for wSource in range(0, wTarget):
 		conceptNeuronSource = sentenceConceptNodeList[wSource]
 		activationTime = calculateActivationTimeSequence(wSource)

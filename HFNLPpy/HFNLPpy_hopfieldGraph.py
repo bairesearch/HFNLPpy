@@ -36,6 +36,7 @@ useDependencyParseTree = False
 
 if(biologicalSimulation):
 	from HFNLPpy_biologicalSimulationNode import biologicalSimulationEncodeSyntaxInDendriticBranchStructure
+	from HFNLPpy_biologicalSimulationNode import seedHFnetworkSubsequence
 	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 		useDependencyParseTree = True
 	else:
@@ -43,7 +44,6 @@ if(biologicalSimulation):
 	if(useDependencyParseTree):
 		import HFNLPpy_biologicalSimulationSyntacticalGraph
 	else:
-		from HFNLPpy_biologicalSimulationNode import seedHFnetworkSubsequence
 		import HFNLPpy_biologicalSimulation
 else:
 	useDependencyParseTree = True
@@ -52,17 +52,14 @@ if(useDependencyParseTree):
 	import SPNLPpy_syntacticalGraph
 	if(not SPNLPpy_syntacticalGraph.useSPNLPcustomSyntacticalParser):
 		SPNLPpy_syntacticalGraph.SPNLPpy_syntacticalGraphConstituencyParserFormal.initalise(spacyWordVectorGenerator)
-	if(biologicalSimulation):
-		if(HFNLPpy_biologicalSimulationSyntacticalGraph.supportForNonBinarySubbranchSize):
-			identifySyntacticalDependencyRelations = True	#optional
-		else:
-			identifySyntacticalDependencyRelations = False	#mandatory
+	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
+		identifySyntacticalDependencyRelations = True	#optional
 		#configuration notes:
 		#some constituency parse trees are binary trees eg useSPNLPcustomSyntacticalParser:SPNLPpy_syntacticalGraphConstituencyParserWordVectors (or Stanford constituency parser with binarize option etc), other constituency parsers are non-binary trees; eg !useSPNLPcustomSyntacticalParser:SPNLPpy_syntacticalGraphConstituencyParserFormal (Berkeley neural parser)
 		#most dependency parse trees are non-binary trees eg useSPNLPcustomSyntacticalParser:SPNLPpy_syntacticalGraphDependencyParserWordVectors / !useSPNLPcustomSyntacticalParser:SPNLPpy_syntacticalGraphDependencyParserWordVectors (spacy dependency parser)
 		#if identifySyntacticalDependencyRelations False (use constituency parser), synapses are created in most distal branch segments only - requires dendritic tree propagation algorithm mod	
 		#if supportForNonBinarySubbranchSize True, dendriticTree will support 2+ subbranches, with inputs adjusted by weight depending on number of subbranches expected to be activated
-		#if supportForNonBinarySubbranchSize False, constituency/dependency parser must produce a binary parse tree (or disable biologicalSimulationEncodeSyntaxInDendriticBranchStructure)
+		#if supportForNonBinarySubbranchSize False, constituency/dependency parser must produce a binary parse tree (or disable biologicalSimulationEncodeSyntaxInDendriticBranchStructureDirect)
 		if(not identifySyntacticalDependencyRelations):
 			print("biologicalSimulation constituency parse tree support has not yet been implemented: synapses are created in most distal branch segments only - requires dendritic tree propagation algorithm mod")
 			exit()

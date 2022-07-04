@@ -34,7 +34,6 @@ def addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptN
 	numberOfWordsInSequence = len(sentenceConceptNodeList)
 	
 	#no prediction found for previous sequence; generate prediction for conceptNeuron (encode subsequences in dendrite)
-	#print("addPredictiveSequenceToNeuron:")
 
 	if((branchIndex1 > 0) or expectFirstBranchSequentialSegmentConnection):
 		previousContextConceptNode = sentenceConceptNodeList[dendriticBranchMaxW]
@@ -42,6 +41,8 @@ def addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptN
 		currentSequentialSegment = dendriticBranch.sequentialSegments[currentSequentialSegmentIndex]
 		createNewConnection, existingSequentialSegmentInput = verifyCreateNewConnection(currentSequentialSegment, previousContextConceptNode)
 		if(createNewConnection):
+			if(printVerbose):
+				print("addPredictiveSequenceToNeuron: conceptNeuron = ", conceptNeuron.nodeName, ", previousContextConceptNode = ", previousContextConceptNode.nodeName)
 			weight = sequentialSegmentMinActivationLevel
 			newSequentialSegmentSegmentInputIndex = calculateNewSequentialSegmentInputIndex(currentSequentialSegment)
 			#print("addPredictiveSynapseToNeuron ", conceptNeuron.nodeName, " branchIndex1 = ", branchIndex1)

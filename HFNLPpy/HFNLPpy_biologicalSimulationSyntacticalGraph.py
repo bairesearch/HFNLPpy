@@ -34,12 +34,6 @@ else:
 printVerbose = False
 
 debugDrawAfterAddPredictiveSequence = True
-
-if(expectFirstBranchSequentialSegmentConnection):
-	print("HFNLPpy_biologicalSimulationSyntacticalGraph warning: biologicalSimulationEncodeSyntaxInDendriticBranchStructure requires !expectFirstBranchSequentialSegmentConnection")
-	biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False
-else:
-	biologicalSimulationEncodeSyntaxInDendriticBranchStructure = True	#speculative: directly encode precalculated syntactical structure in dendritic branches (rather than deriving syntax from commonly used dendritic subsequence encodings)
 	
 
 def trainBiologicalHFnetworkSP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode, identifySyntacticalDependencyRelations):
@@ -47,10 +41,13 @@ def trainBiologicalHFnetworkSP(networkConceptNodeDict, sentenceIndex, sentenceCo
 
 def simulateBiologicalHFnetworkSequenceTrainSP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode, identifySyntacticalDependencyRelations):
 	connectionTargetNeuronSet = set()	#for posthoc network deactivation
+	contextConceptNodesList = []
+	#if(not biologicalSimulationEncodeSyntaxInDendriticBranchStructureDirect and not biologicalSimulationEncodeSyntaxInDendriticBranchStructureLinearHierarchical):
+	#	identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulation(sentenceConceptNodeList, SPgraphHeadNode, contextConceptNodesList)
 
 	activationTime = 0
 	if(identifySyntacticalDependencyRelations):
-		simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchDP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode, activationTime, connectionTargetNeuronSet)		
+		simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchDP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode, activationTime, connectionTargetNeuronSet, contextConceptNodesList)		
 	else:
 		print("biologicalSimulation:identifySyntacticalDependencyRelations current implementation requires identifySyntacticalDependencyRelations")
 		exit()
@@ -63,13 +60,12 @@ def simulateBiologicalHFnetworkSequenceTrainSP(networkConceptNodeDict, sentenceI
 	
 	HFNLPpy_biologicalSimulation.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
 		
-def simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchDP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPgovernorNode, activationTime, connectionTargetNeuronSet):
+def simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchDP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPgovernorNode, activationTime, connectionTargetNeuronSet, contextConceptNodesList=None):
 	somaActivationFound = False
-	contextConceptNodesList = []
 	if(len(DPgovernorNode.DPdependentList) > 0):
 		for DPdependentNode in DPgovernorNode.DPdependentList:
 			#print("activationTime = ", activationTime)
-			simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchDP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPdependentNode, activationTime-1, connectionTargetNeuronSet)
+			simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchDP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPdependentNode, activationTime-1, connectionTargetNeuronSet, contextConceptNodesList)
 			if(simulateBiologicalHFnetworkSequenceSyntacticalBranchDPPropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPdependentNode, DPgovernorNode, activationTime, connectionTargetNeuronSet, contextConceptNodesList)):
 				somaActivationFound = True
 	else:
@@ -80,12 +76,12 @@ def simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchDP(networkConceptNo
 	else:
 		#if(printVerbose):
 		print("!somaActivationFound: simulateBiologicalHFnetworkSequenceSyntacticalBranchDPAdd; DPbranchHeadNode = ", DPgovernorNode.word)
-		simulateBiologicalHFnetworkSequenceSyntacticalBranchDPAdd(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPgovernorNode, activationTime, connectionTargetNeuronSet)
+		simulateBiologicalHFnetworkSequenceSyntacticalBranchDPAdd(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPgovernorNode, activationTime, connectionTargetNeuronSet, contextConceptNodesList)
 
 def simulateBiologicalHFnetworkSequenceSyntacticalBranchDPPropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPbranchSourceNode, DPbranchTargetNode, activationTime, connectionTargetNeuronSet, contextConceptNodesList=None):
 	print("simulateBiologicalHFnetworkSequenceSyntacticalBranchDPPropagate: DPbranchTargetNode = ", DPbranchTargetNode.word, ", DPbranchSourceNode = ", DPbranchSourceNode.word)
 	somaActivationFound = False
-	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
+	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructureDirect):
 		if(biologicalSimulationForward):
 			if(calculateNeuronActivationSyntacticalBranchDPforward(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPbranchSourceNode, DPbranchTargetNode, activationTime, connectionTargetNeuronSet)):
 				somaActivationFound = True
@@ -93,7 +89,7 @@ def simulateBiologicalHFnetworkSequenceSyntacticalBranchDPPropagate(networkConce
 			if(calculateNeuronActivationSyntacticalBranchDPreverseLookup(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPbranchTargetNode, DPbranchTargetNode, activationTime, connectionTargetNeuronSet)):
 				somaActivationFound = True			
 	else:
-		if(calculateNeuronActivationSyntacticalBranchDPflat(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPbranchSourceNode, DPbranchTargetNode, activationTime, connectionTargetNeuronSet, contextConceptNodesList)):
+		if(calculateNeuronActivationSyntacticalBranchDPlinear(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPbranchSourceNode, DPbranchTargetNode, activationTime, connectionTargetNeuronSet, contextConceptNodesList)):
 			somaActivationFound = True
 	
 	return somaActivationFound
@@ -102,14 +98,19 @@ def simulateBiologicalHFnetworkSequenceSyntacticalBranchDPAdd(networkConceptNode
 	w = DPbranchHeadNode.w
 	conceptNode = sentenceConceptNodeList[w]
 	currentBranchIndex1 = 0
-	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
+	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructureDirect):
 		addPredictiveSequenceToNeuronSyntacticalBranchDP(conceptNode, sentenceIndex, sentenceConceptNodeList, DPbranchHeadNode, conceptNode.dendriticTree, currentBranchIndex1)		
-	else:
-		dendriticBranchMaxW = len(contextConceptNodesList) - 1	#index of last predictive neuron in artificial contextConceptNodesList sequence (not index of target concept)
+	else:	
+		contextConceptNodesListLocal = []	
+		if(biologicalSimulationEncodeSyntaxInDendriticBranchStructureLinearHierarchical):
+			identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulationHierarchical(sentenceConceptNodeList, DPbranchHeadNode, contextConceptNodesListLocal)
+		else:
+			identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulation(sentenceConceptNodeList, DPbranchHeadNode, contextConceptNodesListLocal)			
+		dendriticBranchMaxW = len(contextConceptNodesListLocal) - 1	#index of last predictive neuron in artificial contextConceptNodesListLocal sequence (index of target concept is not in contextConceptNodesListLocal)
 		expectFurtherSubbranches = True
 		if(dendriticBranchMaxW == 0):
 			expectFurtherSubbranches = False
-		HFNLPpy_biologicalSimulationGenerate.addPredictiveSequenceToNeuron(conceptNode, sentenceIndex, contextConceptNodesList, conceptNode.dendriticTree, dendriticBranchMaxW, currentBranchIndex1, expectFurtherSubbranches)
+		HFNLPpy_biologicalSimulationGenerate.addPredictiveSequenceToNeuron(conceptNode, sentenceIndex, contextConceptNodesListLocal, conceptNode.dendriticTree, dendriticBranchMaxW, currentBranchIndex1, expectFurtherSubbranches)
 
 	if(debugDrawAfterAddPredictiveSequence):
 		HFNLPpy_biologicalSimulation.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)	#draw for debugging
@@ -139,31 +140,7 @@ def calculateNeuronActivationSyntacticalBranchDPreverseLookup(networkConceptNode
 
 	return somaActivationFound
 
-def calculateNeuronActivationSyntacticalBranchDPflat(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPbranchSourceNode, DPbranchTargetNode, activationTime, connectionTargetNeuronSet, contextConceptNodesList):
-	#note use of activationTime parameters requires allowNegativeActivationTimes
-	somaActivationFound = False
-	identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulation(sentenceConceptNodeList, DPbranchSourceNode, contextConceptNodesList)
-	wTarget = DPbranchTargetNode.w
-	conceptNeuronTarget = sentenceConceptNodeList[wTarget]
-	#print("wTarget = ", wTarget)
-	#print("conceptNeuronTarget = ", conceptNeuronTarget.nodeName)
-	if(biologicalSimulationForward):
-		somaActivationFound = HFNLPpy_biologicalSimulation.simulateBiologicalHFnetworkSequenceNodePropagateForwardFull(networkConceptNodeDict, sentenceIndex, contextConceptNodesList, wTarget, conceptNeuronTarget)
-		#wSource = DPbranchSourceNode.w
-		#conceptNeuronSource = sentenceConceptNodeList[wSource]
-		#somaActivationFound = HFNLPpy_biologicalSimulation.simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, contextConceptNodesList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet)	#assumes simulateBiologicalHFnetworkSequenceNodePropagateForward was executed for contiguous wSource)
-	else:
-		somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup(networkConceptNodeDict, sentenceIndex, contextConceptNodesList, wTarget, conceptNeuronTarget)	
-	return somaActivationFound
-
-def identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulation(sentenceConceptNodeList, DPgovernorNode, contextConceptNodesList):
-	wSource = DPgovernorNode.w
-	conceptNeuronSource = sentenceConceptNodeList[wSource]
-	contextConceptNodesList.append(conceptNeuronSource)
-	for DPdependentNode in DPgovernorNode.DPdependentList:
-		identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulation(sentenceConceptNodeList, DPdependentNode, contextConceptNodesList)
 	
-
 def addPredictiveSequenceToNeuronSyntacticalBranchDP(conceptNeuron, sentenceIndex, sentenceConceptNodeList, DPgovernorNode, dendriticBranch, currentBranchIndex1):
 
 	if(expectFirstBranchSequentialSegmentConnection):
@@ -221,8 +198,63 @@ def addPredictiveSequenceToNeuronSyntacticalBranchDP(conceptNeuron, sentenceInde
 
 
 
+#biologicalSimulationEncodeSyntaxInDendriticBranchStructureLinear:
 
-#INCOMPLETE;
+def calculateNeuronActivationSyntacticalBranchDPlinear(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPbranchSourceNode, DPbranchTargetNode, activationTime, connectionTargetNeuronSet, contextConceptNodesList):
+	#note use of activationTime parameters requires allowNegativeActivationTimes
+	somaActivationFound = False
+	activationTime = len(contextConceptNodesList)	#set activationTime with respect to contextConceptNodesList (the order in which source node is activated when parsing tree)
+	contextConceptNodesList.append(DPbranchSourceNode)	#contextConceptNodesList is currently only used to calculate activation time only (based on tree parse reverse order)
+	#identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulation(sentenceConceptNodeList, DPbranchSourceNode, contextConceptNodesList)
+	#print("len(contextConceptNodesList) = ", len(contextConceptNodesList))
+	wTarget = DPbranchTargetNode.w
+	conceptNeuronTarget = sentenceConceptNodeList[wTarget]
+	#print("wTarget = ", wTarget)
+	#print("conceptNeuronTarget = ", conceptNeuronTarget.nodeName)
+	if(biologicalSimulationForward):
+		#somaActivationFound = HFNLPpy_biologicalSimulation.simulateBiologicalHFnetworkSequenceNodePropagateForwardFull(networkConceptNodeDict, sentenceIndex, contextConceptNodesList, wTarget, conceptNeuronTarget)
+		wSource = DPbranchSourceNode.w
+		conceptNeuronSource = sentenceConceptNodeList[wSource]
+		somaActivationFound = HFNLPpy_biologicalSimulation.simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet)	#assumes simulateBiologicalHFnetworkSequenceNodePropagateForward was executed for contiguous wSource)
+	else:
+		print("calculateNeuronActivationSyntacticalBranchDPlinear requires biologicalSimulationForward")
+		exit()
+		#somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup(networkConceptNodeDict, sentenceIndex, contextConceptNodesList, wTarget, conceptNeuronTarget)	
+	return somaActivationFound
+	
+def identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulation(sentenceConceptNodeList, DPgovernorNode, contextConceptNodesList):
+	#adds the nodes in reverse order of tree crawl to a linear contextConceptNodesList
+	for DPdependentNode in DPgovernorNode.DPdependentList:
+		identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulation(sentenceConceptNodeList, DPdependentNode, contextConceptNodesList)
+		wSource = DPdependentNode.w
+		conceptNeuronSource = sentenceConceptNodeList[wSource]
+		contextConceptNodesList.append(conceptNeuronSource)	
+
+def identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulationHierarchical(sentenceConceptNodeList, DPgovernorNode, contextConceptNodesList):
+	#adds the most distant nodes to the start of a linear contextConceptNodesList
+	maximumBranchDepth = calculateMaximumBranchDepth(DPgovernorNode, 0)
+	#print("maximumBranchDepth = ", maximumBranchDepth)
+	for level in reversed(range(maximumBranchDepth+1)):
+		identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulationHierarchicalRecurse(sentenceConceptNodeList, DPgovernorNode, contextConceptNodesList, level, 0)
+
+def calculateMaximumBranchDepth(DPgovernorNode, level):
+	maxDepth = level
+	for DPdependentNode in DPgovernorNode.DPdependentList:
+		depth = calculateMaximumBranchDepth(DPdependentNode, level+1)
+		if(depth > maxDepth):
+			maxDepth = depth
+	return maxDepth
+
+def identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulationHierarchicalRecurse(sentenceConceptNodeList, DPgovernorNode, contextConceptNodesList, levelToAdd, level):
+	for DPdependentNode in DPgovernorNode.DPdependentList:
+		identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulationHierarchicalRecurse(sentenceConceptNodeList, DPdependentNode, contextConceptNodesList, levelToAdd, level+1)
+		if(level+1 == levelToAdd):
+			wSource = DPdependentNode.w
+			conceptNeuronSource = sentenceConceptNodeList[wSource]
+			contextConceptNodesList.append(conceptNeuronSource)
+
+
+#Constituency Parser (INCOMPLETE);
 
 def simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchCP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, CPtargetNode, activationTime, connectionTargetNeuronSet):
 	somaActivationFound = False
@@ -243,11 +275,11 @@ def simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchCP(networkConceptNo
 
 def simulateBiologicalHFnetworkSequenceSyntacticalBranchCPPropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, CPbranchSourceNode, CPbranchTargetNode, activationTime, connectionTargetNeuronSet):
 	somaActivationFound = False
-	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
+	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructureDirect):
 		if(calculateNeuronActivationSyntacticalBranchCP(sentenceConceptNodeList, CPbranchSourceNode, CPbranchTargetNode, activationTime, connectionTargetNeuronSet)):
 			somaActivationFound = True  
 	else:
-		print("simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchCP error: requires biologicalSimulationEncodeSyntaxInDendriticBranchStructure")
+		print("simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchCP error: requires biologicalSimulationEncodeSyntaxInDendriticBranchStructureDirect")
 		exit()
 	return somaActivationFound
 
