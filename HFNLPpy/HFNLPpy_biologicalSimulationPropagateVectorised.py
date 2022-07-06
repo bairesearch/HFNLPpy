@@ -29,30 +29,30 @@ from HFNLPpy_biologicalSimulationNode import *
 #if(biologicalSimulationForward):	#required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic
 if(vectoriseComputation):		#dynamic draw should use vectoriseComputation, as this activates all target neuron synapses of wSource simultaneously 
 	if(updateNeuronObjectActivationLevels):
-		drawBiologicalSimulationDynamic = True	#draw dynamic activation levels of biological simulation	#optional
+		drawBiologicalSimulationDynamic = False	#draw dynamic activation levels of biological simulation	#optional
 		if(drawBiologicalSimulationDynamic):
 			drawBiologicalSimulationDynamicPlot = True	#default: False
 			drawBiologicalSimulationDynamicSave = False	#default: True	#save to file
-			drawBiologicalSimulationDendriticTreeSentenceDynamic = True	#default: True	#draw graph for sentence neurons and their dendritic tree
+			drawBiologicalSimulationDendriticTreeSentenceDynamic = False	#default: True	#draw graph for sentence neurons and their dendritic tree
 			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
 				import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawSentenceDynamic
-			drawBiologicalSimulationDendriticTreeNetworkDynamic = False	#default: True	#draw graph for entire network (not just sentence)
+			drawBiologicalSimulationDendriticTreeNetworkDynamic = True	#default: True	#draw graph for entire network (not just sentence)
 			if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
 				import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawNetworkDynamic
 	else:
 		print("HFNLPpy_biologicalSimulationPropagateVectorised warning: updateNeuronObjectActivationLevels is required for vectoriseComputation:drawBiologicalSimulationDynamic (if drawBiologicalSimulationDynamic is required; either enable updateNeuronObjectActivationLevels or disable vectoriseComputation)")
 		drawBiologicalSimulationDynamic = False	#mandatory: False
 
-	
 printVerbose = False
+printConnectionTargetActivations = False
 
 debugCalculateNeuronActivationParallel = False
 if(debugCalculateNeuronActivationParallel):
-	sentenceIndexDebug = 10
-	wSourceDebug = 8
+	sentenceIndexDebug = 23
+	wSourceDebug = 8	#"-"
 	branchIndex1Debug = 2
 	batchIndexOfWTargetDebug = None
-	wTargetDebug = 1 #wSourceDebug+1
+	wTargetDebug = 8	#"-"
 else:
 	wTargetDebug = None
 
@@ -90,8 +90,8 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 		
 	for conceptNeuronSource in conceptNeuronSourceList:
 
-		#if(printVerbose):
-		print("simulateBiologicalHFnetworkSequenceNodePropagateParallel: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName)
+		if(printVerbose):
+			print("simulateBiologicalHFnetworkSequenceNodesPropagateParallel: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName)
 	
 		if(updateNeuronObjectActivationLevels):
 			conceptNeuronSource.activationLevel = objectAreaActivationLevelOn
@@ -268,7 +268,10 @@ def generateVectorisedSequentialSegmentInputActivationBias(currentSequentialSegm
 #parameters only used for drawBiologicalSimulationDynamic: wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList
 #does not currently support vectoriseComputionUseSequentialSegmentInputActivationLevels;
 def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationLevelBatchListBuffer, vectorisedBranchActivationTimeBatchListBuffer, vectorisedBranchObjectBatchList, activationTime, wTarget, conceptNeuronTarget, conceptNeuronBatchIndex, batchNeuronsList, wSource=None, networkConceptNodeDict=None, sentenceIndex=None, sentenceConceptNodeList=None):
-	print("calculateNeuronActivationParallel:")
+	
+	somaActivationFound = False
+	
+	#print("calculateNeuronActivationParallel:")
 	
 	#vectorisedBranchActivationLevelBatchList/vectorisedBranchActivationTimeBatchList: list of tensors for every branchIndex1 - each element is of shape [batchSize, numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments], each batch sample refers to a unique target concept
 	numberOfVerticalBranches = calculateNumberOfVerticalBranches(numberOfBranches1) 	#len(vectorisedBranchActivationLevelBatchList)
@@ -425,14 +428,21 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 			batchNeuron = batchNeuronsList[batchIndex]
 		somaActivationLevel = vectorisedSomaActivationLevel[batchIndex].numpy()
 		somaActivationLevel = bool(somaActivationLevel)
-		batchNeuron.activationLevel = somaActivationLevel
-	
-	drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget)	
+		
+		if(printConnectionTargetActivations):
+			print("calculateNeuronActivationParallel: conceptNeuronConnectionTarget = ", batchNeuron.nodeName, ", somaActivationLevel = ", somaActivationLevel)
+		
+		if(applySomaActivation(batchNeuron, conceptNeuronTarget, somaActivationLevel)):
+			somaActivationFound = True
+			
+		#if(somaActivationLevel and batchIndex == conceptNeuronBatchIndex):
+		#	somaActivationFound = True
 
-	somaActivationFound = vectorisedSomaActivationLevel[conceptNeuronBatchIndex].numpy()	#is target neuron activated?
+	#somaActivationFound = vectorisedSomaActivationLevel[conceptNeuronBatchIndex].numpy()	#is target neuron activated?
+	#somaActivationFound = bool(somaActivationFound)
 	#print("somaActivationFound = ", somaActivationFound)
-	somaActivationFound = bool(somaActivationFound)
-
+	
+	drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget)
 						
 	return somaActivationFound
 
@@ -490,7 +500,7 @@ def sliceReshapeExpandDims(t, numberOfSlices, axis):
 
 def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, wTarget=None):
 	if(drawBiologicalSimulationDynamic):
-		if(not debugCalculateNeuronActivationParallel or (sentenceIndex == sentenceIndexDebug)):
+		if(not debugCalculateNeuronActivationParallel or (sentenceIndex == sentenceIndexDebug and wSource == wSourceDebug)):
 			print("branchIndex1 = ", branchIndex1)
 			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
 				fileName = generateBiologicalSimulationDynamicFileName(True, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
@@ -505,14 +515,14 @@ def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkC
 
 def drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget=None):
 	if(drawBiologicalSimulationDynamic):
-		if(not debugCalculateNeuronActivationParallel or False):	#temp debug requirement
+		if(not debugCalculateNeuronActivationParallel or (sentenceIndex == sentenceIndexDebug and wSource == wSourceDebug)):
 			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
 				fileName = generateBiologicalSimulationFileName(True, wSource, sentenceIndex)
 				HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()
 				HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList, wTargetDebug)
 				HFNLPpy_biologicalSimulationDrawSentenceDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
 			if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
-				generateBiologicalSimulationFileName(False, wSource, sentenceIndex)
+				fileName = generateBiologicalSimulationFileName(False, wSource, sentenceIndex)
 				HFNLPpy_biologicalSimulationDrawNetworkDynamic.clearHopfieldGraph()
 				HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict, wTargetDebug)
 				HFNLPpy_biologicalSimulationDrawNetworkDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)		

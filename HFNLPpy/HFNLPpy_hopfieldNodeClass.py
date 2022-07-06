@@ -27,6 +27,7 @@ from HFNLPpy_biologicalSimulationNode import biologicalSimulationNodePropertiesI
 
 	
 storeConceptNodesByLemma = True	#else store by word (morphology included)
+convertLemmasToLowercase = True #required to ensure that capitalised start of sentence words are always converted to the same lemmas (irrespective of inconsistent propernoun detection)
 
 graphNodeTypeConcept = 1	#base/input neuron (network neuron)
 
@@ -77,6 +78,9 @@ def createConnectionKeyIfNonExistant(dic, key):
 		dic[key] = []	#create new empty list
 		
 def generateHopfieldGraphNodeName(word, lemma):
+	if(convertLemmasToLowercase):
+		lemma = lemma.lower()
+		
 	if(storeConceptNodesByLemma):
 		nodeName = lemma
 	else:

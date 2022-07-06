@@ -33,7 +33,7 @@ if(highResolutionFigure):
 	saveFigSize = (16,9)	#in inches
 	
 debugOnlyDrawActiveBranches = False
-debugOnlyDrawTargetNeuron = False
+debugOnlyDrawTargetNeuron = True
 
 drawHopfieldGraphEdgeColoursWeights = True
 drawHopfieldGraphNodeColours = True	#node colours not yet coded (pos type of concept node will be different depending on connectivity/instance context)
@@ -97,7 +97,7 @@ def drawHopfieldGraphNetwork(networkConceptNodeDict, wTarget=None):
 	#networkSize = len(networkConceptNodeDict)
 	for conceptNodeKey, conceptNode in networkConceptNodeDict.items():
 		if(not debugOnlyDrawTargetNeuron or (conceptNode.w==wTarget)):
-			drawHopfieldGraphNode(conceptNode, drawGraphNetwork, wTarget)
+			drawHopfieldGraphNode(conceptNode, drawGraphNetwork)
 	for conceptNodeKey, conceptNode in networkConceptNodeDict.items():
 		if(not debugOnlyDrawTargetNeuron):
 			drawHopfieldGraphNodeConnections(conceptNode, drawGraphNetwork)
@@ -118,10 +118,16 @@ def drawHopfieldGraphNode(conceptNode, drawGraphNetwork):
 	else:
 		colorHtml = 'darkgreen'	#soma: 	darkgreen	(orig: turquoise)
 	#print("conceptNode.networkIndex = ", conceptNode.networkIndex)
-	if(drawGraphNetwork):
-		posX, posY = (conceptNode.networkIndex*conceptNeuronIndexSeparation, 0)	#y=0: currently align concept neurons along single plane
+	
+	if(debugOnlyDrawTargetNeuron):
+		posX = len(hopfieldGraphConceptNodesList)*conceptNeuronIndexSeparation
 	else:
-		posX, posY = (conceptNode.w*conceptNeuronIndexSeparation, 0)	#y=0: currently align concept neurons along single plane
+		if(drawGraphNetwork):
+			posX = conceptNode.networkIndex*conceptNeuronIndexSeparation
+		else:
+			posX = conceptNode.w*conceptNeuronIndexSeparation
+	posY = 0	#y=0: currently align concept neurons along single plane
+	
 	#print("drawHopfieldGraphNode: ", conceptNode.nodeName)
 	hopfieldGraph.add_node(conceptNode.nodeName, pos=(posX, posY))
 	if(drawHopfieldGraphNodeColours):

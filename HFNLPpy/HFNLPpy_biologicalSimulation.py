@@ -55,7 +55,7 @@ printVerbose = False
 #if(vectoriseComputation):
 #	alwaysAddPredictionInputFromPreviousConcept = True #ensures that simulateBiologicalHFnetworkSequenceNodePropagateParallel:conceptNeuronBatchIndexFound
 
-drawBiologicalSimulation = True	#default: True
+drawBiologicalSimulation = False	#default: True
 if(drawBiologicalSimulation):
 	drawBiologicalSimulationDendriticTreeSentence = True	#default: True	#draw graph for sentence neurons and their dendritic tree
 	if(drawBiologicalSimulationDendriticTreeSentence):
@@ -91,17 +91,26 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, targetSentenc
 			conceptNeuronSourceList.clear()
 			for connectionTargetNeuron in connectionTargetNeuronSetLocal:
 				if(connectionTargetNeuron.activationLevel):
-					print("conceptNeuronSourceList.append connectionTargetNeuron = ", connectionTargetNeuron.nodeName)
+					#print("conceptNeuronSourceList.append connectionTargetNeuron = ", connectionTargetNeuron.nodeName)
 					conceptNeuronSourceList.append(connectionTargetNeuron)
 			
 			connectionTargetNeuronSet.union(connectionTargetNeuronSetLocal)
-	
-		if(somaActivationFound):
-			#if(printVerbose):
-			print("somaActivationFound")
+
+		expectPredictiveSequenceToBeFound = False
+		if(enforceMinimumEncodedSequenceLength):
+			if(wSource >= minimumEncodedSequenceLength-1):
+				expectPredictiveSequenceToBeFound = True
 		else:
-			#if(printVerbose):
-			print("!somaActivationFound: HFNLP algorithm error detected")
+			expectPredictiveSequenceToBeFound = True
+		if(expectPredictiveSequenceToBeFound):
+			if(somaActivationFound):
+				#if(printVerbose):
+				print("somaActivationFound")
+			else:
+				#if(printVerbose):
+				print("!somaActivationFound: HFNLP algorithm error detected")
+		else:
+			print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
 				
 	#reset dendritic trees
 	if(biologicalSimulationForward):
@@ -109,6 +118,31 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, targetSentenc
 			resetDendriticTreeActivation(conceptNeuron)
 
 	drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList)
+
+def verifySeedSentenceIsReplicant(articles, numberOfSentences):
+	result = False
+	if(seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant):
+		seedSentence = articles[numberOfSentences-1]
+		for sentenceIndex in range(numberOfSentences-1):
+			sentence = articles[sentenceIndex]
+			if(compareSentenceStrings(seedSentence, sentence)):
+				result = True
+		if(not result):
+			print("verifySeedSentenceIsReplicant warning: seedSentence (last sentence in dataset) was not found eariler in dataset (sentences which are being trained)")
+	return result
+	
+def compareSentenceStrings(sentence1, sentence2):
+	result = True
+	if(len(sentence1) == len(sentence2)):
+		for wordIndex in range(len(sentence1)):
+			word1 = sentence1[wordIndex]
+			word2 = sentence1[wordIndex]
+			if(word1 != word2):
+				result = False
+	else:
+		result = False	
+	return result
+	
 
 def trainBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList):
 	simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)	
@@ -132,14 +166,25 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 			print("somaActivationFound")
 		else:
 			#if(printVerbose):
-			print("!somaActivationFound: addPredictiveSequenceToNeuron")
+			print("!somaActivationFound: ", end='')
 			dendriticBranchMaxW = wTarget-1
 			expectFurtherSubbranches = True
 			if(wTarget == 1):
 				expectFurtherSubbranches = False
 			conceptNeuronTarget = sentenceConceptNodeList[wTarget]
-			HFNLPpy_biologicalSimulationGenerate.addPredictiveSequenceToNeuron(conceptNeuronTarget, sentenceIndex, sentenceConceptNodeList, conceptNeuronTarget.dendriticTree, dendriticBranchMaxW, 0, expectFurtherSubbranches)
-	
+			
+			addPredictiveSequenceToNeuron = False
+			if(enforceMinimumEncodedSequenceLength):
+				if(dendriticBranchMaxW >= minimumEncodedSequenceLength-1):
+					addPredictiveSequenceToNeuron = True
+			else:
+				addPredictiveSequenceToNeuron = True
+			if(addPredictiveSequenceToNeuron):
+				print("addPredictiveSequenceToNeuron")
+				HFNLPpy_biologicalSimulationGenerate.addPredictiveSequenceToNeuron(conceptNeuronTarget, sentenceIndex, sentenceConceptNodeList, conceptNeuronTarget.dendriticTree, dendriticBranchMaxW, 0, expectFurtherSubbranches)
+			else:
+				print("")	#add new line
+				
 	#reset dendritic trees
 	if(biologicalSimulationForward):
 		for conceptNeuron in connectionTargetNeuronSet:
@@ -164,17 +209,24 @@ def simulateBiologicalHFnetworkSequenceNodePropagateWrapper(networkConceptNodeDi
 
 
 def simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet):
+	print("simulateBiologicalHFnetworkSequenceNodePropagateForward: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName)	
 	if(vectoriseComputationCurrentDendriticInput):
 		somaActivationFound = HFNLPpy_biologicalSimulationPropagateVectorised.simulateBiologicalHFnetworkSequenceNodePropagateParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)
 	else:
-		somaActivationFound = HFNLPpy_biologicalSimulationPropagateStandard.simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)			
+		if(emulateVectorisedComputationOrder):
+			somaActivationFound = HFNLPpy_biologicalSimulationPropagateStandard.simulateBiologicalHFnetworkSequenceNodePropagateStandardEmulateVectorisedComputationOrder(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)					
+		else:
+			somaActivationFound = HFNLPpy_biologicalSimulationPropagateStandard.simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)			
 	return somaActivationFound
 
 def simulateBiologicalHFnetworkSequenceNodesPropagateForward(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSourceList, connectionTargetNeuronSet):
 	if(vectoriseComputationCurrentDendriticInput):
 		somaActivationFound = HFNLPpy_biologicalSimulationPropagateVectorised.simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)
 	else:
-		somaActivationFound = HFNLPpy_biologicalSimulationPropagateStandard.simulateBiologicalHFnetworkSequenceNodesPropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)			
+		if(emulateVectorisedComputationOrder):
+			somaActivationFound = HFNLPpy_biologicalSimulationPropagateStandard.simulateBiologicalHFnetworkSequenceNodesPropagateStandardEmulateVectorisedComputationOrder(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)				
+		else:
+			somaActivationFound = HFNLPpy_biologicalSimulationPropagateStandard.simulateBiologicalHFnetworkSequenceNodesPropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)			
 	return somaActivationFound
 	
 def simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget):

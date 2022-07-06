@@ -37,6 +37,7 @@ useDependencyParseTree = False
 if(biologicalSimulation):
 	from HFNLPpy_biologicalSimulationNode import biologicalSimulationEncodeSyntaxInDendriticBranchStructure
 	from HFNLPpy_biologicalSimulationNode import seedHFnetworkSubsequence
+	from HFNLPpy_biologicalSimulationNode import HFNLPnonrandomSeed
 	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 		useDependencyParseTree = True
 	else:
@@ -66,7 +67,7 @@ if(useDependencyParseTree):
 	else:
 		identifySyntacticalDependencyRelations = True	#mandatory 	#standard hopfield NLP graph requires words are connected (no intermediary constituency parse tree syntax nodes) 
 
-drawHopfieldGraph = True
+drawHopfieldGraph = False
 if(drawHopfieldGraph):
 	drawHopfieldGraphPlot = True
 	drawHopfieldGraphSave = False
@@ -82,6 +83,14 @@ networkSize = 0
 
 def generateHopfieldGraphNetwork(articles):
 	numberOfSentences = len(articles)
+	
+	if(HFNLPnonrandomSeed):
+		np.random.seed(0)
+		print("np.random.randint(0,9) = ", np.random.randint(0,9))
+
+	if(seedHFnetworkSubsequence):
+		HFNLPpy_biologicalSimulation.verifySeedSentenceIsReplicant(articles, numberOfSentences)
+
 	for sentenceIndex, sentence in enumerate(articles):
 		generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences)	
 
@@ -135,7 +144,7 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 			conceptNode = HopfieldNode(networkIndex, nodeName, wordVector, nodeGraphType, activationTime, biologicalSimulation, w, sentenceIndex)
 			addNodeToGraph(conceptNode)
 			if(printVerbose):
-				print("create new conceptNode; ", conceptNode.lemma)
+				print("create new conceptNode; ", conceptNode.nodeName)
 		sentenceConceptNodeList.append(conceptNode)
 						
 	if(biologicalSimulation):
@@ -233,6 +242,7 @@ def graphNodeExists(nodeName):
 def addNodeToGraph(conceptNode):
 	global networkSize
 	if(conceptNode.nodeName not in networkConceptNodeDict):
+		#print("addNodeToGraph: conceptNode.nodeName = ", conceptNode.nodeName)
 		networkConceptNodeDict[conceptNode.nodeName] = conceptNode
 		networkSize = networkSize + 1
 	else:

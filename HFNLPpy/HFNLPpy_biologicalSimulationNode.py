@@ -24,14 +24,29 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 
 
-vectoriseComputation = True	#parallel processing for optimisation
+vectoriseComputation = False	#parallel processing for optimisation
 
+deactivateConnectionTargetIfSomaActivationNotFound = True	#default:True #True: orig simulateBiologicalHFnetworkSequenceNodesPropagateParallel:calculateNeuronActivationParallel method, False: orig simulateBiologicalHFnetworkSequenceNodePropagateStandard method
+
+biologicalSimulationTestHarness = False
+HFNLPnonrandomSeed = False
+emulateVectorisedComputationOrder = False
+if(biologicalSimulationTestHarness):
+	if(not vectoriseComputation):
+		#emulateVectorisedComputationOrder requires biologicalSimulationForward, !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
+		emulateVectorisedComputationOrder = True	#change standard computation to execute in order of vectorised computation (for comparison)
+	HFNLPnonrandomSeed = True	#always generate the same set of random numbers upon execution
+		
+enforceMinimumEncodedSequenceLength = False	#do not execute addPredictiveSequenceToNeuron if predictive sequence is short (ie does not use up the majority of numberOfBranches1)
+if(enforceMinimumEncodedSequenceLength):
+	minimumEncodedSequenceLength = 4	#should be high enough to fill a significant proportion of dendrite vertical branch length (numberOfBranches1)	#~seedHFnetworkSubsequenceLength
+	
 seedHFnetworkSubsequence = False #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
 if(seedHFnetworkSubsequence):
-	#seedHFnetworkSubsequence does not currently support biologicalSimulationEncodeSyntaxInDendriticBranchStructure
-	#seedHFnetworkSubsequence requires resetWsourceNeuronDendriteAfterActivation
-	seedHFnetworkSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
+	#seedHFnetworkSubsequence currently requires !biologicalSimulationEncodeSyntaxInDendriticBranchStructure, resetWsourceNeuronDendriteAfterActivation
+	seedHFnetworkSubsequenceLength = 2	#must be < len(targetSentenceConceptNodeList)
 	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
+	seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant = True
 	
 supportForNonBinarySubbranchSize = False
 performSummationOfSequentialSegmentInputsAcrossBranch = False
@@ -89,7 +104,7 @@ if(vectoriseComputation):
 		vectoriseComputationIndependentBranches = True	#mandatory - default behaviour
 	batchSizeDefault = 100	#high batch size allowed since parallel processing simple/small scalar operations (on effective boolean synaptic inputs), lowered proportional to max (most distal) numberOfHorizontalBranches	#not used (createDendriticTreeVectorised is never called with batched=True)
 	
-	updateNeuronObjectActivationLevels = False	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
+	updateNeuronObjectActivationLevels = True	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 	if(updateNeuronObjectActivationLevels):
 		recordVectorisedBranchObjectList = True	#vectorisedBranchObjectList is required to convert vectorised activations back to denditicTree object structure (DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic:updateNeuronObjectActivationLevels (as HFNLPpy_biologicalSimulationDraw currently only supports drawing of denditicTree object structure activations)  
 	else:
@@ -497,3 +512,23 @@ def findSequentialSegmentInputBySourceNode(sequentialSegment, sourceConceptNode)
 		print("findSequentialSegmentInputBySourceNode error: currently requires preventGenerationOfDuplicateConnections")
 		exit()
 	return foundSequentialSegmentInput, sequentialSegmentInput
+
+def applySomaActivation(conceptNeuronConnectionTarget, conceptNeuronTarget, somaActivationLevel, connectionTargetActivationFoundSet=None):
+	somaActivationFound = False
+	if(deactivateConnectionTargetIfSomaActivationNotFound):
+		conceptNeuronConnectionTarget.activationLevel = somaActivationLevel	
+	if(somaActivationLevel):
+		if(not deactivateConnectionTargetIfSomaActivationNotFound):
+			conceptNeuronConnectionTarget.activationLevel = somaActivationLevel
+			if(biologicalSimulationTestHarness):
+				if(emulateVectorisedComputationOrder):
+					if(conceptNeuronConnectionTarget not in(connectionTargetActivationFoundSet)):
+						connectionTargetActivationFoundSet.add(conceptNeuronConnectionTarget)	#current implementation only words for !deactivateConnectionTargetIfSomaActivationNotFound
+						print("biologicalSimulationTestHarness: conceptNeuronConnectionTarget somaActivationLevel = ", conceptNeuronConnectionTarget.nodeName)
+				else:
+					print("biologicalSimulationTestHarness: conceptNeuronConnectionTarget somaActivationLevel = ", conceptNeuronConnectionTarget.nodeName)
+		if(conceptNeuronConnectionTarget == conceptNeuronTarget):
+			somaActivationFound = True
+	return somaActivationFound
+	
+						
