@@ -22,17 +22,19 @@ import numpy as np
 
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
+from HFNLPpy_biologicalSimulationGlobalDefs import *
 from HFNLPpy_biologicalSimulationNode import *
+
 
 #if(biologicalSimulationForward):	#required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic?
 drawBiologicalSimulationDynamic = False	#draw dynamic activation levels of biological simulation
 if(drawBiologicalSimulationDynamic):
 	drawBiologicalSimulationDynamicPlot = True	#default: False
 	drawBiologicalSimulationDynamicSave = False	#default: True	#save to file
-	drawBiologicalSimulationDendriticTreeSentenceDynamic = False	#default: True	#draw graph for sentence neurons and their dendritic tree
+	drawBiologicalSimulationDendriticTreeSentenceDynamic = True	#default: True	#draw graph for sentence neurons and their dendritic tree
 	if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
 		import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawSentenceDynamic
-	drawBiologicalSimulationDendriticTreeNetworkDynamic = True	#default: True	#draw graph for entire network (not just sentence)
+	drawBiologicalSimulationDendriticTreeNetworkDynamic = False	#default: True	#draw graph for entire network (not just sentence)
 	if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
 		import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawNetworkDynamic
 
@@ -45,6 +47,8 @@ if(debugCalculateNeuronActivationStandard):
 	sentenceIndexDebug = 23
 	wSourceDebug = 8	#"-"
 	wTargetDebug = 8	#"-"	
+else:
+	wTargetDebug = None
 	
 #emulateVectorisedComputationOrder:
 
@@ -335,7 +339,7 @@ def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkC
 	if(drawBiologicalSimulationDynamic):
 		if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug and wSource == wSourceDebug)):
 			if(emulateVectorisedComputationOrder):
-				print("branchIndex1 = ", branchIndex1)
+				print("branchIndex1 = ", branchIndex1, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
 			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
 				fileName = generateBiologicalSimulationDynamicFileName(True, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
 				HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()

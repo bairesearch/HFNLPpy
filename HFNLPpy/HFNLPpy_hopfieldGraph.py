@@ -71,7 +71,7 @@ drawHopfieldGraph = False
 if(drawHopfieldGraph):
 	drawHopfieldGraphPlot = True
 	drawHopfieldGraphSave = False
-	drawHopfieldGraphSentence = True
+	drawHopfieldGraphSentence = False
 	if(drawHopfieldGraphSentence):
 		import HFNLPpy_hopfieldGraphDraw as ATNLPtf_hopfieldGraphDrawSentence
 	drawHopfieldGraphNetwork = True	#default: True	#draw graph for entire network (not just sentence)

@@ -40,9 +40,9 @@ import numpy as np
 
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
+from HFNLPpy_biologicalSimulationGlobalDefs import *
 from HFNLPpy_biologicalSimulationNode import *
 import HFNLPpy_biologicalSimulationGenerate
-import HFNLPpy_hopfieldOperations
 if(vectoriseComputation):
 	import HFNLPpy_biologicalSimulationPropagateVectorised
 else:
@@ -181,7 +181,7 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 				addPredictiveSequenceToNeuron = True
 			if(addPredictiveSequenceToNeuron):
 				print("addPredictiveSequenceToNeuron")
-				HFNLPpy_biologicalSimulationGenerate.addPredictiveSequenceToNeuron(conceptNeuronTarget, sentenceIndex, sentenceConceptNodeList, conceptNeuronTarget.dendriticTree, dendriticBranchMaxW, 0, expectFurtherSubbranches)
+				HFNLPpy_biologicalSimulationGenerate.addPredictiveSequenceToNeuron(conceptNeuronTarget, sentenceIndex, sentenceConceptNodeList, conceptNeuronTarget.dendriticTree, dendriticBranchMaxW, 0, 0, expectFurtherSubbranches)
 			else:
 				print("")	#add new line
 				

@@ -25,6 +25,7 @@ plt.ioff()	# Turn interactive plotting off
 from math import cos, sin, radians
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
+from HFNLPpy_biologicalSimulationGlobalDefs import *
 from HFNLPpy_biologicalSimulationNode import *
 
 highResolutionFigure = True
@@ -33,7 +34,7 @@ if(highResolutionFigure):
 	saveFigSize = (16,9)	#in inches
 	
 debugOnlyDrawActiveBranches = False
-debugOnlyDrawTargetNeuron = True
+debugOnlyDrawTargetNeuron = False
 
 drawHopfieldGraphEdgeColoursWeights = True
 drawHopfieldGraphNodeColours = True	#node colours not yet coded (pos type of concept node will be different depending on connectivity/instance context)
@@ -54,7 +55,7 @@ if(supportForNonBinarySubbranchSize):
 		horizontalBranchSeparationDivergence = 10
 	#branchIndex2Separation = conceptNeuronIndexSeparation/numberOfBranches2/1.5
 
-sequentialSegmentIndexSeparation = branchIndex1Separation	#10.0/numberOfBranchSequentialSegments/2.0
+sequentialSegmentIndexSeparation = branchIndex1Separation/numberOfBranchSequentialSegments	#10.0/numberOfBranchSequentialSegments/2.0
 sequentialSegmentInputIndexSeparation = 0.5
 
 spineSeparation = 0.2
@@ -164,10 +165,14 @@ def drawHopfieldGraphNodeDendriticBranch(conceptNode, posX, posY, dendriticBranc
 		orthogonalNodeName = None
 	if(not debugOnlyDrawActiveBranches or dendriticBranch.activationLevel):
 		drawHopfieldGraphBranch(currentBranchIndex1, previousBranch, dendriticBranch, drawOrthogonalBranchNode=drawOrthogonalBranchNode, orthogonalNodeName=orthogonalNodeName)	#draw branch edge
-							
+	
+	if(drawOrthogonalBranchNode and drawDendriticBranchOrthogonal):
+		previousSequentialSegmentNodeName = orthogonalNodeName					
+	else:
+		previousSequentialSegmentNodeName = previousBranch.nodeName
 	for currentSequentialSegmentIndex, currentSequentialSegment in enumerate(dendriticBranch.sequentialSegments):
-		posYsequentialSegment = posY+currentSequentialSegmentIndex*sequentialSegmentIndexSeparation
-		drawHopfieldGraphNodeSequentialSegment(currentBranchIndex1, conceptNode, posX, posYsequentialSegment, currentSequentialSegment, currentSequentialSegmentIndex, previousBranch, drawOrthogonalBranchNode=drawOrthogonalBranchNode, orthogonalNodeName=orthogonalNodeName)
+		posYsequentialSegment = posY+currentSequentialSegmentIndex*sequentialSegmentIndexSeparation - (sequentialSegmentIndexSeparation*(numberOfBranchSequentialSegments-1))
+		previousSequentialSegmentNodeName = drawHopfieldGraphNodeSequentialSegment(currentBranchIndex1, conceptNode, posX, posYsequentialSegment, currentSequentialSegment, currentSequentialSegmentIndex, previousSequentialSegmentNodeName)
 		
 	for currentBranchIndex2, subbranch in enumerate(dendriticBranch.subbranches):	
 		horizontalSeparation = branchIndex2Separation/(pow(horizontalBranchSeparationDivergence, currentBranchIndex1))	#normalise/shorten at greater distance from soma
@@ -201,14 +206,14 @@ def drawHopfieldGraphBranch(currentBranchIndex1, parentBranch, currentBranch, dr
 		else:
 			hopfieldGraph.add_edge(parentBranch.nodeName, currentBranch.nodeName)
 			
-def drawHopfieldGraphNodeSequentialSegment(currentBranchIndex1, conceptNode, posX, posY, sequentialSegment, currentSequentialSegmentIndex, previousBranch, drawOrthogonalBranchNode=True, orthogonalNodeName=None):
+def drawHopfieldGraphNodeSequentialSegment(currentBranchIndex1, conceptNode, posX, posY, sequentialSegment, currentSequentialSegmentIndex, previousSequentialSegmentNodeName):
 	colorHtml = 'green'	#branch: green	#'OR #ffffff' invisible: white
 	hopfieldGraph.add_node(sequentialSegment.nodeName, pos=(posX, posY))
 	if(drawHopfieldGraphNodeColours):
 		hopfieldGraphNodeColorMap.append(colorHtml)
 		hopfieldGraphNodeSizeMap.append(nodeSizeDraw)
 	if(not debugOnlyDrawActiveBranches or sequentialSegment.activationLevel):
-		drawHopfieldGraphSequentialSegment(currentBranchIndex1, sequentialSegment, currentSequentialSegmentIndex, previousBranch, drawOrthogonalBranchNode=drawOrthogonalBranchNode, orthogonalNodeName=orthogonalNodeName)	#draw sequential segment edge
+		drawHopfieldGraphSequentialSegment(currentBranchIndex1, sequentialSegment, currentSequentialSegmentIndex, previousSequentialSegmentNodeName)	#draw sequential segment edge
 
 	#for currentSequentialSegmentInputIndex, currentSequentialSegmentInput in enumerate(sequentialSegment.inputs):
 	for currentSequentialSegmentInputIndexDynamic, currentSequentialSegmentInput in enumerate(sequentialSegment.inputs.values()):	#note currentSequentialSegmentInputIndexDynamic is valid even if inputs have been removed from dictionary (although order not guaranteed)
@@ -217,10 +222,11 @@ def drawHopfieldGraphNodeSequentialSegment(currentBranchIndex1, conceptNode, pos
 		else:
 			currentSequentialSegmentInputIndex = currentSequentialSegmentInputIndexDynamic
 		#print("currentSequentialSegmentInputIndex = ", currentSequentialSegmentInputIndex)
-		posYsegmentInput = posY+(currentSequentialSegmentInputIndex*sequentialSegmentInputIndexSeparation*spineSeparation) - branchIndex1Separation + nodeSize	#+nodeSize to separate visualisation from sequential segment node	#-branchIndex1Separation to position first input of first sequential segment at base of branch
+		posYsegmentInput = posY+(currentSequentialSegmentInputIndex*sequentialSegmentInputIndexSeparation*spineSeparation) - sequentialSegmentIndexSeparation + nodeSize	#+nodeSize to separate visualisation from sequential segment node	#-branchIndex1Separation to position first input of first sequential segment at base of branch
 		drawHopfieldGraphNodeSequentialSegmentInput(conceptNode, posX, posYsegmentInput, currentSequentialSegmentInput, currentSequentialSegmentInputIndex)
-
-def drawHopfieldGraphSequentialSegment(currentBranchIndex1, sequentialSegment, currentSequentialSegmentIndex, parentBranch, drawOrthogonalBranchNode=False, orthogonalNodeName=None):
+	return sequentialSegment.nodeName
+	
+def drawHopfieldGraphSequentialSegment(currentBranchIndex1, sequentialSegment, currentSequentialSegmentIndex, previousSequentialSegmentNodeName):
 	if(drawHopfieldGraphEdgeColoursWeights):
 		if(sequentialSegment.activationLevel):
 			color = 'cyan'	#active dendrite: cyan
@@ -228,17 +234,11 @@ def drawHopfieldGraphSequentialSegment(currentBranchIndex1, sequentialSegment, c
 			color = 'green'	#dendrite: green
 		weight = 5.0/(currentBranchIndex1+1)
 
-	if(drawDendriticBranchOrthogonal and drawOrthogonalBranchNode):
-		#print("orthogonalNodeName = ", orthogonalNodeName)
-		if(drawHopfieldGraphEdgeColoursWeights):
-			hopfieldGraph.add_edge(orthogonalNodeName, sequentialSegment.nodeName, color=color, weight=weight)
-		else:
-			hopfieldGraph.add_edge(orthogonalNodeName, sequentialSegment.nodeName)
+	#print("orthogonalNodeName = ", orthogonalNodeName)
+	if(drawHopfieldGraphEdgeColoursWeights):
+		hopfieldGraph.add_edge(previousSequentialSegmentNodeName, sequentialSegment.nodeName, color=color, weight=weight)
 	else:
-		if(drawHopfieldGraphEdgeColoursWeights):
-			hopfieldGraph.add_edge(parentBranch.nodeName, sequentialSegment.nodeName, color=color, weight=weight)	#FUTURE: consider setting color based on spatioTemporalIndex
-		else:
-			hopfieldGraph.add_edge(parentBranch.nodeName, sequentialSegment.nodeName)
+		hopfieldGraph.add_edge(previousSequentialSegmentNodeName, sequentialSegment.nodeName)
 
 def drawHopfieldGraphNodeSequentialSegmentInput(conceptNode, posX, posY, sequentialSegmentInput, currentSequentialSegmentInputIndex):
 
