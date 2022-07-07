@@ -216,6 +216,31 @@ def generateSequentialSegmentInputName(conceptNode):
 	return nodeName
 
 
+def resetConnectionTargetNeurons(connectionTargetNeuronSet, duringSourcePropagation, conceptNeuronTarget=None):
+	if(duringSourcePropagation):
+		if(resetConnectionTargetNeuronDendriteAfterActivation):
+			resetConnectionTargetNeuronsBasic(connectionTargetNeuronSet, duringSourcePropagation)
+		if(resetTargetNeuronDendriteAfterActivation):
+			resetDendriticTreeActivation(conceptNeuronTarget)
+	else:
+		#if(not resetConnectionTargetNeuronDendriteAfterActivation):
+		resetConnectionTargetNeuronsBasic(connectionTargetNeuronSet, duringSourcePropagation)	#reset all encountered connectionTargets irrespective of connectionTargetNeuron.activationLevel after sentence sourcePropagation complete
+			
+def resetConnectionTargetNeuronsBasic(connectionTargetNeuronSet, duringSourcePropagation):
+	for connectionTargetNeuron in connectionTargetNeuronSet:
+		if(duringSourcePropagation):
+			if(connectionTargetNeuron.activationLevel):
+				#print("resetConnectionTargetNeuronsBasic: connectionTargetNeuron.activationLevel = ", connectionTargetNeuron.nodeName)
+				resetDendriticTreeActivation(connectionTargetNeuron)
+		else:
+			resetDendriticTreeActivation(connectionTargetNeuron)
+	connectionTargetNeuronSet.clear()
+		
+def resetSourceNeuronAfterActivation(conceptNeuronSource):
+	if(resetSourceNeuronAxonAfterActivation):
+		resetAxonsActivation(conceptNeuronSource)
+	if(resetSourceNeuronDendriteAfterActivation):
+		resetDendriticTreeActivation(conceptNeuronSource)
 
 def resetDendriticTreeActivation(conceptNeuron):
 	conceptNeuron.activationLevel = objectAreaActivationLevelOff

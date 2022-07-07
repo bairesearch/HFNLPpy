@@ -67,7 +67,7 @@ if(drawBiologicalSimulation):
 
 def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList):
 	
-	connectionTargetNeuronSet = set()
+	connectionTargetNeuronSet = set()	#for posthoc network deactivation
 	if(not seedHFnetworkSubsequenceBasic):
 		conceptNeuronSourceList = []
 
@@ -81,7 +81,7 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, targetSentenc
 			activationTime = calculateActivationTimeSequence(wSource)
 			somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet)
 		else:
-			connectionTargetNeuronSetLocal = set()	#for posthoc network deactivation
+			connectionTargetNeuronSetLocal = set()
 			activationTime = calculateActivationTimeSequence(wSource)
 			if(wSource < seedHFnetworkSubsequenceLength):
 				somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSetLocal)
@@ -93,8 +93,9 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, targetSentenc
 				if(connectionTargetNeuron.activationLevel):
 					#print("conceptNeuronSourceList.append connectionTargetNeuron = ", connectionTargetNeuron.nodeName)
 					conceptNeuronSourceList.append(connectionTargetNeuron)
-			
-			connectionTargetNeuronSet.union(connectionTargetNeuronSetLocal)
+			connectionTargetNeuronSet = connectionTargetNeuronSet.union(connectionTargetNeuronSetLocal)
+			if(biologicalSimulationForward):
+				resetConnectionTargetNeurons(connectionTargetNeuronSetLocal, True, conceptNeuronTarget)	
 
 		expectPredictiveSequenceToBeFound = False
 		if(enforceMinimumEncodedSequenceLength):
@@ -111,11 +112,9 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, targetSentenc
 				print("!somaActivationFound: HFNLP algorithm error detected")
 		else:
 			print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
-				
-	#reset dendritic trees
-	if(biologicalSimulationForward):
-		for conceptNeuron in connectionTargetNeuronSet:
-			resetDendriticTreeActivation(conceptNeuron)
+			
+	if(biologicalSimulationForward):	
+		resetConnectionTargetNeurons(connectionTargetNeuronSet, False)
 
 	drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList)
 
@@ -159,8 +158,15 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 	connectionTargetNeuronSet = set()	#for posthoc network deactivation
 	
 	for wTarget in range(1, sentenceLength):	#wTarget>=1: do not create (recursive) connection from conceptNode to conceptNode branchIndex1=0
-		somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagateWrapper(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, connectionTargetNeuronSet)
-
+		conceptNeuronTarget = sentenceConceptNodeList[wTarget]
+		
+		connectionTargetNeuronSetLocal = set()
+		somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagateWrapper(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, connectionTargetNeuronSetLocal)
+		
+		connectionTargetNeuronSet = connectionTargetNeuronSet.union(connectionTargetNeuronSetLocal)
+		if(biologicalSimulationForward):
+			resetConnectionTargetNeurons(connectionTargetNeuronSetLocal, True, conceptNeuronTarget)	
+						
 		if(somaActivationFound):
 			#if(printVerbose):
 			print("somaActivationFound")
@@ -171,7 +177,6 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 			expectFurtherSubbranches = True
 			if(wTarget == 1):
 				expectFurtherSubbranches = False
-			conceptNeuronTarget = sentenceConceptNodeList[wTarget]
 			
 			addPredictiveSequenceToNeuron = False
 			if(enforceMinimumEncodedSequenceLength):
@@ -187,8 +192,7 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 				
 	#reset dendritic trees
 	if(biologicalSimulationForward):
-		for conceptNeuron in connectionTargetNeuronSet:
-			resetDendriticTreeActivation(conceptNeuron)
+		resetConnectionTargetNeurons(connectionTargetNeuronSet, False)
 
 	drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
 
@@ -242,13 +246,18 @@ def simulateBiologicalHFnetworkSequenceNodePropagateForwardFull(networkConceptNo
 	#orig for wSource in range(0, wTarget):
 		conceptNeuronSource = sentenceConceptNodeList[wSource]
 		activationTime = calculateActivationTimeSequence(wSource)
-		somaActivationFoundTemp = simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet)
+		
+		connectionTargetNeuronSetLocal = set()
+		somaActivationFoundTemp = simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSetLocal)
+		
 		if(wSource == len(sentenceConceptNodeList)-1):
 			if(somaActivationFoundTemp):
 				somaActivationFound = True
-			
-	for conceptNeuron in connectionTargetNeuronSet:
-		resetDendriticTreeActivation(conceptNeuron)
+		
+		connectionTargetNeuronSet = connectionTargetNeuronSet.union(connectionTargetNeuronSetLocal)
+		resetConnectionTargetNeurons(connectionTargetNeuronSetLocal, True, conceptNeuronTarget)
+	
+	resetConnectionTargetNeurons(connectionTargetNeuronSet, False)
 		
 	return somaActivationFound
 

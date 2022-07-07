@@ -43,8 +43,8 @@ if(enforceMinimumEncodedSequenceLength):
 	
 seedHFnetworkSubsequence = False #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
 if(seedHFnetworkSubsequence):
-	#seedHFnetworkSubsequence currently requires !biologicalSimulationEncodeSyntaxInDendriticBranchStructure, resetWsourceNeuronDendriteAfterActivation
-	seedHFnetworkSubsequenceLength = 2	#must be < len(targetSentenceConceptNodeList)
+	#seedHFnetworkSubsequence currently requires !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
+	seedHFnetworkSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
 	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
 	seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant = True
 	
@@ -149,8 +149,19 @@ if(vectoriseComputation):
 	biologicalSimulationForward = True	#mandatory (only implementation) #required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic
 else:
 	biologicalSimulationForward = True	#optional	#orig implementation; False (simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup)
+
+resetSourceNeuronDendriteAfterActivation = False	#initialise (dependent var)
+resetConnectionTargetNeuronDendriteAfterActivation = False	#initialise (dependent var)
+resetTargetNeuronDendriteAfterActivation = False	#initialise (dependent var)
 if(biologicalSimulationForward):
-	resetWsourceNeuronDendriteAfterActivation = True
+	resetSourceNeuronDendriteAfterActivation = True	#optional	#True: orig implementation	#not compatible with recursive connections (ie nodeX -> nodeX; connection created from repeated words in sentence)	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
+	if(not resetSourceNeuronDendriteAfterActivation):
+		resetConnectionTargetNeuronDendriteAfterActivation = True	#optional	#reset all connection target neuron dendrites after activation	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
+		if(not resetConnectionTargetNeuronDendriteAfterActivation):
+			resetTargetNeuronDendriteAfterActivation = True	#only reset expected target neuron dendrites after activation	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
+else:
+	resetTargetNeuronDendriteAfterActivation = True	#mandatory
+resetSourceNeuronAxonAfterActivation = True	#mandatory
 
 if(vectoriseComputation):
 	recordSequentialSegmentInputActivationLevels = True	#optional

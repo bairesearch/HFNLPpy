@@ -31,10 +31,10 @@ drawBiologicalSimulationDynamic = False	#draw dynamic activation levels of biolo
 if(drawBiologicalSimulationDynamic):
 	drawBiologicalSimulationDynamicPlot = True	#default: False
 	drawBiologicalSimulationDynamicSave = False	#default: True	#save to file
-	drawBiologicalSimulationDendriticTreeSentenceDynamic = True	#default: True	#draw graph for sentence neurons and their dendritic tree
+	drawBiologicalSimulationDendriticTreeSentenceDynamic = False	#default: True	#draw graph for sentence neurons and their dendritic tree
 	if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
 		import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawSentenceDynamic
-	drawBiologicalSimulationDendriticTreeNetworkDynamic = False	#default: True	#draw graph for entire network (not just sentence)
+	drawBiologicalSimulationDendriticTreeNetworkDynamic = True	#default: True	#draw graph for entire network (not just sentence)
 	if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
 		import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawNetworkDynamic
 
@@ -44,9 +44,9 @@ printConnectionTargetActivations = False
 
 debugCalculateNeuronActivationStandard = False
 if(debugCalculateNeuronActivationStandard):
-	sentenceIndexDebug = 23
-	wSourceDebug = 8	#"-"
-	wTargetDebug = 8	#"-"	
+	sentenceIndexDebug = 2
+	wSourceDebug = 11	#"-"
+	wTargetDebug = 12	#"-"	
 else:
 	wTargetDebug = None
 	
@@ -64,9 +64,7 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateStandardEmulateVectorisedCo
 			drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, wTarget)
 		
 	for conceptNeuronSource in conceptNeuronSourceList:
-		resetAxonsActivation(conceptNeuronSource)
-		if(resetWsourceNeuronDendriteAfterActivation):
-			resetDendriticTreeActivation(conceptNeuronSource)
+		resetSourceNeuronAfterActivation(conceptNeuronSource)
 			
 	return somaActivationFound
 	
@@ -80,9 +78,7 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandardEmulateVectorisedCom
 				somaActivationFound = True			
 			drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, wTarget)
 		
-	resetAxonsActivation(conceptNeuronSource)
-	if(resetWsourceNeuronDendriteAfterActivation):
-		resetDendriticTreeActivation(conceptNeuronSource)
+	resetSourceNeuronAfterActivation(conceptNeuronSource)
 	
 	return somaActivationFound
 	
@@ -128,9 +124,7 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 				drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
 	
 	if(not emulateVectorisedComputationOrder):
-		resetAxonsActivation(conceptNeuronSource)
-		if(resetWsourceNeuronDendriteAfterActivation):
-			resetDendriticTreeActivation(conceptNeuronSource)
+		resetSourceNeuronAfterActivation(conceptNeuronSource)
 			
 	return somaActivationFound
 						
@@ -150,7 +144,8 @@ def simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup(networkConcept
 		if(simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget)):
 			somaActivationFound = True
 			
-	resetDendriticTreeActivation(conceptNeuronTarget)
+	if(resetTargetNeuronDendriteAfterActivation):
+		resetDendriticTreeActivation(conceptNeuronTarget)
 	
 	return somaActivationFound
 
@@ -181,8 +176,9 @@ def simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget(networkC
 
 			drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)	
 
-		resetAxonsActivationConnectionList(connectionList)
-		conceptNeuronSource.activationLevel = objectAreaActivationLevelOff
+		if(resetSourceNeuronAxonAfterActivation):
+			resetAxonsActivationConnectionList(connectionList)
+			conceptNeuronSource.activationLevel = objectAreaActivationLevelOff
 			
 	return somaActivationFound
 					
@@ -343,6 +339,7 @@ def findConnectionSynapseInSequentialSegment(currentSequentialSegment, connectio
 def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, wTarget):
 	if(drawBiologicalSimulationDynamic):
 		if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug and wSource == wSourceDebug)):
+		#if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug)):
 			if(emulateVectorisedComputationOrder):
 				print("branchIndex1 = ", branchIndex1, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
 			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
@@ -359,6 +356,7 @@ def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkC
 def drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList):
 	if(drawBiologicalSimulationDynamic):
 		if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug and wSource == wSourceDebug)):
+		#if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug)):
 			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
 				fileName = generateBiologicalSimulationFileName(True, wSource, sentenceIndex)
 				HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()

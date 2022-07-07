@@ -34,10 +34,10 @@ if(vectoriseComputation):		#dynamic draw should use vectoriseComputation, as thi
 		if(drawBiologicalSimulationDynamic):
 			drawBiologicalSimulationDynamicPlot = True	#default: False
 			drawBiologicalSimulationDynamicSave = False	#default: True	#save to file
-			drawBiologicalSimulationDendriticTreeSentenceDynamic = True	#default: True	#draw graph for sentence neurons and their dendritic tree
+			drawBiologicalSimulationDendriticTreeSentenceDynamic = False	#default: True	#draw graph for sentence neurons and their dendritic tree
 			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
 				import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawSentenceDynamic
-			drawBiologicalSimulationDendriticTreeNetworkDynamic = False	#default: True	#draw graph for entire network (not just sentence)
+			drawBiologicalSimulationDendriticTreeNetworkDynamic = True	#default: True	#draw graph for entire network (not just sentence)
 			if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
 				import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawNetworkDynamic
 	else:
@@ -176,11 +176,9 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 
 	for conceptNeuronSource in conceptNeuronSourceList:
 		if(updateNeuronObjectActivationLevels):
-			resetAxonsActivation(conceptNeuronSource)
-			if(resetWsourceNeuronDendriteAfterActivation):
-				resetDendriticTreeActivation(conceptNeuronSource)
+			resetSourceNeuronAfterActivation(conceptNeuronSource)
 		else:
-			if(resetWsourceNeuronDendriteAfterActivation):
+			if(resetSourceNeuronDendriteAfterActivation):
 				resetDendriticTreeActivationVectorised(conceptNeuronSource)
 
 	return somaActivationFound
