@@ -244,14 +244,13 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 
 			sequentialSegmentAlreadyActive = False
 			if(sequentialSegmentActivationLevelAboveZero(currentSequentialSegment.activationLevel)):	#required to ensure currentSequentialSegment.activationTime is valid
-				#if(not(sequentialSegmentActivationStatePrior) or verifySequentialActivationTime(currentSequentialSegment.activationTime, sequentialSegmentActivationTimePrior)):	#ignore existing activation level if it occured at an earlier/same time than/as sequentialSegmentActivationTimePrior	#this test should not be required with preventReactivationOfSequentialSegments
 				if(calculateSequentialSegmentActivationState(currentSequentialSegment.activationLevel)):
 					sequentialSegmentAlreadyActive = True
 					sequentialSegmentActivationState = objectAreaActivationLevelOn
 				sequentialSegmentActivationLevel = currentSequentialSegment.activationLevel
 				sequentialSegmentActivationTime = currentSequentialSegment.activationTime
 
-			if(not preventReactivationOfSequentialSegments or not sequentialSegmentAlreadyActive):
+			if(overwriteSequentialSegments or not sequentialSegmentAlreadyActive):
 				foundConnectionSynapse, currentSequentialSegmentInput = findConnectionSynapseInSequentialSegment(currentSequentialSegment, connection)
 				if(foundConnectionSynapse):
 					inputActivationLevel = calculateInputActivationLevel(connection)
@@ -285,8 +284,19 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 							sequentialSegmentActivationState = objectAreaActivationLevelOn
 						currentSequentialSegment.activationLevel = sequentialSegmentActivationLevel
 						currentSequentialSegment.activationTime = sequentialSegmentActivationTime
-
+					
 						drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, wTarget)
+					else:
+						if(deactivateSequentialSegmentsIfTimeTestsFail):
+							#print("deactivateSequentialSegmentsIfTimeTestsFail")
+							#sequentiality requirements (no longer) met - deactivate sequential segment
+							sequentialSegmentActivationLevel = objectLocalActivationLevelOff
+							sequentialSegmentActivationTime = currentSequentialSegment.activationTime	#no change in last activation time
+							sequentialSegmentActivationState = objectAreaActivationLevelOff
+							currentSequentialSegment.activationLevel = sequentialSegmentActivationLevel
+							currentSequentialSegment.activationTime = sequentialSegmentActivationTime	
+													
+							drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, wTarget)
 		else:
 			sequentialSegmentActivationState = sequentialSegmentActivationStatePrior
 			sequentialSegmentActivationLevel = calculateSequentialSegmentActivationState(sequentialSegmentActivationState)
@@ -298,7 +308,7 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 		sequentialSegmentActivationStatePrior = sequentialSegmentActivationState
 		sequentialSegmentActivationTimePrior = sequentialSegmentActivationTime
 
-	#	print("branch: currentBranchIndex1 = ", currentBranchIndex1, ", connection.nodeTarget = ", connection.nodeTarget.nodeName, ", connection.nodeSource = ", connection.nodeSource.nodeName, ", sequentialSegmentActivationLevelPrior = ", sequentialSegmentActivationLevelPrior)
+	#print("branch: currentBranchIndex1 = ", currentBranchIndex1, ", connection.nodeTarget = ", connection.nodeTarget.nodeName, ", connection.nodeSource = ", connection.nodeSource.nodeName, ", sequentialSegmentActivationLevelPrior = ", sequentialSegmentActivationLevelPrior)
 
 	if(performSummationOfSequentialSegmentInputsAcrossBranch):
 		branchActivationLevel = sequentialSegmentActivationLevelPrior
@@ -307,7 +317,6 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 	branchActivationTime = sequentialSegmentActivationTimePrior
 	currentBranch.activationLevel = branchActivationLevel
 	currentBranch.activationTime = branchActivationTime
-	#sequentialSegmentsActive = True
 
 	if(branchActivationLevel):
 		if(printVerbose):
@@ -321,16 +330,12 @@ def findConnectionSynapseInSequentialSegment(currentSequentialSegment, connectio
 	currentSequentialSegmentInput = None
 	if(preventGenerationOfDuplicateConnections):
 		foundSequentialSegmentInput, currentSequentialSegmentInput = findSequentialSegmentInputBySourceNode(currentSequentialSegment, connection.nodeSource)
-		#if(connection.nodeSource.nodeName in currentSequentialSegment.inputs):
-		#	currentSequentialSegmentInput = currentSequentialSegment.inputs[connection.nodeSource.nodeName]
 		if(foundSequentialSegmentInput):
 			if(connection.nodeTargetSequentialSegmentInput == currentSequentialSegmentInput):
 				foundConnectionSynapse = True
 	else:
-		#for currentSequentialSegmentInputTest in currentSequentialSegment.inputs:
 		for currentSequentialSegmentInputTest in currentSequentialSegment.inputs.values():
 			if(connection.nodeTargetSequentialSegmentInput == currentSequentialSegmentInputTest):
-				#print("foundConnectionSynapse")
 				foundConnectionSynapse = True
 				currentSequentialSegmentInput = currentSequentialSegmentInputTest
 	return foundConnectionSynapse, currentSequentialSegmentInput	

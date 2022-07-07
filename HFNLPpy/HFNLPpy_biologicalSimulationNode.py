@@ -352,8 +352,6 @@ def generateBiologicalSimulationDynamicFileName(sentenceOrNetwork, wSource, bran
 def findSequentialSegmentInputBySourceNode(sequentialSegment, sourceConceptNode):
 	foundSequentialSegmentInput = False
 	sequentialSegmentInput = None
-	#for sequentialSegmentInput in sequentialSegment.inputs:
-		#if(sequentialSegmentInput.nodeSource == sourceConceptNode):
 	if(preventGenerationOfDuplicateConnections):
 		if(sourceConceptNode.nodeName in sequentialSegment.inputs):		
 			foundSequentialSegmentInput = True	

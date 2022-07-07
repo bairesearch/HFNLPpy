@@ -29,8 +29,8 @@ vectoriseComputation = True	#parallel processing for optimisation
 deactivateConnectionTargetIfSomaActivationNotFound = True	#default:True #True: orig simulateBiologicalHFnetworkSequenceNodesPropagateParallel:calculateNeuronActivationParallel method, False: orig simulateBiologicalHFnetworkSequenceNodePropagateStandard method
 
 biologicalSimulationTestHarness = False
-HFNLPnonrandomSeed = False
-emulateVectorisedComputationOrder = False
+HFNLPnonrandomSeed = False	#initialise (dependent var)
+emulateVectorisedComputationOrder = False	#initialise (dependent var)
 if(biologicalSimulationTestHarness):
 	if(not vectoriseComputation):
 		#emulateVectorisedComputationOrder requires biologicalSimulationForward, !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
@@ -48,11 +48,11 @@ if(seedHFnetworkSubsequence):
 	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
 	seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant = True
 	
-supportForNonBinarySubbranchSize = False
-performSummationOfSequentialSegmentInputsAcrossBranch = False
-weightedSequentialSegmentInputs = False
-allowNegativeActivationTimes = False	#calculateNeuronActivationSyntacticalBranchDPlinear current implementation does not require allowNegativeActivationTimes
-expectFirstBranchSequentialSegmentConnection = True	#True:default	#False: orig implementation
+supportForNonBinarySubbranchSize = False	#initialise (dependent var)
+performSummationOfSequentialSegmentInputsAcrossBranch = False	#initialise (dependent var)
+weightedSequentialSegmentInputs = False	#initialise (dependent var)
+allowNegativeActivationTimes = False	#initialise (dependent var)	#calculateNeuronActivationSyntacticalBranchDPlinear current implementation does not require allowNegativeActivationTimes
+expectFirstBranchSequentialSegmentConnection = True	#initialise (dependent var)	#True:default	#False: orig implementation
 
 biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False	#determines HFNLPpy_hopfieldGraph:useDependencyParseTree	#speculative: use precalculated syntactical structure to generate dendritic branch connections (rather than deriving syntax from commonly used dendritic subsequence encodings)
 if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
@@ -85,7 +85,19 @@ preventGenerationOfDuplicateConnections = True	#note sequentialSegment inputs wi
 
 storeSequentialSegmentInputIndexValues = False	#not required	#index record value not robust if inputs are removed (synaptic atrophy)	#HFNLPpy_biologicalSimulationDraw can use currentSequentialSegmentInputIndexDynamic instead
 
-preventReactivationOfSequentialSegments = True	#prevent reactivation of sequential segments (equates to a long repolarisation time of ~= sentenceLength)	#algorithmTimingWorkaround2
+overwriteSequentialSegments = False	#default: False	#False: prevent reactivation of sequential segments (equates to a long repolarisation time of ~= sentenceLength)	#algorithmTimingWorkaround2
+deactivateSequentialSegmentsIfAllConnectionInputsOff = False	#initialise (dependent var)
+deactivateSequentialSegmentsIfTimeTestsFail = False	#initialise (dependent var)
+if(overwriteSequentialSegments):
+	if(vectoriseComputation):
+		deactivateSequentialSegmentsIfTimeTestsFail = True	#mandatory implied True (only coded implementation)
+	else:
+		deactivateSequentialSegmentsIfTimeTestsFail = True	#Default/mandatory: True		#deactivates sequential segments upon reencountering insufficient prior dendritic activation conditions (level/time)	#deactivates only if connectionInputActivationFound but passSegmentActivationTimeTests fail
+	if(vectoriseComputation):
+		deactivateSequentialSegmentsIfAllConnectionInputsOff = False	#Default/mandatory: False	#deactivates deactivates if !connectionInputActivationFound 
+	else:
+		deactivateSequentialSegmentsIfAllConnectionInputsOff = False	#mandatory implied False (only coded implementation)
+		  
 algorithmTimingWorkaround1 = False	#insufficient workaround
 
 performSummationOfSequentialSegmentInputs = False #allows sequential segment activation to be dependent on summation of individual local inputs #support multiple source neurons fired simultaneously	#consider renaming to performSummationOfSequentialSegmentInputsLocal
@@ -172,4 +184,3 @@ subsequenceLengthCalibration = 1.0
 numberOfHorizontalSubBranchesRequiredForActivation = 2	#calibrate
 activationRepolarisationTime = 1	#calibrate
 
-resetSequentialSegments = False
