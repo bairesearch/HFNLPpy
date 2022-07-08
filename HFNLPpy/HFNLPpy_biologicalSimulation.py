@@ -1,7 +1,7 @@
 """HFNLPpy_biologicalSimulation.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2020-2022 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -94,8 +94,7 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, targetSentenc
 					#print("conceptNeuronSourceList.append connectionTargetNeuron = ", connectionTargetNeuron.nodeName)
 					conceptNeuronSourceList.append(connectionTargetNeuron)
 			connectionTargetNeuronSet = connectionTargetNeuronSet.union(connectionTargetNeuronSetLocal)
-			if(biologicalSimulationForward):
-				resetConnectionTargetNeurons(connectionTargetNeuronSetLocal, True, conceptNeuronTarget)	
+			resetConnectionTargetNeurons(connectionTargetNeuronSetLocal, True, conceptNeuronTarget)	
 
 		expectPredictiveSequenceToBeFound = False
 		if(enforceMinimumEncodedSequenceLength):
@@ -113,8 +112,7 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, targetSentenc
 		else:
 			print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
 			
-	if(biologicalSimulationForward):	
-		resetConnectionTargetNeurons(connectionTargetNeuronSet, False)
+	resetConnectionTargetNeurons(connectionTargetNeuronSet, False)
 
 	drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList)
 
@@ -164,8 +162,7 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 		somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagateWrapper(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, connectionTargetNeuronSetLocal)
 		
 		connectionTargetNeuronSet = connectionTargetNeuronSet.union(connectionTargetNeuronSetLocal)
-		if(biologicalSimulationForward):
-			resetConnectionTargetNeurons(connectionTargetNeuronSetLocal, True, conceptNeuronTarget)	
+		resetConnectionTargetNeurons(connectionTargetNeuronSetLocal, True, conceptNeuronTarget)	
 						
 		if(somaActivationFound):
 			#if(printVerbose):
@@ -191,8 +188,7 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 				print("")	#add new line
 				
 	#reset dendritic trees
-	if(biologicalSimulationForward):
-		resetConnectionTargetNeurons(connectionTargetNeuronSet, False)
+	resetConnectionTargetNeurons(connectionTargetNeuronSet, False)
 
 	drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
 

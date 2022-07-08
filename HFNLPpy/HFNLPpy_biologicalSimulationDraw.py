@@ -1,7 +1,7 @@
 """HFNLPpy_biologicalSimulationDraw.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2020-2022 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -241,11 +241,17 @@ def drawHopfieldGraphSequentialSegment(currentBranchIndex1, sequentialSegment, c
 		hopfieldGraph.add_edge(previousSequentialSegmentNodeName, sequentialSegment.nodeName)
 
 def drawHopfieldGraphNodeSequentialSegmentInput(conceptNode, posX, posY, sequentialSegmentInput, currentSequentialSegmentInputIndex):
-
-	if(sequentialSegmentInput.activationLevel):
-		colorHtml = 'blue'	#active synapse: blue
+	
+	if(sequentialSegmentInput.firstInputInSequence):
+		if(sequentialSegmentInput.activationLevel):
+			colorHtml = 'blue'	#active synapse: blue
+		else:
+			colorHtml = 'orange'	#synapse: yellow	
 	else:
-		colorHtml = 'yellow'	#synapse: yellow
+		if(sequentialSegmentInput.activationLevel):
+			colorHtml = 'blue'	#active synapse: blue
+		else:
+			colorHtml = 'yellow'	#synapse: yellow
 				
 	#print("sequentialSegmentInput.nodeName = ", sequentialSegmentInput.nodeName)
 	#print("posX = ", posX)

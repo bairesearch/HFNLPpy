@@ -1,7 +1,7 @@
 """HFNLPpy_biologicalSimulationGlobalDefs.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2020-2022 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -25,8 +25,9 @@ import numpy as np
 
 
 vectoriseComputation = True	#parallel processing for optimisation
+if(vectoriseComputation):
+	updateNeuronObjectActivationLevels = True	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 
-deactivateConnectionTargetIfSomaActivationNotFound = True	#default:True #True: orig simulateBiologicalHFnetworkSequenceNodesPropagateParallel:calculateNeuronActivationParallel method, False: orig simulateBiologicalHFnetworkSequenceNodePropagateStandard method
 
 biologicalSimulationTestHarness = False
 HFNLPnonrandomSeed = False	#initialise (dependent var)
@@ -36,7 +37,7 @@ if(biologicalSimulationTestHarness):
 		#emulateVectorisedComputationOrder requires biologicalSimulationForward, !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
 		emulateVectorisedComputationOrder = True	#change standard computation to execute in order of vectorised computation (for comparison)
 	HFNLPnonrandomSeed = True	#always generate the same set of random numbers upon execution
-		
+
 enforceMinimumEncodedSequenceLength = False	#do not execute addPredictiveSequenceToNeuron if predictive sequence is short (ie does not use up the majority of numberOfBranches1)
 if(enforceMinimumEncodedSequenceLength):
 	minimumEncodedSequenceLength = 4	#should be high enough to fill a significant proportion of dendrite vertical branch length (numberOfBranches1)	#~seedHFnetworkSubsequenceLength
@@ -47,7 +48,8 @@ if(seedHFnetworkSubsequence):
 	seedHFnetworkSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
 	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
 	seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant = True
-	
+
+
 supportForNonBinarySubbranchSize = False	#initialise (dependent var)
 performSummationOfSequentialSegmentInputsAcrossBranch = False	#initialise (dependent var)
 weightedSequentialSegmentInputs = False	#initialise (dependent var)
@@ -66,7 +68,7 @@ if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 		biologicalSimulationEncodeSyntaxInDendriticBranchStructureLinearHierarchical = False	#incomplete #adds the most distant nodes to the start of a linear contextConceptNodesList - will still perform propagate/predict in reverse order of tree crawl
 		#if(not biologicalSimulationEncodeSyntaxInDendriticBranchStructureLinearHierarchical):
 		#	implied biologicalSimulationEncodeSyntaxInDendriticBranchStructureLinearCrawl = True: adds the nodes in reverse order of tree crawl to a linear contextConceptNodesList) - will also perform propagate/predict in reverse order of tree crawl
-			
+
 if(supportForNonBinarySubbranchSize):
 	performSummationOfSequentialSegmentInputsAcrossBranch = True
 	debugBiologicalSimulationEncodeSyntaxInDendriticBranchStructure = False	#reduce number of subbranches to support and draw simpler dependency tree (use with drawBiologicalSimulationDynamic)
@@ -75,15 +77,18 @@ if(supportForNonBinarySubbranchSize):
 		#performSummationOfSequentialSegmentInputsAcrossBranch does not support numberOfBranchSequentialSegments>1 as branch summation occurs using the final sequentialSegment activationLevel of each subbranch
 		#performSummationOfSequentialSegmentInputsAcrossBranch does not support performSummationOfSequentialSegmentInputs (or multiple simultaneous inputs at a sequential segment) as this will arbitrarily overwrite the precise sequentialSegment activationLevel of a subbranch
 
-
 if(allowNegativeActivationTimes):
 	minimumActivationTime = -1000
 else:
 	minimumActivationTime = 0	#alternatively set -1;	#initial activation time of dendritic sequence set artificially low such that passSegmentActivationTimeTests automatically pass (not required (as passSegmentActivationTimeTests are ignored for currentSequentialSegmentInput.firstInputInSequence)
-		
+	
+	
 preventGenerationOfDuplicateConnections = True	#note sequentialSegment inputs will be stored as a dictionary indexed by source node name (else indexed by sequentialSegmentInputIndex)
 
 storeSequentialSegmentInputIndexValues = False	#not required	#index record value not robust if inputs are removed (synaptic atrophy)	#HFNLPpy_biologicalSimulationDraw can use currentSequentialSegmentInputIndexDynamic instead
+
+
+deactivateConnectionTargetIfSomaActivationNotFound = True	#default:True #True: orig simulateBiologicalHFnetworkSequenceNodesPropagateParallel:calculateNeuronActivationParallel method, False: orig simulateBiologicalHFnetworkSequenceNodePropagateStandard method
 
 overwriteSequentialSegments = False	#default: False	#False: prevent reactivation of sequential segments (equates to a long repolarisation time of ~= sentenceLength)	#algorithmTimingWorkaround2
 deactivateSequentialSegmentsIfAllConnectionInputsOff = False	#initialise (dependent var)
@@ -99,6 +104,7 @@ if(overwriteSequentialSegments):
 		deactivateSequentialSegmentsIfAllConnectionInputsOff = False	#mandatory implied False (only coded implementation)
 		  
 algorithmTimingWorkaround1 = False	#insufficient workaround
+
 
 performSummationOfSequentialSegmentInputs = False #allows sequential segment activation to be dependent on summation of individual local inputs #support multiple source neurons fired simultaneously	#consider renaming to performSummationOfSequentialSegmentInputsLocal
 if(performSummationOfSequentialSegmentInputs):
@@ -116,7 +122,6 @@ if(vectoriseComputation):
 		vectoriseComputationIndependentBranches = True	#mandatory - default behaviour
 	batchSizeDefault = 100	#high batch size allowed since parallel processing simple/small scalar operations (on effective boolean synaptic inputs), lowered proportional to max (most distal) numberOfHorizontalBranches	#not used (createDendriticTreeVectorised is never called with batched=True)
 	
-	updateNeuronObjectActivationLevels = False	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 	if(updateNeuronObjectActivationLevels):
 		recordVectorisedBranchObjectList = True	#vectorisedBranchObjectList is required to convert vectorised activations back to denditicTree object structure (DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic:updateNeuronObjectActivationLevels (as HFNLPpy_biologicalSimulationDraw currently only supports drawing of denditicTree object structure activations)  
 	else:
@@ -150,18 +155,26 @@ if(vectoriseComputation):
 else:
 	biologicalSimulationForward = True	#optional	#orig implementation; False (simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup)
 
+
+resetSourceNeuronAxonAfterActivation = True	#mandatory
+
+resetConnectionTargetNeuronDendriteDuringActivation = False	#requires !overwriteSequentialSegments, !performSummationOfSequentialSegmentInputs
+resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#initialise (dependent var)
+if(resetConnectionTargetNeuronDendriteDuringActivation):
+	if(not vectoriseComputation):
+		resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#incomplete
+	
 resetSourceNeuronDendriteAfterActivation = False	#initialise (dependent var)
 resetConnectionTargetNeuronDendriteAfterActivation = False	#initialise (dependent var)
 resetTargetNeuronDendriteAfterActivation = False	#initialise (dependent var)
-if(biologicalSimulationForward):
-	resetSourceNeuronDendriteAfterActivation = True	#optional	#True: orig implementation	#not compatible with recursive connections (ie nodeX -> nodeX; connection created from repeated words in sentence)	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
-	if(not resetSourceNeuronDendriteAfterActivation):
-		resetConnectionTargetNeuronDendriteAfterActivation = True	#optional	#reset all connection target neuron dendrites after activation	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
-		if(not resetConnectionTargetNeuronDendriteAfterActivation):
-			resetTargetNeuronDendriteAfterActivation = True	#only reset expected target neuron dendrites after activation	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
-else:
-	resetTargetNeuronDendriteAfterActivation = True	#mandatory
-resetSourceNeuronAxonAfterActivation = True	#mandatory
+if(not resetConnectionTargetNeuronDendriteDuringActivation):
+	if(biologicalSimulationForward):
+		resetSourceNeuronDendriteAfterActivation = True	#optional	#True: orig implementation	#not compatible with recursive connections (ie nodeX -> nodeX; connection created from repeated words in sentence)	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
+		resetConnectionTargetNeuronDendriteAfterActivation = False	#optional	#reset all connection target neuron dendrites after activation	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
+		resetTargetNeuronDendriteAfterActivation = False	#optional	#only reset expected target neuron dendrites after activation	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
+	else:
+		resetTargetNeuronDendriteAfterActivation = False	#optional
+
 
 if(vectoriseComputation):
 	recordSequentialSegmentInputActivationLevels = True	#optional
@@ -195,3 +208,5 @@ subsequenceLengthCalibration = 1.0
 numberOfHorizontalSubBranchesRequiredForActivation = 2	#calibrate
 activationRepolarisationTime = 1	#calibrate
 
+sequentialSegmentIndexMostProximal = 0
+branchIndex1MostProximal = 0

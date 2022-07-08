@@ -1,7 +1,7 @@
 """HFNLPpy_biologicalSimulationNode.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2020-2022 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -42,7 +42,7 @@ def biologicalSimulationNodePropertiesInitialisation(conceptNode):
 		if(recordVectorisedBranchObjectList):
 			conceptNode.vectorisedBranchActivationLevelList, conceptNode.vectorisedBranchActivationTimeList, conceptNode.vectorisedBranchObjectList = createDendriticTreeVectorised(batched=False, createVectorisedBranchObjectList=recordVectorisedBranchObjectList, storeSequentialSegmentInputActivationLevels=False)	#shape [numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments]
 			#vectorisedBranchActivationLevelList always stores effective boolean 1/0 values (since their activations are calculated across all wSource of same activationTime simultaneously); could be converted to dtype=tf.bool
-			#vectorisedBranchActivationLevelListBuffer will store variable numeric values, biased for first inputs in sequences (likewise weightedSequentialSegmentInputs:vectorisedBranchActivationLevelListBuffer will store numeric values of the synaptic input activation levels being accumulated prior to batch processing)
+			#vectorisedBranchActivationLevelListBuffer will store variable numeric values, biased for first inputs in sequences (likewise weightedSequentialSegmentInputs:vectorisedBranchActivationLevelListBuffer will store numeric values of the synaptic input activation levels being accumulated prior to batch processing)			
 		else:
 			conceptNode.vectorisedBranchActivationLevelList, conceptNode.vectorisedBranchActivationTimeList = createDendriticTreeVectorised(batched=False, createVectorisedBranchObjectList=recordVectorisedBranchObjectList, storeSequentialSegmentInputActivationLevels=False)	#shape [numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments]
 		#vectorisedBranchObjectList required for drawBiologicalSimulationDynamic only
@@ -62,7 +62,7 @@ class DendriticBranch:
 		self.horizontalBranchIndex = horizontalBranchIndex	#absolute horizontalBranchIndex	#required by vectoriseComputationCurrentDendriticInput only
 		self.conceptNode = conceptNode
 
-		self.sequentialSegments = [SequentialSegment(conceptNode, self, i) for i in range(numberOfBranchSequentialSegments)]	#[SequentialSegment(conceptNode, self, i)]*numberOfBranchSequentialSegments
+		self.sequentialSegments = [SequentialSegment(conceptNode, self, i) for i in range(numberOfBranchSequentialSegments)]	#[SequentialSegment(conceptNode, self, i)]*numberOfBranchSequentialSegments	#indexed from most proximal to most distal
 		self.activationLevel = objectAreaActivationLevelOff
 		self.activationTime = None	#within sequence/sentence activation time
 						
@@ -84,7 +84,9 @@ class SequentialSegment:
 				#print("recordVectorisedBranchObjectList: branch.branchIndex1 = ", branch.branchIndex1, "branch.branchIndex2 = ", branch.branchIndex2, "branch.horizontalBranchIndex = ", branch.horizontalBranchIndex, "sequentialSegmentIndex = ", sequentialSegmentIndex)
 				conceptNode.vectorisedBranchObjectList[branch.branchIndex1][branch.horizontalBranchIndex, branch.branchIndex2, sequentialSegmentIndex] = self
 				#print("conceptNode.vectorisedBranchObjectList[branch.branchIndex1][branch.horizontalBranchIndex, branch.branchIndex2, sequentialSegmentIndex].nodeName = ", conceptNode.vectorisedBranchObjectList[branch.branchIndex1][branch.horizontalBranchIndex, branch.branchIndex2, sequentialSegmentIndex].nodeName)
-					
+		if(resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion):
+			self.frozen = False
+				
 class SequentialSegmentInput:
 	def __init__(self, conceptNode, SequentialSegment, sequentialSegmentInputIndex, nodeSource):
 		self.input = None
@@ -139,7 +141,7 @@ def createDendriticTreeVectorised(batched, createVectorisedBranchObjectList, sto
 				if(createVectorisedBranchObjectList):
 					vectorisedBranchObject = np.empty(shape=(numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments, numberOfSequentialSegmentInputs), dtype=object)			
 			else:
-				vectorisedBranchActivationLevel = tf.Variable(tf.zeros([numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments]))
+				vectorisedBranchActivationLevel = tf.Variable(tf.zeros([numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments]))		
 				vectorisedBranchActivationTime = tf.Variable(tf.zeros([numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments]))
 				if(createVectorisedBranchObjectList):
 					vectorisedBranchObject = np.empty(shape=(numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments), dtype=object)
@@ -147,7 +149,7 @@ def createDendriticTreeVectorised(batched, createVectorisedBranchObjectList, sto
 		vectorisedBranchActivationTimeList.append(vectorisedBranchActivationTime)
 		if(createVectorisedBranchObjectList):
 			vectorisedBranchObjectList.append(vectorisedBranchObject)
-	
+				
 	if(createVectorisedBranchObjectList):
 		return vectorisedBranchActivationLevelList, vectorisedBranchActivationTimeList, vectorisedBranchObjectList	
 	else:
@@ -176,7 +178,7 @@ def calculateNumberOfHorizontalBranches(currentBranchIndex1, numberOfBranches2):
 	
 	horizontalBranchWidth = numberOfBranches2
 	if(currentBranchIndex1 == 0):
-		horizontalBranchWidth = 1	#CHECKTHIS: first branch has single width
+		horizontalBranchWidth = 1	#first branch has single width
 	
 	return numberOfHorizontalBranches, horizontalBranchWidth
 
@@ -217,21 +219,29 @@ def generateSequentialSegmentInputName(conceptNode):
 
 
 def resetConnectionTargetNeurons(connectionTargetNeuronSet, duringSourcePropagation, conceptNeuronTarget=None):
-	if(duringSourcePropagation):
-		if(resetConnectionTargetNeuronDendriteAfterActivation):
-			resetConnectionTargetNeuronsBasic(connectionTargetNeuronSet, duringSourcePropagation)
-		if(resetTargetNeuronDendriteAfterActivation):
-			resetDendriticTreeActivation(conceptNeuronTarget)
-	else:
-		#if(not resetConnectionTargetNeuronDendriteAfterActivation):
-		resetConnectionTargetNeuronsBasic(connectionTargetNeuronSet, duringSourcePropagation)	#reset all encountered connectionTargets irrespective of connectionTargetNeuron.activationLevel after sentence sourcePropagation complete
+	if(biologicalSimulationForward):		
+		if(duringSourcePropagation):
+			if(resetConnectionTargetNeuronDendriteDuringActivation):
+				resetConnectionTargetNeuronsBasic(connectionTargetNeuronSet, duringSourcePropagation)
+			if(resetConnectionTargetNeuronDendriteAfterActivation):
+				resetConnectionTargetNeuronsBasic(connectionTargetNeuronSet, duringSourcePropagation)
+			if(resetTargetNeuronDendriteAfterActivation):
+				resetDendriticTreeActivation(conceptNeuronTarget)
+		else:
+			#if(not resetConnectionTargetNeuronDendriteAfterActivation):
+			resetConnectionTargetNeuronsBasic(connectionTargetNeuronSet, duringSourcePropagation)	#reset all encountered connectionTargets irrespective of connectionTargetNeuron.activationLevel after sentence sourcePropagation complete
 			
 def resetConnectionTargetNeuronsBasic(connectionTargetNeuronSet, duringSourcePropagation):
 	for connectionTargetNeuron in connectionTargetNeuronSet:
 		if(duringSourcePropagation):
 			if(connectionTargetNeuron.activationLevel):
 				#print("resetConnectionTargetNeuronsBasic: connectionTargetNeuron.activationLevel = ", connectionTargetNeuron.nodeName)
-				resetDendriticTreeActivation(connectionTargetNeuron)
+				if(resetConnectionTargetNeuronDendriteDuringActivation):
+					resetDendriticTreeLastSequentialSegmentActivation(connectionTargetNeuron)
+					if(resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion):
+						unfreezeDendriticTreeActivation(connectionTargetNeuron.dendriticTree)
+				else:
+					resetDendriticTreeActivation(connectionTargetNeuron)
 		else:
 			resetDendriticTreeActivation(connectionTargetNeuron)
 	connectionTargetNeuronSet.clear()
@@ -244,14 +254,13 @@ def resetSourceNeuronAfterActivation(conceptNeuronSource):
 
 def resetDendriticTreeActivation(conceptNeuron):
 	conceptNeuron.activationLevel = objectAreaActivationLevelOff
-	resetBranchActivation(conceptNeuron.dendriticTree)
+	resetBranchActivationRecurse(conceptNeuron.dendriticTree)
 	if(vectoriseComputationCurrentDendriticInput):
 		resetDendriticTreeActivationVectorised(conceptNeuron)
-		
+	
 def resetDendriticTreeActivationVectorised(conceptNeuron):
 	conceptNeuron.activationLevel = objectAreaActivationLevelOff
 	conceptNeuron.vectorisedBranchActivationLevelList, conceptNeuron.vectorisedBranchActivationTimeList = createDendriticTreeVectorised(batched=False, createVectorisedBranchObjectList=False, storeSequentialSegmentInputActivationLevels=False)	#rezero tensors by regenerating them 	#do not overwrite conceptNeuron.vectorisedBranchObjectList
-
 
 def resetAxonsActivation(conceptNeuron):
 	conceptNeuron.activationLevel = objectAreaActivationLevelOff
@@ -262,19 +271,27 @@ def resetAxonsActivationConnectionList(connectionList):
 	for connection in connectionList:
 		connection.activationLevel = objectAreaActivationLevelOff
 
+def resetBranchActivationRecurse(currentBranch):
+	resetBranchActivation(currentBranch)									
+	for subbranch in currentBranch.subbranches:	
+		resetBranchActivationRecurse(subbranch)
+
 def resetBranchActivation(currentBranch):
 	currentBranch.activationLevel = objectAreaActivationLevelOff
-	
 	for sequentialSegment in currentBranch.sequentialSegments:
-		sequentialSegment.activationLevel = objectLocalActivationLevelOff
-		if(recordSequentialSegmentInputActivationLevels):
-			#for sequentialSegmentInput in sequentialSegment.inputs:
-			for sequentialSegmentInput in sequentialSegment.inputs.values():
-				sequentialSegmentInput.activationLevel = objectLocalActivationLevelOff
-										
-	for subbranch in currentBranch.subbranches:	
-		resetBranchActivation(subbranch)
-	
+		resetSequentialSegmentActivation(sequentialSegment)
+
+def resetSequentialSegmentActivation(sequentialSegment):
+	sequentialSegment.activationLevel = objectLocalActivationLevelOff
+	if(recordSequentialSegmentInputActivationLevels):
+		for sequentialSegmentInput in sequentialSegment.inputs.values():
+			resetSequentialSegmentInputActivation(sequentialSegmentInput)
+
+def resetSequentialSegmentInputActivation(sequentialSegmentInput):	
+	sequentialSegmentInput.activationLevel = objectLocalActivationLevelOff
+			
+						
+								
 def printIndentation(level):
 	for indentation in range(level):
 		print('\t', end='')
@@ -411,3 +428,44 @@ def isMostDistalSequentialSegmentInBranch(sequentialSegmentIndex):
 		result = True
 	return result
 	
+def deactivatePreviousSequentialSegmentOrSubbranch(currentSequentialSegment):
+	dendriticBranch = currentSequentialSegment.branch
+	sequentialSegmentIndex = currentSequentialSegment.sequentialSegmentIndex
+	if(isMostDistalSequentialSegmentInBranch(sequentialSegmentIndex)):
+		for subbranchIndex, subbranch in enumerate(dendriticBranch.subbranches):
+			subbranch.activationLevel = objectAreaActivationLevelOff
+			previousSequentialSegment = subbranch.sequentialSegments[sequentialSegmentIndexMostProximal]
+			resetSequentialSegmentActivation(previousSequentialSegment)
+			if(resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion):
+				previousSequentialSegment.frozen = True
+				#print("freeze")
+	else:
+		previousSequentialSegmentIndex = sequentialSegmentIndex+1
+		previousSequentialSegment = dendriticBranch.sequentialSegments[previousSequentialSegmentIndex]
+		resetSequentialSegmentActivation(previousSequentialSegment)
+		if(resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion):
+			previousSequentialSegment.frozen = True
+			#print("freeze")
+
+def resetDendriticTreeLastSequentialSegmentActivation(conceptNeuron):
+	conceptNeuron.activationLevel = objectAreaActivationLevelOff
+	
+	dendriticTreeLastBranch = conceptNeuron.dendriticTree
+	dendriticTreeLastBranch.activationLevel = objectAreaActivationLevelOff
+	dendriticTreeLastSequentialSegment = dendriticTreeLastBranch.sequentialSegments[sequentialSegmentIndexMostProximal]
+	resetSequentialSegmentActivation(dendriticTreeLastSequentialSegment)
+
+	if(vectoriseComputationCurrentDendriticInput):
+		resetDendriticTreeLastSequentialSegmentActivationVectorised(conceptNeuron)
+
+def resetDendriticTreeLastSequentialSegmentActivationVectorised(conceptNeuron):
+	#print(conceptNeuron.vectorisedBranchActivationLevelList[branchIndex1MostProximal][0, 0, sequentialSegmentIndexMostProximal])
+	conceptNeuron.vectorisedBranchActivationLevelList[branchIndex1MostProximal][0, 0, sequentialSegmentIndexMostProximal].assign(vectorisedActivationLevelOff)
+	
+def unfreezeDendriticTreeActivation(currentBranch):
+	for sequentialSegment in currentBranch.sequentialSegments:
+		sequentialSegment.frozen = False
+		#print("unfreezeDendriticTreeActivation")
+	for subbranch in currentBranch.subbranches:	
+		unfreezeDendriticTreeActivation(subbranch)
+
