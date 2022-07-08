@@ -250,11 +250,12 @@ def resetSourceNeuronAfterActivation(conceptNeuronSource):
 	if(resetSourceNeuronAxonAfterActivation):
 		resetAxonsActivation(conceptNeuronSource)
 	if(resetSourceNeuronDendriteAfterActivation):
-		resetDendriticTreeActivation(conceptNeuronSource)
+		resetDendriticTreeActivation(conceptNeuronSource, updateDendriticTreeObjects=updateNeuronObjectActivationLevels)
 
-def resetDendriticTreeActivation(conceptNeuron):
+def resetDendriticTreeActivation(conceptNeuron, updateDendriticTreeObjects=True):
 	conceptNeuron.activationLevel = objectAreaActivationLevelOff
-	resetBranchActivationRecurse(conceptNeuron.dendriticTree)
+	if(updateDendriticTreeObjects):
+		resetBranchActivationRecurse(conceptNeuron.dendriticTree)
 	if(vectoriseComputationCurrentDendriticInput):
 		resetDendriticTreeActivationVectorised(conceptNeuron)
 	
@@ -297,14 +298,18 @@ def printIndentation(level):
 		print('\t', end='')
 
 def verifyRepolarised(currentSequentialSegment, activationTime):
-	if(currentSequentialSegment.activationLevel):
-		repolarised = False
-		if(activationTime >= currentSequentialSegment.activationTime+activationRepolarisationTime):
-			#do not reactivate sequential segment if already activated by same source neuron
+	if(verifyRepolarisationTime):
+		if(calculateSequentialSegmentActivationState(currentSequentialSegment.activationLevel)):
+			repolarised = False
+			if(activationTime >= currentSequentialSegment.activationTime+activationRepolarisationTime):
+				#do not reactivate sequential segment if already activated by same source neuron
+				repolarised = True
+		else:
 			repolarised = True
 	else:
 		repolarised = True
 	return repolarised
+	
 	
 def verifySequentialActivationTime(currentSequentialSegmentActivationTime, previousSequentialSegmentActivationTime):
 	sequentiality = False

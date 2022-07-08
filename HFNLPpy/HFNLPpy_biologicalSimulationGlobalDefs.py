@@ -27,7 +27,8 @@ import numpy as np
 vectoriseComputation = True	#parallel processing for optimisation
 if(vectoriseComputation):
 	updateNeuronObjectActivationLevels = True	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
-
+else:
+	updateNeuronObjectActivationLevels = True	#mandatory (typically implied true)
 
 biologicalSimulationTestHarness = False
 HFNLPnonrandomSeed = False	#initialise (dependent var)
@@ -88,24 +89,6 @@ preventGenerationOfDuplicateConnections = True	#note sequentialSegment inputs wi
 storeSequentialSegmentInputIndexValues = False	#not required	#index record value not robust if inputs are removed (synaptic atrophy)	#HFNLPpy_biologicalSimulationDraw can use currentSequentialSegmentInputIndexDynamic instead
 
 
-deactivateConnectionTargetIfSomaActivationNotFound = True	#default:True #True: orig simulateBiologicalHFnetworkSequenceNodesPropagateParallel:calculateNeuronActivationParallel method, False: orig simulateBiologicalHFnetworkSequenceNodePropagateStandard method
-
-overwriteSequentialSegments = False	#default: False	#False: prevent reactivation of sequential segments (equates to a long repolarisation time of ~= sentenceLength)	#algorithmTimingWorkaround2
-deactivateSequentialSegmentsIfAllConnectionInputsOff = False	#initialise (dependent var)
-deactivateSequentialSegmentsIfTimeTestsFail = False	#initialise (dependent var)
-if(overwriteSequentialSegments):
-	if(vectoriseComputation):
-		deactivateSequentialSegmentsIfTimeTestsFail = True	#mandatory implied True (only coded implementation)
-	else:
-		deactivateSequentialSegmentsIfTimeTestsFail = True	#Default/mandatory: True		#deactivates sequential segments upon reencountering insufficient prior dendritic activation conditions (level/time)	#deactivates only if connectionInputActivationFound but passSegmentActivationTimeTests fail
-	if(vectoriseComputation):
-		deactivateSequentialSegmentsIfAllConnectionInputsOff = False	#Default/mandatory: False	#deactivates deactivates if !connectionInputActivationFound 
-	else:
-		deactivateSequentialSegmentsIfAllConnectionInputsOff = False	#mandatory implied False (only coded implementation)
-		  
-algorithmTimingWorkaround1 = False	#insufficient workaround
-
-
 performSummationOfSequentialSegmentInputs = False #allows sequential segment activation to be dependent on summation of individual local inputs #support multiple source neurons fired simultaneously	#consider renaming to performSummationOfSequentialSegmentInputsLocal
 if(performSummationOfSequentialSegmentInputs):
 	weightedSequentialSegmentInputs = True
@@ -158,24 +141,45 @@ else:
 
 resetSourceNeuronAxonAfterActivation = True	#mandatory
 
-resetConnectionTargetNeuronDendriteDuringActivation = False	#requires !overwriteSequentialSegments, !performSummationOfSequentialSegmentInputs
+if(biologicalSimulationForward):
+	#dendrite activations reset mode selection (typically select one only):
+	resetConnectionTargetNeuronDendriteAfterSequence = False	#optional
+	resetConnectionTargetNeuronDendriteDuringActivation = False	#optional #requires !overwriteSequentialSegments, !performSummationOfSequentialSegmentInputs
+	resetSourceNeuronDendriteAfterActivation = True	#optional	#True: orig implementation	#not compatible with recursive connections (ie nodeX -> nodeX; connection created from repeated words in sentence)	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
+	resetConnectionTargetNeuronDendriteAfterActivation = False	#optional	#reset all connection target neuron dendrites after activation	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
+	resetTargetNeuronDendriteAfterActivation = False	#optional	#only reset expected target neuron dendrites after activation	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
+else:
+	resetTargetNeuronDendriteAfterActivation = True	#optional
+
 resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#initialise (dependent var)
 if(resetConnectionTargetNeuronDendriteDuringActivation):
 	if(not vectoriseComputation):
 		resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#incomplete
+
+overwriteSequentialSegments = False	#initialise (dependent var)
+verifyRepolarisationTime = False	#initialise (dependent var)
+if(resetConnectionTargetNeuronDendriteAfterSequence):
+	overwriteSequentialSegments = True	#orig: False	#False: prevent reactivation of sequential segments (equates to a long repolarisation time of ~= sentenceLength)	#False: algorithmTimingWorkaround2
+	verifyRepolarisationTime = True
+	#resetConnectionTargetNeuronDendriteAfterSequence does not currently support !expectFirstBranchSequentialSegmentConnection
 	
-resetSourceNeuronDendriteAfterActivation = False	#initialise (dependent var)
-resetConnectionTargetNeuronDendriteAfterActivation = False	#initialise (dependent var)
-resetTargetNeuronDendriteAfterActivation = False	#initialise (dependent var)
-if(not resetConnectionTargetNeuronDendriteDuringActivation):
-	if(biologicalSimulationForward):
-		resetSourceNeuronDendriteAfterActivation = True	#optional	#True: orig implementation	#not compatible with recursive connections (ie nodeX -> nodeX; connection created from repeated words in sentence)	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
-		resetConnectionTargetNeuronDendriteAfterActivation = False	#optional	#reset all connection target neuron dendrites after activation	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
-		resetTargetNeuronDendriteAfterActivation = False	#optional	#only reset expected target neuron dendrites after activation	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
+deactivateSequentialSegmentsIfAllConnectionInputsOff = False	#initialise (dependent var)
+deactivateSequentialSegmentsIfTimeTestsFail = False	#initialise (dependent var)
+if(overwriteSequentialSegments):
+	if(vectoriseComputation):
+		deactivateSequentialSegmentsIfTimeTestsFail = True	#mandatory implied True (only coded implementation)
 	else:
-		resetTargetNeuronDendriteAfterActivation = False	#optional
+		deactivateSequentialSegmentsIfTimeTestsFail = True	#Default/mandatory: True		#deactivates sequential segments upon reencountering insufficient prior dendritic activation conditions (level/time)	#deactivates only if connectionInputActivationFound but passSegmentActivationTimeTests fail
+	if(vectoriseComputation):
+		deactivateSequentialSegmentsIfAllConnectionInputsOff = False	#Default/mandatory: False	#deactivates deactivates if !connectionInputActivationFound 
+	else:
+		deactivateSequentialSegmentsIfAllConnectionInputsOff = False	#mandatory implied False (only coded implementation)
 
+deactivateConnectionTargetIfSomaActivationNotFound = True	#default:True #True: orig simulateBiologicalHFnetworkSequenceNodesPropagateParallel:calculateNeuronActivationParallel method, False: orig simulateBiologicalHFnetworkSequenceNodePropagateStandard method
+  
+algorithmTimingWorkaround1 = False	#insufficient workaround
 
+	
 if(vectoriseComputation):
 	recordSequentialSegmentInputActivationLevels = True	#optional
 	if(updateNeuronObjectActivationLevels):

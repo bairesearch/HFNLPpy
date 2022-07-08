@@ -175,11 +175,7 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 			batchNeuron.vectorisedBranchActivationTimeList[branchIndex1] = tf.Variable(vectorisedBranchActivationTimeBatchList[branchIndex1][batchIndex])
 			
 	for conceptNeuronSource in conceptNeuronSourceList:
-		if(updateNeuronObjectActivationLevels):
-			resetSourceNeuronAfterActivation(conceptNeuronSource)
-		else:
-			if(resetSourceNeuronDendriteAfterActivation):
-				resetDendriticTreeActivationVectorised(conceptNeuronSource)
+		resetSourceNeuronAfterActivation(conceptNeuronSource)
 
 	return somaActivationFound
 	
@@ -237,7 +233,7 @@ def setVectorisedBranchActivation(conceptNeuronConnectionTarget, connection, act
 				activationTimeFlags = vectorisedActivationTimeFlagFirstInputInSequence
 		if(currentSequentialSegmentInput.firstInputInSequence):
 			activationTimeFlags = vectorisedActivationTimeFlagFirstInputInSequence
-		#if(verifyRepolarised(currentSequentialSegment, activationTime)):
+		#if(verifyRepolarised(currentSequentialSegment, activationTime)):	#do not perform this test for buffer (all inputs should have same activation time)
 		#print("activationValue = ", activationValue)
 		conceptNeuronConnectionTarget.vectorisedBranchActivationLevelListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].assign(activationValue)
 		conceptNeuronConnectionTarget.vectorisedBranchActivationTimeListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].assign(activationTimeFlags)	#orig: activationTime (all inputs should have same activation time)
@@ -279,6 +275,8 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 	if(resetConnectionTargetNeuronDendriteDuringActivation):
 		#note vectorisedBranchActivationLevelBatchSequentialSegmentPrevious is same as vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch but updated more regularly than vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch (for every sequential segment); could therefore replace PreviousBranch tensor with Previous tensor 
 		vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious = (None, None)
+	if(resetConnectionTargetNeuronDendriteAfterSequence):
+		vectorisedBranchActivationStateBatchSequentialSegmentFinalNew = None
 	
 	for branchIndex1 in reversed(range(numberOfVerticalBranches)):
 			
@@ -308,7 +306,15 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 				else:
 					vectorisedBranchActivationStateBatchSequentialSegment = calculateSequentialSegmentActivationStateVectorisedMemory(vectorisedBranchActivationLevelBatchSequentialSegment)
 					vectorisedBranchActivationNewBatchSequentialSegmentMask = calculateSequentialSegmentActivationStateVectorisedBuffer(vectorisedBranchActivationLevelBatchSequentialSegmentBuffer)
-					if(not overwriteSequentialSegments):
+					if(overwriteSequentialSegments):
+						if(verifyRepolarisationTime):
+							vectorisedBranchActivationStateBatchSequentialSegmentOverwrite = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, vectorisedBranchActivationStateBatchSequentialSegment)
+							vectorisedBranchActivationStateBatchSequentialSegmentNonOverwrite = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, tf.logical_not(vectorisedBranchActivationStateBatchSequentialSegment))
+							vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite = tf.multiply(vectorisedBranchActivationTimeBatchSequentialSegment, tf.cast(vectorisedBranchActivationStateBatchSequentialSegmentOverwrite, tf.float32))
+							vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests = verifyRepolarisedVectorised(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite, activationTime)
+							vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests = tf.logical_and(vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests, vectorisedBranchActivationStateBatchSequentialSegmentOverwrite)	#required because verifyRepolarisedVectorised is only valid for valid times (ie states=On)
+							vectorisedBranchActivationNewBatchSequentialSegmentMask = tf.logical_or(vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests, vectorisedBranchActivationStateBatchSequentialSegmentNonOverwrite)
+					else:
 						vectorisedBranchActivationNewBatchSequentialSegmentMask = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, tf.logical_not(vectorisedBranchActivationStateBatchSequentialSegment))
 					vectorisedBranchActivationExistingBatchSequentialSegmentMask = tf.logical_not(vectorisedBranchActivationNewBatchSequentialSegmentMask)
 					vectorisedBranchActivationNewBatchSequentialSegmentMaskFloat = tf.cast(vectorisedBranchActivationNewBatchSequentialSegmentMask, tf.float32)
@@ -347,6 +353,9 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 					#or vectorisedBranchActivationTimeBatchSequentialSegmentCurrent = activationTime (as activationTimes will be ignored for unactivated sequential segments) 
 				vectorisedBranchActivationTimeBatchSequentialSegmentCurrent = tf.where(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, x=activationTime, y=minimumActivationTime)	#filter sequential segment activation time based on previous sequentialSegment/subbranch activation level/time tests			
 				vectorisedBranchActivationTimeBatchSequentialSegmentCurrent = tf.cast(vectorisedBranchActivationTimeBatchSequentialSegmentCurrent, tf.float32)
+				
+				if(resetConnectionTargetNeuronDendriteAfterSequence):
+					vectorisedBranchActivationStateBatchSequentialSegmentFinalNew = vectorisedBranchActivationStateBatchSequentialSegmentCurrent
 				
 				if(not deactivateSequentialSegmentsIfAllConnectionInputsOff):
 					vectorisedBranchActivationLevelBatchSequentialSegmentCurrent = tf.add(vectorisedBranchActivationLevelBatchSequentialSegmentCurrent, vectorisedBranchActivationLevelBatchSequentialSegmentExisting)		#merge contents of mutually exclusive indices together
@@ -391,8 +400,11 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 						
 		vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch = vectorisedBranchActivationLevelBatchSequentialSegmentCurrent
 		vectorisedBranchActivationTimeBatchSequentialSegmentPreviousBranch = vectorisedBranchActivationTimeBatchSequentialSegmentCurrent
-		
-	vectorisedSomaActivationLevel = tf.squeeze(vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch, axis=[1,2])	#size:batchSize
+	
+	if(resetConnectionTargetNeuronDendriteAfterSequence):
+		vectorisedSomaActivationLevel = tf.squeeze(vectorisedBranchActivationStateBatchSequentialSegmentFinalNew, axis=[1,2])	#size:batchSize
+	else:
+		vectorisedSomaActivationLevel = tf.squeeze(vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch, axis=[1,2])	#size:batchSize
 	vectorisedSomaActivationTime = tf.squeeze(vectorisedBranchActivationTimeBatchSequentialSegmentPreviousBranch, axis=[1,2]) #size:batchSize
 	
 	batchSize = vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch.shape[0]	#or #batchSize = vectorisedBranchObjectBatchList[0].shape[0]
@@ -527,3 +539,12 @@ def deactivatePreviousSequentialSegmentOrSubbranchVectorised(vectorisedBranchAct
 		#vectorisedBranchActivationTimeBatchSequentialSegmentPrevious = vectorisedBranchActivationTimeBatchSequentialSegmentPrevious	#no change to last activation times
 		#vectorisedBranchActivationTimeBatchList[branchIndex1][:, :, :, previousSequentialSegmentIndex].assign(vectorisedBranchActivationTimeBatchSequentialSegmentPrevious)	
 
+def verifyRepolarisedVectorised(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite, activationTime):	
+	#sync with verifyRepolarised
+	if(verifyRepolarisationTime):
+		repolarised = tf.greater_equal(activationTime, tf.add(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite, activationRepolarisationTime))
+	else:
+		print("verifyRepolarisedVectorised error: requires verifyRepolarisationTime")
+		exit()
+	return repolarised
+	
