@@ -47,11 +47,10 @@ if(vectoriseComputation):		#dynamic draw should use vectoriseComputation, as thi
 printVerbose = False
 printConnectionTargetActivations = False
 
-debugCalculateNeuronActivationParallel = False
+debugCalculateNeuronActivationParallel = False	#requires !drawBiologicalSimulationDynamicHighlightNewActivations
 if(debugCalculateNeuronActivationParallel):
-	sentenceIndexDebug = 23
-	wSourceDebug = 8
-	branchIndex1Debug = 2
+	sentenceIndexDebug = 1
+	wSourceDebug = 14
 	batchIndexOfWTargetDebug = None
 	wTargetDebug = 8
 else:
@@ -70,14 +69,18 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 	numberOfVerticalBranches = calculateNumberOfVerticalBranches(numberOfBranches1)
 	vectorisedBranchActivationLevelBatchListList = [[] for _ in range(numberOfVerticalBranches)]	#temporary list before being coverted to tensor for parallel processing
 	vectorisedBranchActivationTimeBatchListList = [[] for _ in range(numberOfVerticalBranches)]	#temporary list before being coverted to tensor for parallel processing
+	vectorisedBranchActivationFlagBatchListList = [[] for _ in range(numberOfVerticalBranches)]	#temporary list before being coverted to tensor for parallel processing
 	vectorisedBranchActivationLevelBatchListListBuffer = [[] for _ in range(numberOfVerticalBranches)]	#temporary list before being coverted to tensor for parallel processing
 	vectorisedBranchActivationTimeBatchListListBuffer = [[] for _ in range(numberOfVerticalBranches)]	#temporary list before being coverted to tensor for parallel processing	
+	vectorisedBranchActivationFlagBatchListListBuffer = [[] for _ in range(numberOfVerticalBranches)]	#temporary list before being coverted to tensor for parallel processing	
 	if(recordVectorisedBranchObjectList):
 		vectorisedBranchObjectBatchListList = [[] for _ in range(numberOfVerticalBranches)]	#temporary list before being coverted to tensor for parallel processing
 	vectorisedBranchActivationLevelBatchList = [None for _ in range(numberOfVerticalBranches)]	#[]*(numberOfVerticalBranches)
 	vectorisedBranchActivationTimeBatchList = [None for _ in range(numberOfVerticalBranches)]	#[]*(numberOfVerticalBranches)
+	vectorisedBranchActivationFlagBatchList = [None for _ in range(numberOfVerticalBranches)]	#[]*(numberOfVerticalBranches)
 	vectorisedBranchActivationLevelBatchListBuffer = [None for _ in range(numberOfVerticalBranches)]	#[]*(numberOfVerticalBranches)
 	vectorisedBranchActivationTimeBatchListBuffer = [None for _ in range(numberOfVerticalBranches)]	#[]*(numberOfVerticalBranches)
+	vectorisedBranchActivationFlagBatchListBuffer = [None for _ in range(numberOfVerticalBranches)]	#[]*(numberOfVerticalBranches)
 	if(recordVectorisedBranchObjectList):
 		vectorisedBranchObjectBatchList = [None for _ in range(numberOfVerticalBranches)]	#[]*(numberOfVerticalBranches)
 	else:
@@ -122,7 +125,7 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 				batchIndex += 1
 				
 				#create temporary vectorised buffers for conceptNeuronSource connection target input sequentialSegment candidate application;
-				conceptNeuronConnectionTarget.vectorisedBranchActivationLevelListBuffer, conceptNeuronConnectionTarget.vectorisedBranchActivationTimeListBuffer = createDendriticTreeVectorised(batched=False, createVectorisedBranchObjectList=False, storeSequentialSegmentInputActivationLevels=vectoriseComputionUseSequentialSegmentInputActivationLevels)	#shape [numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments, {numberOfSequentialSegmentInputs}]
+				conceptNeuronConnectionTarget.vectorisedBranchActivationLevelListBuffer, conceptNeuronConnectionTarget.vectorisedBranchActivationTimeListBuffer, conceptNeuronConnectionTarget.vectorisedBranchActivationFlagListBuffer = createDendriticTreeVectorised(batched=False, createVectorisedBranchObjectList=False, storeSequentialSegmentInputActivationLevels=vectoriseComputionUseSequentialSegmentInputActivationLevels)	#shape [numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments, {numberOfSequentialSegmentInputs}]
 				
 			#trigger all target synaptic inputs before parallel processing	
 			for connection in connectionList:
@@ -139,16 +142,20 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 				for branchIndex1 in range(numberOfVerticalBranches):
 					vectorisedBranchActivationLevelBatchListList[branchIndex1].append(conceptNeuronConnectionTarget.vectorisedBranchActivationLevelList[branchIndex1])
 					vectorisedBranchActivationTimeBatchListList[branchIndex1].append(conceptNeuronConnectionTarget.vectorisedBranchActivationTimeList[branchIndex1])
+					vectorisedBranchActivationFlagBatchListList[branchIndex1].append(conceptNeuronConnectionTarget.vectorisedBranchActivationFlagList[branchIndex1])
 					vectorisedBranchActivationLevelBatchListListBuffer[branchIndex1].append(conceptNeuronConnectionTarget.vectorisedBranchActivationLevelListBuffer[branchIndex1])
 					vectorisedBranchActivationTimeBatchListListBuffer[branchIndex1].append(conceptNeuronConnectionTarget.vectorisedBranchActivationTimeListBuffer[branchIndex1])
+					vectorisedBranchActivationFlagBatchListListBuffer[branchIndex1].append(conceptNeuronConnectionTarget.vectorisedBranchActivationFlagListBuffer[branchIndex1])
 					if(recordVectorisedBranchObjectList):
 						vectorisedBranchObjectBatchListList[branchIndex1].append(conceptNeuronConnectionTarget.vectorisedBranchObjectList[branchIndex1])			
 
 	for branchIndex1 in range(numberOfVerticalBranches):
 		vectorisedBranchActivationLevelBatchList[branchIndex1] = tf.Variable(tf.stack(vectorisedBranchActivationLevelBatchListList[branchIndex1]))
 		vectorisedBranchActivationTimeBatchList[branchIndex1] = tf.Variable(tf.stack(vectorisedBranchActivationTimeBatchListList[branchIndex1]))	
+		vectorisedBranchActivationFlagBatchList[branchIndex1] = tf.Variable(tf.stack(vectorisedBranchActivationFlagBatchListList[branchIndex1]))	
 		vectorisedBranchActivationLevelBatchListBuffer[branchIndex1] = tf.stack(vectorisedBranchActivationLevelBatchListListBuffer[branchIndex1])
-		vectorisedBranchActivationTimeBatchListBuffer[branchIndex1] = tf.stack(vectorisedBranchActivationTimeBatchListListBuffer[branchIndex1])			
+		vectorisedBranchActivationTimeBatchListBuffer[branchIndex1] = tf.stack(vectorisedBranchActivationTimeBatchListListBuffer[branchIndex1])		
+		vectorisedBranchActivationFlagBatchListBuffer[branchIndex1] = tf.stack(vectorisedBranchActivationFlagBatchListListBuffer[branchIndex1])				
 		#print("vectorisedBranchActivationLevelBatchListListBuffer[branchIndex1] = ", vectorisedBranchActivationLevelBatchListListBuffer[branchIndex1])
 		if(recordVectorisedBranchObjectList):
 			if(not emptyList(vectorisedBranchObjectBatchListList[branchIndex1])):
@@ -162,7 +169,7 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 	#			print("\tvectorisedBranchActivationLevelBatchList[branchIndex1] = ", vectorisedBranchActivationLevelBatchList[branchIndex1])
 
 	if(conceptNeuronBatchIndexFound):	#optimsation; only execute calculateNeuronActivationParallel if conceptNeuronTarget input(s) are activated by conceptNeuronSource
-		if(calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationLevelBatchListBuffer, vectorisedBranchActivationTimeBatchListBuffer, vectorisedBranchObjectBatchList, activationTime, wTarget, conceptNeuronTarget, conceptNeuronBatchIndex, batchNeuronsList, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)):
+		if(calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationFlagBatchList, vectorisedBranchActivationLevelBatchListBuffer, vectorisedBranchActivationTimeBatchListBuffer, vectorisedBranchActivationFlagBatchListBuffer, vectorisedBranchObjectBatchList, activationTime, wTarget, conceptNeuronTarget, conceptNeuronBatchIndex, batchNeuronsList, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)):
 			somaActivationFound = True
 	else:
 		print("warning !conceptNeuronBatchIndexFound")
@@ -173,6 +180,7 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 			#iterating over batchSize to save tensors is slow and may require optimisation
 			batchNeuron.vectorisedBranchActivationLevelList[branchIndex1] = tf.Variable(vectorisedBranchActivationLevelBatchList[branchIndex1][batchIndex])
 			batchNeuron.vectorisedBranchActivationTimeList[branchIndex1] = tf.Variable(vectorisedBranchActivationTimeBatchList[branchIndex1][batchIndex])
+			batchNeuron.vectorisedBranchActivationFlagList[branchIndex1] = tf.Variable(vectorisedBranchActivationFlagBatchList[branchIndex1][batchIndex])
 			
 	for conceptNeuronSource in conceptNeuronSourceList:
 		resetSourceNeuronAfterActivation(conceptNeuronSource)
@@ -210,33 +218,39 @@ def setVectorisedBranchActivation(conceptNeuronConnectionTarget, connection, act
 				currentSequentialSegmentInput.activationLevel = activationValue	#CHECKTHIS: or connection.weight (disregarding firstInputInSequence activation level modifier)
 			else:
 				currentSequentialSegmentInput.activationLevel = objectLocalActivationLevelOn	#True
+			if(drawBiologicalSimulationDynamicHighlightNewActivations):
+				currentSequentialSegmentInput.activationStateNew = True
 			currentSequentialSegmentInput.activationTime = activationTime	
-		activationTimeFlags = vectorisedActivationTimeFlagDefault
+		activationFlags = vectorisedActivationTimeFlagDefault
 		if(currentSequentialSegmentInput.firstInputInSequence):
-			activationTimeFlags = vectorisedActivationTimeFlagFirstInputInSequence
+			activationFlags = vectorisedActivationTimeFlagFirstInputInSequence
 		conceptNeuronConnectionTarget.vectorisedBranchActivationLevelListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex, currentSequentialSegmentInputIndex].assign(activationValue)
-		conceptNeuronConnectionTarget.vectorisedBranchActivationTimeListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex, currentSequentialSegmentInputIndex].assign(activationTimeFlags)	#orig: activationTime
+		conceptNeuronConnectionTarget.vectorisedBranchActivationTimeListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex, currentSequentialSegmentInputIndex].assign(activationTime)	#not used (all inputs should have same activation time)
+		conceptNeuronConnectionTarget.vectorisedBranchActivationFlagListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex, currentSequentialSegmentInputIndex].assign(activationFlags)	
 	else:
 		if(updateNeuronObjectActivationLevels):
 			if(weightedSequentialSegmentInputs):
 				currentSequentialSegmentInput.activationLevel = activationValue		#CHECKTHIS: or connection.weight (disregarding firstInputInSequence activation level modifier)
 			else:
 				currentSequentialSegmentInput.activationLevel = objectLocalActivationLevelOn	#True
+			if(drawBiologicalSimulationDynamicHighlightNewActivations):
+				currentSequentialSegmentInput.activationStateNew = True
 			currentSequentialSegmentInput.activationTime = activationTime
-		activationTimeFlags = vectorisedActivationTimeFlagDefault
+		activationFlags = vectorisedActivationTimeFlagDefault
 		if(performSummationOfSequentialSegmentInputs):
 			summationOfSequentialSegmentInputs = conceptNeuronConnectionTarget.vectorisedBranchActivationLevelListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].numpy()
 			summationOfSequentialSegmentInputs = summationOfSequentialSegmentInputs + activationValue
 			activationValue = summationOfSequentialSegmentInputs
 			firstInputInSequenceExisting = conceptNeuronConnectionTarget.vectorisedBranchActivationTimeListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].numpy()
 			if(bool(firstInputInSequenceExisting)):
-				activationTimeFlags = vectorisedActivationTimeFlagFirstInputInSequence
+				activationFlags = vectorisedActivationTimeFlagFirstInputInSequence
 		if(currentSequentialSegmentInput.firstInputInSequence):
-			activationTimeFlags = vectorisedActivationTimeFlagFirstInputInSequence
+			activationFlags = vectorisedActivationTimeFlagFirstInputInSequence
 		#if(verifyRepolarised(currentSequentialSegment, activationTime)):	#do not perform this test for buffer (all inputs should have same activation time)
 		#print("activationValue = ", activationValue)
 		conceptNeuronConnectionTarget.vectorisedBranchActivationLevelListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].assign(activationValue)
-		conceptNeuronConnectionTarget.vectorisedBranchActivationTimeListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].assign(activationTimeFlags)	#orig: activationTime (all inputs should have same activation time)
+		conceptNeuronConnectionTarget.vectorisedBranchActivationTimeListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].assign(activationTime)	#not used (all inputs should have same activation time)
+		conceptNeuronConnectionTarget.vectorisedBranchActivationFlagListBuffer[branchIndex1][horizontalBranchIndex, branchIndex2, currentSequentialSegmentIndex].assign(activationFlags)
 
 def calculateVectorisedSequentialSegmentInputActivation(connection):
 	activationValue = calculateInputActivationLevelVectorised(connection)	
@@ -262,7 +276,7 @@ def generateVectorisedSequentialSegmentInputActivationBias(currentSequentialSegm
 
 #parameters only used for drawBiologicalSimulationDynamic: wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList
 #does not currently support vectoriseComputionUseSequentialSegmentInputActivationLevels;
-def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationLevelBatchListBuffer, vectorisedBranchActivationTimeBatchListBuffer, vectorisedBranchObjectBatchList, activationTime, wTarget, conceptNeuronTarget, conceptNeuronBatchIndex, batchNeuronsList, wSource=None, networkConceptNodeDict=None, sentenceIndex=None, sentenceConceptNodeList=None):
+def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationFlagBatchList, vectorisedBranchActivationLevelBatchListBuffer, vectorisedBranchActivationTimeBatchListBuffer, vectorisedBranchActivationFlagBatchListBuffer, vectorisedBranchObjectBatchList, activationTime, wTarget, conceptNeuronTarget, conceptNeuronBatchIndex, batchNeuronsList, wSource=None, networkConceptNodeDict=None, sentenceIndex=None, sentenceConceptNodeList=None):
 	
 	somaActivationFound = False
 	
@@ -272,18 +286,20 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 	numberOfVerticalBranches = calculateNumberOfVerticalBranches(numberOfBranches1) 	#len(vectorisedBranchActivationLevelBatchList)
 	
 	vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch, vectorisedBranchActivationTimeBatchSequentialSegmentPreviousBranch = (None, None)
-	if(resetConnectionTargetNeuronDendriteDuringActivation):
-		#note vectorisedBranchActivationLevelBatchSequentialSegmentPrevious is same as vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch but updated more regularly than vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch (for every sequential segment); could therefore replace PreviousBranch tensor with Previous tensor 
-		vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious = (None, None)
-	if(resetConnectionTargetNeuronDendriteAfterSequence):
-		vectorisedBranchActivationStateBatchSequentialSegmentFinalNew = None
+	#note vectorisedBranchActivationLevelBatchSequentialSegmentPrevious is same as vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch but updated more regularly than vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch (for every sequential segment); could therefore replace PreviousBranch tensor with Previous tensor 
+	vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious, vectorisedBranchActivationFlagBatchSequentialSegmentPrevious = (None, None, None)
+		
+	#if(resetConnectionTargetNeuronDendriteAfterSequence):
+	vectorisedBranchActivationStateBatchSequentialSegmentFinalNew = None
 	
 	for branchIndex1 in reversed(range(numberOfVerticalBranches)):
 			
 		vectorisedBranchActivationLevelBatchBuffer = vectorisedBranchActivationLevelBatchListBuffer[branchIndex1]
 		vectorisedBranchActivationTimeBatchBuffer = vectorisedBranchActivationTimeBatchListBuffer[branchIndex1]
+		vectorisedBranchActivationFlagBatchBuffer = vectorisedBranchActivationFlagBatchListBuffer[branchIndex1]
 		vectorisedBranchActivationLevelBatch = vectorisedBranchActivationLevelBatchList[branchIndex1]
 		vectorisedBranchActivationTimeBatch = vectorisedBranchActivationTimeBatchList[branchIndex1]
+		vectorisedBranchActivationFlagBatch = vectorisedBranchActivationFlagBatchList[branchIndex1]
 		if(recordVectorisedBranchObjectList):
 			vectorisedBranchObjectBatch = vectorisedBranchObjectBatchList[branchIndex1]
 
@@ -296,42 +312,46 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 			if((branchIndex1 > 0) or expectFirstBranchSequentialSegmentConnection):
 				vectorisedBranchActivationLevelBatchSequentialSegment = vectorisedBranchActivationLevelBatch[:, :, :, sequentialSegmentIndex]
 				vectorisedBranchActivationTimeBatchSequentialSegment = vectorisedBranchActivationTimeBatch[:, :, :, sequentialSegmentIndex]
+				vectorisedBranchActivationFlagBatchSequentialSegment = vectorisedBranchActivationFlagBatch[:, :, :, sequentialSegmentIndex]
 				vectorisedBranchActivationLevelBatchSequentialSegmentBuffer = vectorisedBranchActivationLevelBatchBuffer[:, :, :, sequentialSegmentIndex]
 				vectorisedBranchActivationTimeBatchSequentialSegmentBuffer = vectorisedBranchActivationTimeBatchBuffer[:, :, :, sequentialSegmentIndex]
+				vectorisedBranchActivationFlagBatchSequentialSegmentBuffer = vectorisedBranchActivationFlagBatchBuffer[:, :, :, sequentialSegmentIndex]
+
+				vectorisedBranchActivationFlagBatchSequentialSegmentCurrent = vectorisedBranchActivationFlagBatchSequentialSegment	#vectorisedBranchActivationFlagBatchSequentialSegmentCurrent is derived from memory, not from previous branch/sequential segment
 				
 				if(deactivateSequentialSegmentsIfAllConnectionInputsOff):
 					vectorisedBranchActivationLevelBatchSequentialSegment = vectorisedBranchActivationLevelBatchSequentialSegmentBuffer	#overwrite current sequential segment with buffer
 					vectorisedBranchActivationTimeBatchSequentialSegment = vectorisedBranchActivationTimeBatchSequentialSegmentBuffer	#overwrite current sequential segment with buffer
+					vectorisedBranchActivationFlagBatchSequentialSegment = vectorisedBranchActivationFlagBatchSequentialSegmentBuffer	#overwrite current sequential segment with buffer
 					vectorisedBranchActivationStateBatchSequentialSegment = calculateSequentialSegmentActivationStateVectorisedBuffer(vectorisedBranchActivationLevelBatchSequentialSegmentBuffer)
 				else:
 					vectorisedBranchActivationStateBatchSequentialSegment = calculateSequentialSegmentActivationStateVectorisedMemory(vectorisedBranchActivationLevelBatchSequentialSegment)
-					vectorisedBranchActivationNewBatchSequentialSegmentMask = calculateSequentialSegmentActivationStateVectorisedBuffer(vectorisedBranchActivationLevelBatchSequentialSegmentBuffer)
-					if(overwriteSequentialSegments):
-						if(verifyRepolarisationTime):
-							vectorisedBranchActivationStateBatchSequentialSegmentOverwrite = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, vectorisedBranchActivationStateBatchSequentialSegment)
-							vectorisedBranchActivationStateBatchSequentialSegmentNonOverwrite = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, tf.logical_not(vectorisedBranchActivationStateBatchSequentialSegment))
-							vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite = tf.multiply(vectorisedBranchActivationTimeBatchSequentialSegment, tf.cast(vectorisedBranchActivationStateBatchSequentialSegmentOverwrite, tf.float32))
-							vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests = verifyRepolarisedVectorised(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite, activationTime)
-							vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests = tf.logical_and(vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests, vectorisedBranchActivationStateBatchSequentialSegmentOverwrite)	#required because verifyRepolarisedVectorised is only valid for valid times (ie states=On)
-							vectorisedBranchActivationNewBatchSequentialSegmentMask = tf.logical_or(vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests, vectorisedBranchActivationStateBatchSequentialSegmentNonOverwrite)
-					else:
-						vectorisedBranchActivationNewBatchSequentialSegmentMask = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, tf.logical_not(vectorisedBranchActivationStateBatchSequentialSegment))
+					
+					vectorisedBranchActivationNewBatchSequentialSegmentMask = calculateVectorisedBranchActivationNewBatchSequentialSegmentMask(vectorisedBranchActivationLevelBatchSequentialSegmentBuffer, vectorisedBranchActivationStateBatchSequentialSegment, vectorisedBranchActivationTimeBatchSequentialSegment, vectorisedBranchActivationFlagBatchSequentialSegment, activationTime)
+					vectorisedBranchActivationNewBatchSequentialSegmentMaskFloat = tf.cast(vectorisedBranchActivationNewBatchSequentialSegmentMask, tf.float32)	
 					vectorisedBranchActivationExistingBatchSequentialSegmentMask = tf.logical_not(vectorisedBranchActivationNewBatchSequentialSegmentMask)
-					vectorisedBranchActivationNewBatchSequentialSegmentMaskFloat = tf.cast(vectorisedBranchActivationNewBatchSequentialSegmentMask, tf.float32)
 					vectorisedBranchActivationExistingBatchSequentialSegmentMaskFloat = tf.cast(vectorisedBranchActivationExistingBatchSequentialSegmentMask, tf.float32)
+					
+					vectorisedBranchActivationStateBatchSequentialSegmentNew = vectorisedBranchActivationNewBatchSequentialSegmentMask	#implied
 					vectorisedBranchActivationLevelBatchSequentialSegmentNew = tf.multiply(vectorisedBranchActivationLevelBatchSequentialSegmentBuffer, vectorisedBranchActivationNewBatchSequentialSegmentMaskFloat)
 					vectorisedBranchActivationTimeBatchSequentialSegmentNew = tf.multiply(vectorisedBranchActivationTimeBatchSequentialSegmentBuffer, vectorisedBranchActivationNewBatchSequentialSegmentMaskFloat)
+					vectorisedBranchActivationFlagBatchSequentialSegmentNew = tf.multiply(vectorisedBranchActivationFlagBatchSequentialSegmentBuffer, vectorisedBranchActivationNewBatchSequentialSegmentMaskFloat)
+					
 					vectorisedBranchActivationStateBatchSequentialSegmentExisting = tf.logical_and(vectorisedBranchActivationStateBatchSequentialSegment, vectorisedBranchActivationExistingBatchSequentialSegmentMask)	#existing activations will be reapplied later
 					vectorisedBranchActivationLevelBatchSequentialSegmentExisting = tf.multiply(vectorisedBranchActivationLevelBatchSequentialSegment, vectorisedBranchActivationExistingBatchSequentialSegmentMaskFloat)	#existing activations will be reapplied later
 					vectorisedBranchActivationTimeBatchSequentialSegmentExisting = tf.multiply(vectorisedBranchActivationTimeBatchSequentialSegment, vectorisedBranchActivationExistingBatchSequentialSegmentMaskFloat)	#existing activations will be reapplied later
+					vectorisedBranchActivationFlagBatchSequentialSegmentExisting = tf.multiply(vectorisedBranchActivationFlagBatchSequentialSegment, vectorisedBranchActivationExistingBatchSequentialSegmentMaskFloat)	#existing activations will be reapplied later
+					
+					vectorisedBranchActivationStateBatchSequentialSegment = calculateSequentialSegmentActivationStateVectorisedBuffer(vectorisedBranchActivationLevelBatchSequentialSegmentNew)	#perform sequential segment calculations with new activations from buffer	#or calculateSequentialSegmentActivationStateVectorisedBuffer(vectorisedBranchActivationLevelBatchSequentialSegment)				
 					vectorisedBranchActivationLevelBatchSequentialSegment = vectorisedBranchActivationLevelBatchSequentialSegmentNew	#perform sequential segment calculations with new activations from buffer
 					vectorisedBranchActivationTimeBatchSequentialSegment = vectorisedBranchActivationTimeBatchSequentialSegmentNew		#perform sequential segment calculations with new activations from buffer	
-					vectorisedBranchActivationStateBatchSequentialSegment = calculateSequentialSegmentActivationStateVectorisedBuffer(vectorisedBranchActivationLevelBatchSequentialSegment)	#perform sequential segment calculations with new activations from buffer
+					vectorisedBranchActivationFlagBatchSequentialSegment = vectorisedBranchActivationFlagBatchSequentialSegmentNew		#perform sequential segment calculations with new activations from buffer	
 
 					vectorisedBranchActivationStateBatchSequentialSegmentCurrent = tf.logical_and(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, vectorisedBranchActivationNewBatchSequentialSegmentMask)	#perform sequential segment calculations with new activations from buffer	#existing activations will be reapplied later
 					vectorisedBranchActivationTimeBatchSequentialSegmentCurrent = tf.multiply(vectorisedBranchActivationTimeBatchSequentialSegmentCurrent, vectorisedBranchActivationNewBatchSequentialSegmentMaskFloat)	#perform sequential segment calculations with new activations from buffer	#existing activations will be reapplied later		
-			
-				vectorisedBranchActivationFlagBatchSequentialSegmentFirstInputInSequence = tf.equal(vectorisedBranchActivationTimeBatchSequentialSegment, vectorisedActivationTimeFlagFirstInputInSequence)
+					vectorisedBranchActivationFlagBatchSequentialSegmentCurrent = tf.multiply(vectorisedBranchActivationFlagBatchSequentialSegmentCurrent, vectorisedBranchActivationNewBatchSequentialSegmentMaskFloat)	#perform sequential segment calculations with new activations from buffer	#existing activations will be reapplied later		
+		
+				vectorisedBranchActivationFlagBatchSequentialSegmentFirstInputInSequence = getFirstInputInSequenceFlagFromVectorisedBranchActivationFlagBatchSequentialSegmentBuffer(vectorisedBranchActivationFlagBatchSequentialSegment)	#note vectorisedBranchActivationFlagBatchSequentialSegment contents is from buffer
 			
 				#apply previous sequentialSegment/subbranch activation level tests;
 				#note if firstSequentialSegmentInSequence and higher branch input is zero, then sequential segment will still activate
@@ -353,19 +373,31 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 					#or vectorisedBranchActivationTimeBatchSequentialSegmentCurrent = activationTime (as activationTimes will be ignored for unactivated sequential segments) 
 				vectorisedBranchActivationTimeBatchSequentialSegmentCurrent = tf.where(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, x=activationTime, y=minimumActivationTime)	#filter sequential segment activation time based on previous sequentialSegment/subbranch activation level/time tests			
 				vectorisedBranchActivationTimeBatchSequentialSegmentCurrent = tf.cast(vectorisedBranchActivationTimeBatchSequentialSegmentCurrent, tf.float32)
-				
-				if(resetConnectionTargetNeuronDendriteAfterSequence):
-					vectorisedBranchActivationStateBatchSequentialSegmentFinalNew = vectorisedBranchActivationStateBatchSequentialSegmentCurrent
-				
+		
+				if(overwriteSequentialSegmentsAfterPropagatingSignal):
+					if(not ((branchIndex1 == branchIndex1MostProximal) and (sequentialSegmentIndex == sequentialSegmentIndexMostProximal))):	#never freeze most proximal sequential segment in tree
+						#freeze all newly activated sequential segment states
+						vectorisedBranchActivationFlagBatchSequentialSegmentFrozen = getFrozenFlagFromVectorisedBranchActivationFlagBatchSequentialSegment(vectorisedBranchActivationFlagBatchSequentialSegmentCurrent)
+						vectorisedBranchActivationFlagBatchSequentialSegmentCurrent = tf.cast(tf.logical_or(vectorisedBranchActivationFlagBatchSequentialSegmentFrozen, vectorisedBranchActivationStateBatchSequentialSegmentCurrent), tf.float32)
+					unfreezePreviousSequentialSegmentOrSubbranchVectorised(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, branchIndex1, sequentialSegmentIndex, vectorisedBranchActivationFlagBatchList, vectorisedBranchActivationFlagBatchSequentialSegmentPrevious)
+		
+				#if(resetConnectionTargetNeuronDendriteAfterSequence):
+				vectorisedBranchActivationStateBatchSequentialSegmentFinalNew = vectorisedBranchActivationStateBatchSequentialSegmentCurrent
+
 				if(not deactivateSequentialSegmentsIfAllConnectionInputsOff):
 					vectorisedBranchActivationLevelBatchSequentialSegmentCurrent = tf.add(vectorisedBranchActivationLevelBatchSequentialSegmentCurrent, vectorisedBranchActivationLevelBatchSequentialSegmentExisting)		#merge contents of mutually exclusive indices together
 					vectorisedBranchActivationTimeBatchSequentialSegmentCurrent = tf.add(vectorisedBranchActivationTimeBatchSequentialSegmentCurrent, vectorisedBranchActivationTimeBatchSequentialSegmentExisting)	#merge contents of mutually exclusive indices together
+					vectorisedBranchActivationFlagBatchSequentialSegmentCurrent = tf.add(vectorisedBranchActivationFlagBatchSequentialSegmentCurrent, vectorisedBranchActivationFlagBatchSequentialSegmentExisting)	#merge contents of mutually exclusive indices together					
 					vectorisedBranchActivationStateBatchSequentialSegmentCurrent = tf.logical_or(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, vectorisedBranchActivationStateBatchSequentialSegmentExisting)
+					
 			else:
 				vectorisedBranchActivationLevelBatchSequentialSegmentCurrent = tf.cast(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, tf.float32)
+				
+				vectorisedBranchActivationStateBatchSequentialSegmentFinalNew = tf.zeros(shape=vectorisedBranchActivationStateBatchSequentialSegmentCurrent.shape)	#invalid (used for draw compatibility)
 
 			vectorisedBranchActivationLevelBatchList[branchIndex1][:, :, :, sequentialSegmentIndex].assign(vectorisedBranchActivationLevelBatchSequentialSegmentCurrent)
 			vectorisedBranchActivationTimeBatchList[branchIndex1][:, :, :, sequentialSegmentIndex].assign(vectorisedBranchActivationTimeBatchSequentialSegmentCurrent)
+			vectorisedBranchActivationFlagBatchList[branchIndex1][:, :, :, sequentialSegmentIndex].assign(vectorisedBranchActivationFlagBatchSequentialSegmentCurrent)
 			#note conceptNode.vectorisedBranchActivationLevelList/vectorisedBranchActivationTimeList will be updated at end of simulateBiologicalHFnetworkSequenceNodesPropagateParallel based on vectorisedBranchActivationLevelBatchList/vectorisedBranchActivationTimeBatchList	
 
 			if(resetConnectionTargetNeuronDendriteDuringActivation):
@@ -381,22 +413,39 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 							activationState = vectorisedBranchActivationStateBatchSequentialSegmentCurrent[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
 							activationLevel = vectorisedBranchActivationLevelBatchSequentialSegmentCurrent[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
 							activationTimeSeg = vectorisedBranchActivationTimeBatchSequentialSegmentCurrent[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
+							activationStateNew = vectorisedBranchActivationStateBatchSequentialSegmentFinalNew[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
 							sequentialSegment.activationLevel = activationLevel
 							if(activationState):
 								sequentialSegment.activationTime = activationTimeSeg
 								#print("activate sequential segment: batchNeuron = ", batchNeuron.nodeName, ", branchIndex1 = ", branchIndex1, ", horizontalBranchIndex = ", horizontalBranchIndex, ", branchIndex2 = ", branchIndex2, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
 								if(resetConnectionTargetNeuronDendriteDuringActivation):
 									deactivatePreviousSequentialSegmentOrSubbranch(sequentialSegment)
-							if(sequentialSegmentIndex == 0):
-								sequentialSegment.branch.activationLevel = sequentialSegment.activationLevel
-								#if(activationState):
-								#	print("activate branch: batchNeuron = ", batchNeuron.nodeName, ", branchIndex1 = ", branchIndex1, ", horizontalBranchIndex = ", horizontalBranchIndex, ", branchIndex2 = ", branchIndex2, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
-	
-			drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, wTarget)			
+							if(activationStateNew):
+								if(drawBiologicalSimulationDynamicHighlightNewActivations):
+									sequentialSegment.activationStateNew = activationStateNew
+								if(overwriteSequentialSegmentsAfterPropagatingSignal):
+									if(not ((branchIndex1 == branchIndex1MostProximal) and (sequentialSegmentIndex == sequentialSegmentIndexMostProximal))):	#never freeze most proximal sequential segment in tree
+										sequentialSegment.frozen = True
+									for subbranch in sequentialSegment.branch.subbranches:	
+										previousSequentialSegment = subbranch.sequentialSegments[sequentialSegmentIndexMostProximal]
+										previousSequentialSegment.frozen = False	
+							if(sequentialSegmentIndex == sequentialSegmentIndexMostProximal):
+								#update branch object parameters;
+								if(storeBranchActivationState):
+									sequentialSegment.branch.activationLevel = activationState
+								else:
+									sequentialSegment.branch.activationLevel = activationLevel
+								if(drawBiologicalSimulationDynamicHighlightNewActivations):
+									sequentialSegment.branch.activationStateNew = activationStateNew
 
-			if(resetConnectionTargetNeuronDendriteDuringActivation):
-				vectorisedBranchActivationLevelBatchSequentialSegmentPrevious = vectorisedBranchActivationLevelBatchSequentialSegmentCurrent
-				vectorisedBranchActivationTimeBatchSequentialSegmentPrevious = vectorisedBranchActivationTimeBatchSequentialSegmentCurrent
+							#if(activationState):
+							#	print("activate branch: batchNeuron = ", batchNeuron.nodeName, ", branchIndex1 = ", branchIndex1, ", horizontalBranchIndex = ", horizontalBranchIndex, ", branchIndex2 = ", branchIndex2, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
+												
+			drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=wTarget)			
+
+			vectorisedBranchActivationLevelBatchSequentialSegmentPrevious = vectorisedBranchActivationLevelBatchSequentialSegmentCurrent
+			vectorisedBranchActivationTimeBatchSequentialSegmentPrevious = vectorisedBranchActivationTimeBatchSequentialSegmentCurrent
+			vectorisedBranchActivationFlagBatchSequentialSegmentPrevious = vectorisedBranchActivationFlagBatchSequentialSegmentCurrent
 						
 		vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch = vectorisedBranchActivationLevelBatchSequentialSegmentCurrent
 		vectorisedBranchActivationTimeBatchSequentialSegmentPreviousBranch = vectorisedBranchActivationTimeBatchSequentialSegmentCurrent
@@ -425,7 +474,7 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 
 	#print("somaActivationFound = ", somaActivationFound)
 	
-	drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget)
+	drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
 						
 	return somaActivationFound
 
@@ -482,35 +531,49 @@ def sliceReshapeExpandDims(t, numberOfSlices, axis):
 	tModified = tf.stack(sliceList, axis=-1)
 	return tModified
 
-def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, wTarget=None):
-	if(drawBiologicalSimulationDynamic):
-		if(not debugCalculateNeuronActivationParallel or (sentenceIndex == sentenceIndexDebug and wSource == wSourceDebug)):
-			print("branchIndex1 = ", branchIndex1, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
-			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
-				fileName = generateBiologicalSimulationDynamicFileName(True, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
-				HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()
-				HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList, wTargetDebug)
-				HFNLPpy_biologicalSimulationDrawSentenceDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
-			if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
-				fileName = generateBiologicalSimulationDynamicFileName(False, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
-				HFNLPpy_biologicalSimulationDrawNetworkDynamic.clearHopfieldGraph()
-				HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict, wTargetDebug)
-				HFNLPpy_biologicalSimulationDrawNetworkDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)				
+def calculateVectorisedBranchActivationNewBatchSequentialSegmentMask(vectorisedBranchActivationLevelBatchSequentialSegmentBuffer, vectorisedBranchActivationStateBatchSequentialSegment, vectorisedBranchActivationTimeBatchSequentialSegment, vectorisedBranchActivationFlagBatchSequentialSegment, activationTime):
+	vectorisedBranchActivationNewBatchSequentialSegmentMask = calculateSequentialSegmentActivationStateVectorisedBuffer(vectorisedBranchActivationLevelBatchSequentialSegmentBuffer)
+	#print("vectorisedBranchActivationNewBatchSequentialSegmentMask = ", vectorisedBranchActivationNewBatchSequentialSegmentMask)
+	if(overwriteSequentialSegments):
+		if(overwriteSequentialSegmentsAfterPropagatingSignal):
+			#sync with calculateNeuronActivationStandard:overwriteSequentialSegmentsAfterPropagatingSignal
+			vectorisedBranchActivationStateBatchSequentialSegmentOverwrite = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, vectorisedBranchActivationStateBatchSequentialSegment)
+			vectorisedBranchActivationStateBatchSequentialSegmentNonOverwrite = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, tf.logical_not(vectorisedBranchActivationStateBatchSequentialSegment))
+			vectorisedBranchActivationFlagBatchSequentialSegmentOverwrite = tf.multiply(vectorisedBranchActivationFlagBatchSequentialSegment, tf.cast(vectorisedBranchActivationStateBatchSequentialSegmentOverwrite, tf.float32))
+			vectorisedBranchActivationFlagBatchSequentialSegmentOverwriteFrozen = getFrozenFlagFromVectorisedBranchActivationFlagBatchSequentialSegment(vectorisedBranchActivationFlagBatchSequentialSegmentOverwrite)
+			vectorisedBranchActivationStateBatchSequentialSegmentOverwriteFrozenTests = tf.logical_not(vectorisedBranchActivationFlagBatchSequentialSegmentOverwriteFrozen)
+			vectorisedBranchActivationStateBatchSequentialSegmentOverwriteFrozenTests = tf.logical_and(vectorisedBranchActivationStateBatchSequentialSegmentOverwriteFrozenTests, vectorisedBranchActivationStateBatchSequentialSegmentOverwrite)	#required because frozen flag tests is only valid for valid times (ie states=On)
+			vectorisedBranchActivationNewBatchSequentialSegmentMask = tf.logical_or(vectorisedBranchActivationStateBatchSequentialSegmentOverwriteFrozenTests, vectorisedBranchActivationStateBatchSequentialSegmentNonOverwrite)
+		if(verifyRepolarisationTime):
+			vectorisedBranchActivationStateBatchSequentialSegmentOverwrite = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, vectorisedBranchActivationStateBatchSequentialSegment)
+			vectorisedBranchActivationStateBatchSequentialSegmentNonOverwrite = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, tf.logical_not(vectorisedBranchActivationStateBatchSequentialSegment))
+			vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite = tf.multiply(vectorisedBranchActivationTimeBatchSequentialSegment, tf.cast(vectorisedBranchActivationStateBatchSequentialSegmentOverwrite, tf.float32))
+			vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests = verifyRepolarisedVectorised(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite, activationTime)
+			vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests = tf.logical_and(vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests, vectorisedBranchActivationStateBatchSequentialSegmentOverwrite)	#required because verifyRepolarisedVectorised is only valid for valid times (ie states=On)
+			vectorisedBranchActivationNewBatchSequentialSegmentMask = tf.logical_or(vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests, vectorisedBranchActivationStateBatchSequentialSegmentNonOverwrite)
+	else:
+		vectorisedBranchActivationNewBatchSequentialSegmentMask = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, tf.logical_not(vectorisedBranchActivationStateBatchSequentialSegment))
+	#print("2 vectorisedBranchActivationNewBatchSequentialSegmentMask = ", vectorisedBranchActivationNewBatchSequentialSegmentMask)
+	return vectorisedBranchActivationNewBatchSequentialSegmentMask
 
-def drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget=None):
-	if(drawBiologicalSimulationDynamic):
-		if(not debugCalculateNeuronActivationParallel or (sentenceIndex == sentenceIndexDebug and wSource == wSourceDebug)):
-			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
-				fileName = generateBiologicalSimulationFileName(True, wSource, sentenceIndex)
-				HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()
-				HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList, wTargetDebug)
-				HFNLPpy_biologicalSimulationDrawSentenceDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
-			if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
-				fileName = generateBiologicalSimulationFileName(False, wSource, sentenceIndex)
-				HFNLPpy_biologicalSimulationDrawNetworkDynamic.clearHopfieldGraph()
-				HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict, wTargetDebug)
-				HFNLPpy_biologicalSimulationDrawNetworkDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)		
+def getFrozenFlagFromVectorisedBranchActivationFlagBatchSequentialSegment(vectorisedBranchActivationFlagBatchSequentialSegment):
+	vectorisedBranchActivationFlagBatchSequentialSegmentFrozen = tf.cast(vectorisedBranchActivationFlagBatchSequentialSegment, tf.bool)
+	return vectorisedBranchActivationFlagBatchSequentialSegmentFrozen
 
+def getFirstInputInSequenceFlagFromVectorisedBranchActivationFlagBatchSequentialSegmentBuffer(vectorisedBranchActivationFlagBatchSequentialSegmentBuffer):
+	vectorisedBranchActivationFlagBatchSequentialSegmentFirstInputInSequence = tf.equal(vectorisedBranchActivationFlagBatchSequentialSegmentBuffer, vectorisedActivationTimeFlagFirstInputInSequence)
+	return vectorisedBranchActivationFlagBatchSequentialSegmentFirstInputInSequence
+	
+
+def verifyRepolarisedVectorised(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite, activationTime):	
+	#sync with verifyRepolarised
+	if(verifyRepolarisationTime):
+		repolarised = tf.greater_equal(activationTime, tf.add(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite, activationRepolarisationTime))
+	else:
+		print("verifyRepolarisedVectorised error: requires verifyRepolarisationTime")
+		exit()
+	return repolarised
+						
 def deactivatePreviousSequentialSegmentOrSubbranchVectorised(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, branchIndex1, sequentialSegmentIndex, vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious):
 	#sync with deactivatePreviousSequentialSegmentOrSubbranch
 	numberOfVerticalBranches = calculateNumberOfVerticalBranches(numberOfBranches1)
@@ -539,12 +602,53 @@ def deactivatePreviousSequentialSegmentOrSubbranchVectorised(vectorisedBranchAct
 		#vectorisedBranchActivationTimeBatchSequentialSegmentPrevious = vectorisedBranchActivationTimeBatchSequentialSegmentPrevious	#no change to last activation times
 		#vectorisedBranchActivationTimeBatchList[branchIndex1][:, :, :, previousSequentialSegmentIndex].assign(vectorisedBranchActivationTimeBatchSequentialSegmentPrevious)	
 
-def verifyRepolarisedVectorised(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite, activationTime):	
-	#sync with verifyRepolarised
-	if(verifyRepolarisationTime):
-		repolarised = tf.greater_equal(activationTime, tf.add(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite, activationRepolarisationTime))
+def unfreezePreviousSequentialSegmentOrSubbranchVectorised(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, branchIndex1, sequentialSegmentIndex, vectorisedBranchActivationFlagBatchList, vectorisedBranchActivationFlagBatchSequentialSegmentPrevious):
+	#sync with calculateNeuronActivationStandard:overwriteSequentialSegmentsAfterPropagatingSignal 
+	#most code extracted from deactivatePreviousSequentialSegmentOrSubbranchVectorised
+	numberOfVerticalBranches = calculateNumberOfVerticalBranches(numberOfBranches1)
+	if(isMostDistalSequentialSegmentInBranch(sequentialSegmentIndex)):
+		if(branchIndex1 < numberOfVerticalBranches-1):
+			#update previous branch last sequential segment activations
+			previousBranchIndex1 = branchIndex1+1
+			numberOfHorizontalBranches, horizontalBranchWidth = calculateNumberOfHorizontalBranches(previousBranchIndex1, numberOfBranches2)
+			vectorisedBranchActivationStateBatchSequentialSegmentCurrentReshapedForPrevBranch = tf.reshape(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, shape=(vectorisedBranchActivationStateBatchSequentialSegmentCurrent.shape[0],vectorisedBranchActivationStateBatchSequentialSegmentCurrent.shape[1]*vectorisedBranchActivationStateBatchSequentialSegmentCurrent.shape[2])) 	#shape [batchSize, numberOfHorizontalBranches*horizontalBranchWidth]
+			vectorisedBranchActivationStateBatchSequentialSegmentCurrentReshapedForPrevBranch = tf.expand_dims(vectorisedBranchActivationStateBatchSequentialSegmentCurrentReshapedForPrevBranch, axis=2)
+			multiples = [1, 1, horizontalBranchWidth]
+			vectorisedBranchActivationStateBatchSequentialSegmentCurrentReshapedForPrevBranch = tf.tile(vectorisedBranchActivationStateBatchSequentialSegmentCurrentReshapedForPrevBranch, multiples)
+			vectorisedBranchActivationFlagBatchSequentialSegmentPrevious = tf.multiply(vectorisedBranchActivationFlagBatchSequentialSegmentPrevious, tf.cast(tf.logical_not(vectorisedBranchActivationStateBatchSequentialSegmentCurrentReshapedForPrevBranch), tf.float32))
+			vectorisedBranchActivationFlagBatchList[previousBranchIndex1][:, :, :, sequentialSegmentIndexMostProximal].assign(vectorisedBranchActivationFlagBatchSequentialSegmentPrevious)
 	else:
-		print("verifyRepolarisedVectorised error: requires verifyRepolarisationTime")
-		exit()
-	return repolarised
-	
+		#update previous sequential segment activations
+		previousSequentialSegmentIndex = sequentialSegmentIndex+1
+		vectorisedBranchActivationFlagBatchSequentialSegmentPrevious = tf.multiply(vectorisedBranchActivationFlagBatchSequentialSegmentPrevious, tf.cast(tf.logical_not(vectorisedBranchActivationStateBatchSequentialSegmentCurrent), tf.float32))
+		vectorisedBranchActivationFlagBatchList[branchIndex1][:, :, :, previousSequentialSegmentIndex].assign(vectorisedBranchActivationFlagBatchSequentialSegmentPrevious)
+
+def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=None):
+	if(drawBiologicalSimulationDynamic):
+		if(not debugCalculateNeuronActivationParallel or (sentenceIndex == sentenceIndexDebug and wSource >= wSourceDebug)):
+			print("branchIndex1 = ", branchIndex1, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
+			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
+				fileName = generateBiologicalSimulationDynamicFileName(True, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
+				HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()
+				HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList, activationTime=activationTime, wTarget=wTargetDebug)
+				HFNLPpy_biologicalSimulationDrawSentenceDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
+			if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
+				fileName = generateBiologicalSimulationDynamicFileName(False, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
+				HFNLPpy_biologicalSimulationDrawNetworkDynamic.clearHopfieldGraph()
+				HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict, activationTime=activationTime, wTarget=wTargetDebug)
+				HFNLPpy_biologicalSimulationDrawNetworkDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)				
+
+def drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=None):
+	if(drawBiologicalSimulationDynamic):
+		if(not debugCalculateNeuronActivationParallel or (sentenceIndex == sentenceIndexDebug and wSource >= wSourceDebug)):
+			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
+				fileName = generateBiologicalSimulationFileName(True, wSource, sentenceIndex)
+				HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()
+				HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList, activationTime=activationTime, wTarget=wTargetDebug)
+				HFNLPpy_biologicalSimulationDrawSentenceDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
+			if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
+				fileName = generateBiologicalSimulationFileName(False, wSource, sentenceIndex)
+				HFNLPpy_biologicalSimulationDrawNetworkDynamic.clearHopfieldGraph()
+				HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict, activationTime=activationTime, wTarget=wTargetDebug)
+				HFNLPpy_biologicalSimulationDrawNetworkDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)		
+

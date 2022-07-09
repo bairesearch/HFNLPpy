@@ -26,9 +26,13 @@ import numpy as np
 
 vectoriseComputation = True	#parallel processing for optimisation
 if(vectoriseComputation):
-	updateNeuronObjectActivationLevels = True	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
+	updateNeuronObjectActivationLevels = False	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 else:
 	updateNeuronObjectActivationLevels = True	#mandatory (typically implied true)
+
+drawBiologicalSimulationDynamicHighlightNewActivations = True	#useful with resetConnectionTargetNeuronDendriteAfterSequence/resetConnectionTargetNeuronDendriteDuringActivation to visually distinguish between new activations (at current time) and prior activations
+if(drawBiologicalSimulationDynamicHighlightNewActivations):
+	highlightNewActivationColor = 'magenta'	#'black'
 
 biologicalSimulationTestHarness = False
 HFNLPnonrandomSeed = False	#initialise (dependent var)
@@ -143,9 +147,9 @@ resetSourceNeuronAxonAfterActivation = True	#mandatory
 
 if(biologicalSimulationForward):
 	#dendrite activations reset mode selection (typically select one only):
-	resetConnectionTargetNeuronDendriteAfterSequence = False	#optional
+	resetConnectionTargetNeuronDendriteAfterSequence = True	#optional
 	resetConnectionTargetNeuronDendriteDuringActivation = False	#optional #requires !overwriteSequentialSegments, !performSummationOfSequentialSegmentInputs
-	resetSourceNeuronDendriteAfterActivation = True	#optional	#True: orig implementation	#not compatible with recursive connections (ie nodeX -> nodeX; connection created from repeated words in sentence)	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
+	resetSourceNeuronDendriteAfterActivation = False	#optional	#True: orig implementation	#not compatible with recursive connections (ie nodeX -> nodeX; connection created from repeated words in sentence)	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
 	resetConnectionTargetNeuronDendriteAfterActivation = False	#optional	#reset all connection target neuron dendrites after activation	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
 	resetTargetNeuronDendriteAfterActivation = False	#optional	#only reset expected target neuron dendrites after activation	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
 else:
@@ -154,18 +158,25 @@ else:
 resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#initialise (dependent var)
 if(resetConnectionTargetNeuronDendriteDuringActivation):
 	if(not vectoriseComputation):
-		resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#incomplete
+		resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#incomplete	#note for HFNLPpy_biologicalSimulationPropagateVectorised this is implied True because entire source propagation round is executed simultaneously in parallel
 
-overwriteSequentialSegments = False	#initialise (dependent var)
 verifyRepolarisationTime = False	#initialise (dependent var)
+overwriteSequentialSegmentsAfterPropagatingSignal = False	#initialise (dependent var)
 if(resetConnectionTargetNeuronDendriteAfterSequence):
-	overwriteSequentialSegments = True	#orig: False	#False: prevent reactivation of sequential segments (equates to a long repolarisation time of ~= sentenceLength)	#False: algorithmTimingWorkaround2
-	verifyRepolarisationTime = True
+	overwriteSequentialSegments = True
+	if(overwriteSequentialSegments):
+		overwriteSequentialSegmentsAfterPropagatingSignal = True	#only overwrite activation if a more proximal branch has been activated	#current implementation is insufficient (too lenient wrt repeated concepts); may need to only consider a sequential segment reactivated if its subbranch activation times have increased (similar to resetConnectionTargetNeuronDendriteDuringActivation)
+		verifyRepolarisationTime = True
 	#resetConnectionTargetNeuronDendriteAfterSequence does not currently support !expectFirstBranchSequentialSegmentConnection
-	
+else:
+	overwriteSequentialSegments = False	#orig: False	#False: prevent reactivation of sequential segments (equates to a long repolarisation time of ~= sentenceLength)	#False: algorithmTimingWorkaround2
+
 deactivateSequentialSegmentsIfAllConnectionInputsOff = False	#initialise (dependent var)
 deactivateSequentialSegmentsIfTimeTestsFail = False	#initialise (dependent var)
 if(overwriteSequentialSegments):
+	drawBiologicalSimulationDynamicFrozenActivations = True
+	if(drawBiologicalSimulationDynamicFrozenActivations):
+		frozenActivationColor = 'blue'
 	if(vectoriseComputation):
 		deactivateSequentialSegmentsIfTimeTestsFail = True	#mandatory implied True (only coded implementation)
 	else:
@@ -214,3 +225,7 @@ activationRepolarisationTime = 1	#calibrate
 
 sequentialSegmentIndexMostProximal = 0
 branchIndex1MostProximal = 0
+
+
+storeBranchActivationState = True	#True: orig implementation	#False: storeBranchActivationLevel
+

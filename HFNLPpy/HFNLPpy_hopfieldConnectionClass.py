@@ -19,6 +19,7 @@ ATNLP Hopfield Connection Class
 
 import numpy as np
 
+objectTypeConnection = 5
 
 class HopfieldConnection:
 	def __init__(self, nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype, biologicalSimulation):
@@ -42,3 +43,4 @@ class HopfieldConnection:
 			self.biologicalSimulation = True
 			self.nodeTargetSequentialSegmentInput = None
 			self.weight = 1.0	#for weightedSequentialSegmentInputs only
+			self.objectType = objectTypeConnection

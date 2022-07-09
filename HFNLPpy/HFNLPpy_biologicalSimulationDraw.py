@@ -73,7 +73,7 @@ def clearHopfieldGraph():
 		hopfieldGraphNodeSizeMap.clear()
 	hopfieldGraphConceptNodesList.clear()	#for labels
 
-def drawHopfieldGraphSentence(sentenceConceptNodeList, wTarget=None):	
+def drawHopfieldGraphSentence(sentenceConceptNodeList, activationTime=None, wTarget=None):	
 	sentenceConceptNodeList = list(set(sentenceConceptNodeList))	#generate a unique list from a list (in the event a sentence contains multiple instances of the same word/lemma)
 	
 	#print("drawHopfieldGraphSentence = ")
@@ -84,12 +84,12 @@ def drawHopfieldGraphSentence(sentenceConceptNodeList, wTarget=None):
 	#need to draw all conceptNodes and their dendriticTrees before creating connections
 	for conceptNode in sentenceConceptNodeList:
 		if(not debugOnlyDrawTargetNeuron or (conceptNode.w==wTarget)):
-			drawHopfieldGraphNode(conceptNode, drawGraphNetwork)
+			drawHopfieldGraphNode(conceptNode, drawGraphNetwork, activationTime)
 	for conceptNode in sentenceConceptNodeList:
 		if(not debugOnlyDrawTargetNeuron):
-			drawHopfieldGraphNodeConnections(conceptNode, drawGraphNetwork, sentenceConceptNodeList)
+			drawHopfieldGraphNodeConnections(conceptNode, drawGraphNetwork, activationTime, sentenceConceptNodeList)
 
-def drawHopfieldGraphNetwork(networkConceptNodeDict, wTarget=None):	
+def drawHopfieldGraphNetwork(networkConceptNodeDict, activationTime=None, wTarget=None):	
 	#print("drawHopfieldGraphNetwork = ")
 	#print("size hopfieldGraph.nodes = ", len(hopfieldGraph.nodes))
 	#print("size hopfieldGraphNodeColorMap = ", len(hopfieldGraphNodeColorMap))
@@ -98,22 +98,22 @@ def drawHopfieldGraphNetwork(networkConceptNodeDict, wTarget=None):
 	#networkSize = len(networkConceptNodeDict)
 	for conceptNodeKey, conceptNode in networkConceptNodeDict.items():
 		if(not debugOnlyDrawTargetNeuron or (conceptNode.w==wTarget)):
-			drawHopfieldGraphNode(conceptNode, drawGraphNetwork)
+			drawHopfieldGraphNode(conceptNode, drawGraphNetwork, activationTime)
 	for conceptNodeKey, conceptNode in networkConceptNodeDict.items():
 		if(not debugOnlyDrawTargetNeuron):
-			drawHopfieldGraphNodeConnections(conceptNode, drawGraphNetwork)
+			drawHopfieldGraphNodeConnections(conceptNode, drawGraphNetwork, activationTime)
 
-def drawHopfieldGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList=None):
+def drawHopfieldGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, activationTime, sentenceConceptNodeList=None):
 	for connectionKey, connectionList in hopfieldGraphNode.targetConnectionDict.items():
 		for connection in connectionList:
-			drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
+			drawHopfieldGraphConnection(connection, drawGraphNetwork, activationTime, sentenceConceptNodeList)
 			
 #def drawHopfieldGraphNodeAndConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList=None):	
 #	#parse tree and generate nodes and connections
 #	drawHopfieldGraphNode(hopfieldGraphNode, drawGraphNetwork)
 #	drawHopfieldGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList)
 		
-def drawHopfieldGraphNode(conceptNode, drawGraphNetwork):
+def drawHopfieldGraphNode(conceptNode, drawGraphNetwork, activationTime):
 	if(conceptNode.activationLevel):
 		colorHtml = 'turquoise'	#soma: turquoise	
 	else:
@@ -142,11 +142,11 @@ def drawHopfieldGraphNode(conceptNode, drawGraphNetwork):
 	#if(biologicalSimulation) exclusive code:
 	posYdendriticTreeBranchHead = posY+branchIndex1Separation	#position of first branching within dendritic tree
 	currentBranchIndex1 = 0
-	drawHopfieldGraphNodeDendriticBranch(conceptNode, posX, posYdendriticTreeBranchHead, conceptNode.dendriticTree, currentBranchIndex1, conceptNode, posX, posY, drawOrthogonalBranchNode=False)
+	drawHopfieldGraphNodeDendriticBranch(conceptNode, posX, posYdendriticTreeBranchHead, conceptNode.dendriticTree, currentBranchIndex1, conceptNode, posX, posY, activationTime, drawOrthogonalBranchNode=False)
 
 #if(biologicalSimulation) exclusive code:
 	
-def drawHopfieldGraphNodeDendriticBranch(conceptNode, posX, posY, dendriticBranch, currentBranchIndex1, previousBranch, previousConceptNodePosX, previousConceptNodePosY, drawOrthogonalBranchNode=True):
+def drawHopfieldGraphNodeDendriticBranch(conceptNode, posX, posY, dendriticBranch, currentBranchIndex1, previousBranch, previousConceptNodePosX, previousConceptNodePosY, activationTime, drawOrthogonalBranchNode=True):
 	#print("drawHopfieldGraphNodeDendriticBranch: , dendriticBranch.nodeName = ", dendriticBranch.nodeName, ", currentBranchIndex1 = ", currentBranchIndex1, ", posX = ", posX, ", posY = ", posY)
 	
 	colorHtml = 'green' #branch: green	#'OR #ffffff' invisible: white
@@ -164,7 +164,7 @@ def drawHopfieldGraphNodeDendriticBranch(conceptNode, posX, posY, dendriticBranc
 	else:
 		orthogonalNodeName = None
 	if(not debugOnlyDrawActiveBranches or dendriticBranch.activationLevel):
-		drawHopfieldGraphBranch(currentBranchIndex1, previousBranch, dendriticBranch, drawOrthogonalBranchNode=drawOrthogonalBranchNode, orthogonalNodeName=orthogonalNodeName)	#draw branch edge
+		drawHopfieldGraphBranch(currentBranchIndex1, previousBranch, dendriticBranch, drawOrthogonalBranchNode, orthogonalNodeName, activationTime)	#draw branch edge
 	
 	if(drawOrthogonalBranchNode and drawDendriticBranchOrthogonal):
 		previousSequentialSegmentNodeName = orthogonalNodeName					
@@ -172,7 +172,7 @@ def drawHopfieldGraphNodeDendriticBranch(conceptNode, posX, posY, dendriticBranc
 		previousSequentialSegmentNodeName = previousBranch.nodeName
 	for currentSequentialSegmentIndex, currentSequentialSegment in enumerate(dendriticBranch.sequentialSegments):
 		posYsequentialSegment = posY+currentSequentialSegmentIndex*sequentialSegmentIndexSeparation - (sequentialSegmentIndexSeparation*(numberOfBranchSequentialSegments-1))
-		previousSequentialSegmentNodeName = drawHopfieldGraphNodeSequentialSegment(currentBranchIndex1, conceptNode, posX, posYsequentialSegment, currentSequentialSegment, currentSequentialSegmentIndex, previousSequentialSegmentNodeName)
+		previousSequentialSegmentNodeName = drawHopfieldGraphNodeSequentialSegment(currentBranchIndex1, conceptNode, posX, posYsequentialSegment, currentSequentialSegment, currentSequentialSegmentIndex, previousSequentialSegmentNodeName, activationTime)
 		
 	for currentBranchIndex2, subbranch in enumerate(dendriticBranch.subbranches):	
 		horizontalSeparation = branchIndex2Separation/(pow(horizontalBranchSeparationDivergence, currentBranchIndex1))	#normalise/shorten at greater distance from soma
@@ -182,14 +182,11 @@ def drawHopfieldGraphNodeDendriticBranch(conceptNode, posX, posY, dendriticBranc
 		#print("posXsubbranch = ", posXsubbranch)
 		posYsubbranch = posY+branchIndex1Separation
 		#print("posYsubbranch = ", posYsubbranch)
-		drawHopfieldGraphNodeDendriticBranch(conceptNode, posXsubbranch, posYsubbranch, subbranch, currentBranchIndex1+1, dendriticBranch, posX, posY)
+		drawHopfieldGraphNodeDendriticBranch(conceptNode, posXsubbranch, posYsubbranch, subbranch, currentBranchIndex1+1, dendriticBranch, posX, posY, activationTime)
 
-def drawHopfieldGraphBranch(currentBranchIndex1, parentBranch, currentBranch, drawOrthogonalBranchNode=False, orthogonalNodeName=None):
+def drawHopfieldGraphBranch(currentBranchIndex1, parentBranch, currentBranch, drawOrthogonalBranchNode, orthogonalNodeName, activationTime):
 	if(drawHopfieldGraphEdgeColoursWeights):
-		if(currentBranch.activationLevel):
-			color = 'darkcyan'	#active dendrite: dark cyan
-		else:
-			color = 'green'	#dendrite: green
+		color = getActivationColor(currentBranch, 'darkcyan', 'green')
 		weight = 5.0/(currentBranchIndex1+1)
 
 	if(drawDendriticBranchOrthogonal and drawOrthogonalBranchNode):
@@ -206,14 +203,14 @@ def drawHopfieldGraphBranch(currentBranchIndex1, parentBranch, currentBranch, dr
 		else:
 			hopfieldGraph.add_edge(parentBranch.nodeName, currentBranch.nodeName)
 			
-def drawHopfieldGraphNodeSequentialSegment(currentBranchIndex1, conceptNode, posX, posY, sequentialSegment, currentSequentialSegmentIndex, previousSequentialSegmentNodeName):
+def drawHopfieldGraphNodeSequentialSegment(currentBranchIndex1, conceptNode, posX, posY, sequentialSegment, currentSequentialSegmentIndex, previousSequentialSegmentNodeName, activationTime):
 	colorHtml = 'green'	#branch: green	#'OR #ffffff' invisible: white
 	hopfieldGraph.add_node(sequentialSegment.nodeName, pos=(posX, posY))
 	if(drawHopfieldGraphNodeColours):
 		hopfieldGraphNodeColorMap.append(colorHtml)
 		hopfieldGraphNodeSizeMap.append(nodeSizeDraw)
 	if(not debugOnlyDrawActiveBranches or sequentialSegment.activationLevel):
-		drawHopfieldGraphSequentialSegment(currentBranchIndex1, sequentialSegment, currentSequentialSegmentIndex, previousSequentialSegmentNodeName)	#draw sequential segment edge
+		drawHopfieldGraphSequentialSegment(currentBranchIndex1, sequentialSegment, currentSequentialSegmentIndex, previousSequentialSegmentNodeName, activationTime)	#draw sequential segment edge
 
 	#for currentSequentialSegmentInputIndex, currentSequentialSegmentInput in enumerate(sequentialSegment.inputs):
 	for currentSequentialSegmentInputIndexDynamic, currentSequentialSegmentInput in enumerate(sequentialSegment.inputs.values()):	#note currentSequentialSegmentInputIndexDynamic is valid even if inputs have been removed from dictionary (although order not guaranteed)
@@ -223,15 +220,12 @@ def drawHopfieldGraphNodeSequentialSegment(currentBranchIndex1, conceptNode, pos
 			currentSequentialSegmentInputIndex = currentSequentialSegmentInputIndexDynamic
 		#print("currentSequentialSegmentInputIndex = ", currentSequentialSegmentInputIndex)
 		posYsegmentInput = posY+(currentSequentialSegmentInputIndex*sequentialSegmentInputIndexSeparation*spineSeparation) - sequentialSegmentIndexSeparation + nodeSize	#+nodeSize to separate visualisation from sequential segment node	#-branchIndex1Separation to position first input of first sequential segment at base of branch
-		drawHopfieldGraphNodeSequentialSegmentInput(conceptNode, posX, posYsegmentInput, currentSequentialSegmentInput, currentSequentialSegmentInputIndex)
+		drawHopfieldGraphNodeSequentialSegmentInput(conceptNode, posX, posYsegmentInput, currentSequentialSegmentInput, currentSequentialSegmentInputIndex, activationTime)
 	return sequentialSegment.nodeName
 	
-def drawHopfieldGraphSequentialSegment(currentBranchIndex1, sequentialSegment, currentSequentialSegmentIndex, previousSequentialSegmentNodeName):
+def drawHopfieldGraphSequentialSegment(currentBranchIndex1, sequentialSegment, currentSequentialSegmentIndex, previousSequentialSegmentNodeName, activationTime):
 	if(drawHopfieldGraphEdgeColoursWeights):
-		if(sequentialSegment.activationLevel):
-			color = 'cyan'	#active dendrite: cyan
-		else:
-			color = 'green'	#dendrite: green
+		color = getActivationColor(sequentialSegment, 'cyan', 'green')
 		weight = 5.0/(currentBranchIndex1+1)
 
 	#print("orthogonalNodeName = ", orthogonalNodeName)
@@ -240,41 +234,31 @@ def drawHopfieldGraphSequentialSegment(currentBranchIndex1, sequentialSegment, c
 	else:
 		hopfieldGraph.add_edge(previousSequentialSegmentNodeName, sequentialSegment.nodeName)
 
-def drawHopfieldGraphNodeSequentialSegmentInput(conceptNode, posX, posY, sequentialSegmentInput, currentSequentialSegmentInputIndex):
+def drawHopfieldGraphNodeSequentialSegmentInput(conceptNode, posX, posY, sequentialSegmentInput, currentSequentialSegmentInputIndex, activationTime):
 	
 	if(sequentialSegmentInput.firstInputInSequence):
-		if(sequentialSegmentInput.activationLevel):
-			colorHtml = 'blue'	#active synapse: blue
-		else:
-			colorHtml = 'orange'	#synapse: yellow	
+		color = getActivationColor(sequentialSegmentInput, 'blue', 'orange')	
 	else:
-		if(sequentialSegmentInput.activationLevel):
-			colorHtml = 'blue'	#active synapse: blue
-		else:
-			colorHtml = 'yellow'	#synapse: yellow
+		color = getActivationColor(sequentialSegmentInput, 'blue', 'yellow')
 				
 	#print("sequentialSegmentInput.nodeName = ", sequentialSegmentInput.nodeName)
 	#print("posX = ", posX)
 	#print("posY = ", posY)
 	hopfieldGraph.add_node(sequentialSegmentInput.nodeName, pos=(posX, posY))
 	if(drawHopfieldGraphNodeColours):
-		hopfieldGraphNodeColorMap.append(colorHtml)
+		hopfieldGraphNodeColorMap.append(color)
 		hopfieldGraphNodeSizeMap.append(nodeSizeDraw)
 
 
-def drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList=None):
+def drawHopfieldGraphConnection(connection, drawGraphNetwork, activationTime, sentenceConceptNodeList=None):
 	node1 = connection.nodeSource
 	node2 = connection.nodeTargetSequentialSegmentInput
 	spatioTemporalIndex = connection.spatioTemporalIndex
 	if(drawGraphNetwork or (node2.conceptNode in sentenceConceptNodeList)):	#if HFNLPpy_biologicalSimulationDrawSentence: ensure target node is in sentence (such that connection can be drawn) - see drawHopfieldGraphNodeConnections
 		if(drawHopfieldGraphEdgeColoursWeights):
 			#color = node2.sequentialSegment.branch.branchIndex1	#CHECKTHIS: assign colour of connection based on distance of target neuron synapse to soma 
-			if(connection.activationLevel):
-				color = 'magenta'	#axon: magenta
-				weight = 1.0
-			else:
-				color = 'red'	#axon: red
-				weight = 1.0				
+			color = getActivationColor(connection, 'magenta', 'red', highlightNewActivations=False)
+			weight = 1.0				
 			hopfieldGraph.add_edge(node1.nodeName, node2.nodeName, color=color, weight=weight)	#FUTURE: consider setting color based on spatioTemporalIndex
 		else:
 			hopfieldGraph.add_edge(node1.nodeName, node2.nodeName)
@@ -331,3 +315,19 @@ def pointOnCircle(radius, angleDegrees, centre=[0,0]):
 	y = centre[1] + (radius * sin(angle))
 	return x, y
 	
+
+def getActivationColor(neuronObject, colorActive, colorInactive, highlightNewActivations=True):
+	if(drawBiologicalSimulationDynamicHighlightNewActivations and highlightNewActivations and neuronObject.activationStateNew):	#highlightNewActivations or neuronObject.objectType != objectTypeConnection
+		color = highlightNewActivationColor
+		neuronObject.activationStateNew = False
+	elif(drawBiologicalSimulationDynamicFrozenActivations and neuronObject.objectType==objectTypeSequentialSegment and neuronObject.frozen):
+		color = frozenActivationColor
+	else:		
+		if(neuronObject.activationLevel):
+			color = colorActive
+		else:
+			color = colorInactive
+	return color
+	
+	
+

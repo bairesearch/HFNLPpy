@@ -42,7 +42,7 @@ if(drawBiologicalSimulationDynamic):
 printVerbose = False
 printConnectionTargetActivations = False
 
-debugCalculateNeuronActivationStandard = False
+debugCalculateNeuronActivationStandard = False		#requires !drawBiologicalSimulationDynamicHighlightNewActivations
 if(debugCalculateNeuronActivationStandard):
 	sentenceIndexDebug = 1
 	wSourceDebug = 14
@@ -61,7 +61,7 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateStandardEmulateVectorisedCo
 			for conceptNeuronSource in conceptNeuronSourceList:
 				if(simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, branchIndex1Target, sequentialSegmentIndexTarget, connectionTargetActivationFoundSet)):
 					somaActivationFound = True
-			drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, wTarget)
+			drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)
 		
 	for conceptNeuronSource in conceptNeuronSourceList:
 		resetSourceNeuronAfterActivation(conceptNeuronSource)
@@ -76,7 +76,7 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandardEmulateVectorisedCom
 		for sequentialSegmentIndexTarget in reversed(range(numberOfBranchSequentialSegments)):
 			if(simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, branchIndex1Target, sequentialSegmentIndexTarget, connectionTargetActivationFoundSet)):
 				somaActivationFound = True			
-			drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, wTarget)
+			drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)
 		
 	resetSourceNeuronAfterActivation(conceptNeuronSource)
 	
@@ -121,7 +121,7 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 					somaActivationFound = True
 
 			if(not emulateVectorisedComputationOrder):
-				drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
+				drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
 	
 	if(not emulateVectorisedComputationOrder):
 		resetSourceNeuronAfterActivation(conceptNeuronSource)
@@ -174,7 +174,7 @@ def simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget(networkC
 				#if(printVerbose):
 				#print("somaActivationFound")
 
-			drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)	
+			drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)	
 
 		if(resetSourceNeuronAxonAfterActivation):
 			resetAxonsActivationConnectionList(connectionList)
@@ -249,7 +249,8 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 				sequentialSegmentActivationTime = currentSequentialSegment.activationTime
 
 			passSegmentActivationOverwriteTests = True
-			if(resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion):
+			
+			if(overwriteSequentialSegments):
 				if(currentSequentialSegment.frozen):
 					passSegmentActivationOverwriteTests = False
 					#print("currentSequentialSegment.frozen")
@@ -263,6 +264,8 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 					if(recordSequentialSegmentInputActivationLevels):
 						currentSequentialSegmentInput.activationLevel = inputActivationLevel
 						currentSequentialSegmentInput.activationTime = activationTime
+						if(drawBiologicalSimulationDynamicHighlightNewActivations):
+							currentSequentialSegmentInput.activationStateNew = True
 					if(printVerbose):
 						printIndentation(currentBranchIndex1+1)
 						print("activate currentSequentialSegmentInput, connection.nodeSource = ", connection.nodeSource.nodeName, ", connection.nodeTarget = ", connection.nodeTarget.nodeName)
@@ -291,15 +294,23 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 						currentSequentialSegment.activationLevel = sequentialSegmentActivationLevel
 						currentSequentialSegment.activationTime = sequentialSegmentActivationTime
 					
-						if(resetConnectionTargetNeuronDendriteDuringActivation):
-							if(sequentialSegmentActivationState):
+						#if(resetConnectionTargetNeuronDendriteAfterSequence):
+						if(sequentialSegmentActivationState):
+							if(resetConnectionTargetNeuronDendriteDuringActivation):
 								deactivatePreviousSequentialSegmentOrSubbranch(currentSequentialSegment)
-						if(resetConnectionTargetNeuronDendriteAfterSequence):
-							if(sequentialSegmentActivationState):
-								if(currentSequentialSegmentIndex == sequentialSegmentIndexMostProximal):
-									newActivationFoundFinalSequentialSegment = True
-																
-						drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, wTarget)
+							if(currentSequentialSegmentIndex == sequentialSegmentIndexMostProximal):
+								newActivationFoundFinalSequentialSegment = True
+							if(drawBiologicalSimulationDynamicHighlightNewActivations):
+								currentSequentialSegment.activationStateNew = True
+							if(overwriteSequentialSegmentsAfterPropagatingSignal):
+								if(not ((currentBranchIndex1 == branchIndex1MostProximal) and (currentSequentialSegmentIndex == sequentialSegmentIndexMostProximal))):	#never freeze most proximal sequential segment in tree
+									#freeze all newly activated sequential segment states
+									currentSequentialSegment.frozen = True
+								for subbranch in currentBranch.subbranches:	
+									previousSequentialSegment = subbranch.sequentialSegments[sequentialSegmentIndexMostProximal]
+									previousSequentialSegment.frozen = False
+								
+						drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
 					
 					else:
 						if(deactivateSequentialSegmentsIfTimeTestsFail):
@@ -311,7 +322,7 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 							currentSequentialSegment.activationLevel = sequentialSegmentActivationLevel
 							currentSequentialSegment.activationTime = sequentialSegmentActivationTime	
 													
-							drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, wTarget)
+							drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
 		else:
 			sequentialSegmentActivationState = sequentialSegmentActivationStatePrior
 			sequentialSegmentActivationLevel = sequentialSegmentActivationLevelPrior
@@ -332,7 +343,10 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 	branchActivationState = sequentialSegmentActivationStatePrior
 	branchActivationLevel = sequentialSegmentActivationLevelPrior
 	branchActivationTime = sequentialSegmentActivationTimePrior
-	currentBranch.activationLevel = branchActivationState	#branchActivationLevel
+	if(storeBranchActivationState):
+		currentBranch.activationLevel = branchActivationState
+	else:
+		currentBranch.activationLevel = branchActivationLevel
 	currentBranch.activationTime = branchActivationTime
 
 	branchActivationFound = branchActivationState
@@ -362,7 +376,7 @@ def findConnectionSynapseInSequentialSegment(currentSequentialSegment, connectio
 				currentSequentialSegmentInput = currentSequentialSegmentInputTest
 	return foundConnectionSynapse, currentSequentialSegmentInput	
 	
-def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, wTarget):
+def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=None):
 	if(drawBiologicalSimulationDynamic):
 		if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug and wSource >= wSourceDebug)):	#wSource == wSourceDebug
 		#if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug)):
@@ -371,26 +385,26 @@ def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkC
 			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
 				fileName = generateBiologicalSimulationDynamicFileName(True, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
 				HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()
-				HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList, wTargetDebug)
+				HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList, activationTime, wTarget=wTargetDebug)
 				HFNLPpy_biologicalSimulationDrawSentenceDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
 			if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
 				fileName = generateBiologicalSimulationDynamicFileName(False, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
 				HFNLPpy_biologicalSimulationDrawNetworkDynamic.clearHopfieldGraph()
-				HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict, wTargetDebug)
+				HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict, activationTime, wTarget=wTargetDebug)
 				HFNLPpy_biologicalSimulationDrawNetworkDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)				
 
-def drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList):
+def drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=None):
 	if(drawBiologicalSimulationDynamic):
 		if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug and wSource >= wSourceDebug)):	#wSource == wSourceDebug
 		#if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug)):
 			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
 				fileName = generateBiologicalSimulationFileName(True, wSource, sentenceIndex)
 				HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()
-				HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList, wTargetDebug)
+				HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList, activationTime, wTarget=wTargetDebug)
 				HFNLPpy_biologicalSimulationDrawSentenceDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
 			if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
 				fileName = generateBiologicalSimulationFileName(False, wSource, sentenceIndex)
 				HFNLPpy_biologicalSimulationDrawNetworkDynamic.clearHopfieldGraph()
-				HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict, wTargetDebug)
+				HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict, activationTime, wTarget=wTargetDebug)
 				HFNLPpy_biologicalSimulationDrawNetworkDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)	
 

@@ -35,8 +35,6 @@ graphNodeTypeConcept = 1	#base/input neuron (network neuron)
 graphNodeTypeStart = 5	#start of sequence - used by biologicalImplementationReuseSynapticSubstrateForIdenticalSubsequences only
 nodeNameStart = "SEQUENCESTARTNODE"
 
-
-
 class HopfieldNode:
 	def __init__(self, networkIndex, nodeName, wordVector, nodeGraphType, activationTime, biologicalSimulation, w, sentenceIndex):
 		#primary vars;
