@@ -86,7 +86,9 @@ def generateHopfieldGraphNetwork(articles):
 	
 	if(HFNLPnonrandomSeed):
 		np.random.seed(0)
+		random.seed(0)
 		print("np.random.randint(0,9) = ", np.random.randint(0,9))
+		print("random.randint(0,9) = ", random.randint(0,9))
 
 	if(seedHFnetworkSubsequence):
 		HFNLPpy_biologicalSimulation.verifySeedSentenceIsReplicant(articles, numberOfSentences)

@@ -196,11 +196,11 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 	#calculate subbranch activations:
 	subbranchesActive = objectAreaActivationLevelOff
 	subbranchesActivationTimeMax = minimumActivationTime
+	if(performSummationOfSequentialSegmentInputsAcrossBranch):
+		branch2activationSum = 0.0		
+	else:
+		numberOfBranch2active = 0
 	if(len(currentBranch.subbranches) > 0):
-		if(performSummationOfSequentialSegmentInputsAcrossBranch):
-			branch2activationSum = 0.0		
-		else:
-			numberOfBranch2active = 0
 		for subbranch in currentBranch.subbranches:	
 			subbranchActive = False
 			subbranchActivationFound, subbranchActiveLevel, subbranchActivationTime = calculateNeuronActivationStandard(connection, currentBranchIndex1+1, subbranch, activationTime, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
@@ -224,6 +224,8 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 				subbranchesActive = objectAreaActivationLevelOn
 	else:
 		subbranchesActive = objectAreaActivationLevelOn
+		if(requireSubbranchOrSequentialSegmentForActivation):
+			numberOfBranch2active = 1
 		#subbranchesActivationTimeMax = 0
 		
 	sequentialSegmentActivationLevelPrior = objectLocalActivationLevelOff
@@ -340,6 +342,14 @@ def calculateNeuronActivationStandard(connection, currentBranchIndex1, currentBr
 
 	#print("branch: currentBranchIndex1 = ", currentBranchIndex1, ", connection.nodeTarget = ", connection.nodeTarget.nodeName, ", connection.nodeSource = ", connection.nodeSource.nodeName, ", sequentialSegmentActivationLevelPrior = ", sequentialSegmentActivationLevelPrior)
 
+	if(requireSubbranchOrSequentialSegmentForActivation):
+		if(not sequentialSegmentActivationStatePrior):
+			if(numberOfBranch2active == numberOfHorizontalSubBranchesOrSequentialSegmentsRequiredForActivation):
+				sequentialSegmentActivationStatePrior = True
+				sequentialSegmentActivationLevelPrior = objectLocalActivationLevelOn
+				sequentialSegmentActivationTimePrior = subbranchesActivationTimeMax
+				#resetConnectionTargetNeuronDendriteAfterSequence:newActivationFoundFinalSequentialSegment not supported (most proximal sequential segment in dendritic tree must be active)
+		
 	branchActivationState = sequentialSegmentActivationStatePrior
 	branchActivationLevel = sequentialSegmentActivationLevelPrior
 	branchActivationTime = sequentialSegmentActivationTimePrior

@@ -26,7 +26,7 @@ import numpy as np
 
 vectoriseComputation = True	#parallel processing for optimisation
 if(vectoriseComputation):
-	updateNeuronObjectActivationLevels = False	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
+	updateNeuronObjectActivationLevels = True	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 else:
 	updateNeuronObjectActivationLevels = True	#mandatory (typically implied true)
 
@@ -173,6 +173,7 @@ else:
 
 deactivateSequentialSegmentsIfAllConnectionInputsOff = False	#initialise (dependent var)
 deactivateSequentialSegmentsIfTimeTestsFail = False	#initialise (dependent var)
+drawBiologicalSimulationDynamicFrozenActivations = False	#initialise (dependent var)
 if(overwriteSequentialSegments):
 	drawBiologicalSimulationDynamicFrozenActivations = True
 	if(drawBiologicalSimulationDynamicFrozenActivations):
@@ -221,6 +222,21 @@ numberOfBranchSequentialSegments = 1	#1+	#sequential inputs (FUTURE: if > 1: eac
 subsequenceLengthCalibration = 1.0
 
 numberOfHorizontalSubBranchesRequiredForActivation = 2	#calibrate
+numberOfHorizontalSubBranchesTrained = numberOfBranches2
+
+trainSubsetOfHorizontalSubbranches = False	#optional
+if(trainSubsetOfHorizontalSubbranches):
+	numberOfHorizontalSubBranchesTrained = 1
+	
+requireSubbranchOrSequentialSegmentForActivation = False	#initialise (dependent var)
+if(numberOfHorizontalSubBranchesTrained == 2 and numberOfHorizontalSubBranchesRequiredForActivation == 2 and numberOfBranchSequentialSegments == 1):
+	requireSubbranchOrSequentialSegmentForActivation = False	#optional
+	if(requireSubbranchOrSequentialSegmentForActivation):
+		#does not support performSummationOfSequentialSegmentInputsAcrossBranch
+		numberOfHorizontalSubBranchesRequiredForActivation = 1
+		numberOfHorizontalSubBranchesOrSequentialSegmentsRequiredForActivation = 2
+		#resetConnectionTargetNeuronDendriteAfterSequence:vectorisedBranchActivationStateBatchSequentialSegmentFinalNew/newActivationFoundFinalSequentialSegment not supported (most proximal sequential segment in dendritic tree must be active)
+		
 activationRepolarisationTime = 1	#calibrate
 
 sequentialSegmentIndexMostProximal = 0
