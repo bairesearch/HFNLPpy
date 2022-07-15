@@ -56,8 +56,15 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateStandardEmulateVectorisedCo
 	somaActivationFound = False
 	connectionTargetActivationFoundSet = set()
 	numberOfVerticalBranches = calculateNumberOfVerticalBranches(numberOfBranches1)
-	for branchIndex1Target in reversed(range(numberOfVerticalBranches)):
-		for sequentialSegmentIndexTarget in reversed(range(numberOfBranchSequentialSegments)):
+
+	branchSequence = range(numberOfVerticalBranches)
+	sequentialSegmentSequence = range(numberOfBranchSequentialSegments)
+	if(reversePropagationOrder):
+		branchSequence = reversed(branchSequence)
+		sequentialSegmentSequence = reversed(sequentialSegmentSequence)
+		
+	for branchIndex1Target in branchSequence:
+		for sequentialSegmentIndexTarget in sequentialSegmentSequence:
 			for conceptNeuronSource in conceptNeuronSourceList:
 				if(simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, branchIndex1Target, sequentialSegmentIndexTarget, connectionTargetActivationFoundSet)):
 					somaActivationFound = True
@@ -72,8 +79,15 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandardEmulateVectorisedCom
 	somaActivationFound = False
 	connectionTargetActivationFoundSet = set()
 	numberOfVerticalBranches = calculateNumberOfVerticalBranches(numberOfBranches1)
-	for branchIndex1Target in reversed(range(numberOfVerticalBranches)):
-		for sequentialSegmentIndexTarget in reversed(range(numberOfBranchSequentialSegments)):
+
+	branchSequence = range(numberOfVerticalBranches)
+	sequentialSegmentSequence = range(numberOfBranchSequentialSegments)
+	if(reversePropagationOrder):
+		branchSequence = reversed(branchSequence)
+		sequentialSegmentSequence = reversed(sequentialSegmentSequence)
+	
+	for branchIndex1Target in branchSequence:
+		for sequentialSegmentIndexTarget in sequentialSegmentSequence:
 			if(simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, branchIndex1Target, sequentialSegmentIndexTarget, connectionTargetActivationFoundSet)):
 				somaActivationFound = True			
 			drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)

@@ -285,14 +285,20 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 	#vectorisedBranchActivationLevelBatchList/vectorisedBranchActivationTimeBatchList: list of tensors for every branchIndex1 - each element is of shape [batchSize, numberOfHorizontalBranches, horizontalBranchWidth, numberOfBranchSequentialSegments], each batch sample refers to a unique target concept
 	numberOfVerticalBranches = calculateNumberOfVerticalBranches(numberOfBranches1) 	#len(vectorisedBranchActivationLevelBatchList)
 	
-	vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch, vectorisedBranchActivationTimeBatchSequentialSegmentPreviousBranch = (None, None)
-	#note vectorisedBranchActivationLevelBatchSequentialSegmentPrevious is same as vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch but updated more regularly than vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch (for every sequential segment); could therefore replace PreviousBranch tensor with Previous tensor 
-	vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious, vectorisedBranchActivationFlagBatchSequentialSegmentPrevious = (None, None, None)
+	if(reversePropagationOrder):
+		vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious, vectorisedBranchActivationFlagBatchSequentialSegmentPrevious = (None, None, None)
 		
 	#if(resetConnectionTargetNeuronDendriteAfterSequence):
 	vectorisedBranchActivationStateBatchSequentialSegmentFinalNew = None
 	
-	for branchIndex1 in reversed(range(numberOfVerticalBranches)):
+	if(reversePropagationOrder):
+		branchSequence = reversed(range(numberOfVerticalBranches))
+		sequentialSegmentSequence = reversed(range(numberOfBranchSequentialSegments))
+	else:
+		branchSequence = range(numberOfVerticalBranches)
+		sequentialSegmentSequence = range(numberOfBranchSequentialSegments)
+			
+	for branchIndex1 in branchSequence:
 			
 		vectorisedBranchActivationLevelBatchBuffer = vectorisedBranchActivationLevelBatchListBuffer[branchIndex1]
 		vectorisedBranchActivationTimeBatchBuffer = vectorisedBranchActivationTimeBatchListBuffer[branchIndex1]
@@ -302,13 +308,29 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 		vectorisedBranchActivationFlagBatch = vectorisedBranchActivationFlagBatchList[branchIndex1]
 		if(recordVectorisedBranchObjectList):
 			vectorisedBranchObjectBatch = vectorisedBranchObjectBatchList[branchIndex1]
-
+				
 		#print("\tbranchIndex1 = ", branchIndex1)
 						
 		#initialise sequential segments activation (shape: [batchSize, numberOfHorizontalBranches, horizontalBranchWidth]);
-		vectorisedBranchActivationStateBatchSequentialSegmentCurrent, vectorisedBranchActivationTimeBatchSequentialSegmentCurrent, vectorisedBranchActivationLevelBatchSequentialSegmentPreviousSummed = calculateSequentialSegmentsInitialActivationFromHigherBranchParallel(branchIndex1, vectorisedBranchActivationLevelBatch.shape, vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch, vectorisedBranchActivationTimeBatchSequentialSegmentPreviousBranch)
 		
-		for sequentialSegmentIndex in reversed(range(numberOfBranchSequentialSegments)):
+		if(reversePropagationOrder):
+			vectorisedBranchActivationStateBatchSequentialSegmentCurrent, vectorisedBranchActivationTimeBatchSequentialSegmentCurrent, vectorisedBranchActivationLevelBatchSequentialSegmentPreviousSummed = calculateSequentialSegmentsInitialActivationFromHigherBranchParallel(branchIndex1, vectorisedBranchActivationLevelBatch.shape, vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious)
+		
+		for sequentialSegmentIndex in sequentialSegmentSequence:
+
+			if(not reversePropagationOrder):
+				if(sequentialSegmentIndex < numberOfBranchSequentialSegments-1):
+					vectorisedBranchActivationLevelBatchSequentialSegmentPrevious = vectorisedBranchActivationLevelBatchList[branchIndex1][:, :, :, sequentialSegmentIndex+1]
+					vectorisedBranchActivationTimeBatchSequentialSegmentPrevious = vectorisedBranchActivationLevelBatchList[branchIndex1][:, :, :, sequentialSegmentIndex+1]
+					vectorisedBranchActivationFlagBatchSequentialSegmentPrevious = vectorisedBranchActivationLevelBatchList[branchIndex1][:, :, :, sequentialSegmentIndex+1]
+				else:
+					if(branchIndex1 < numberOfVerticalBranches-1):
+						vectorisedBranchActivationLevelBatchSequentialSegmentPrevious = vectorisedBranchActivationLevelBatchList[branchIndex1+1][:, :, :, sequentialSegmentIndexMostProximal]
+						vectorisedBranchActivationTimeBatchSequentialSegmentPrevious = vectorisedBranchActivationTimeBatchList[branchIndex1+1][:, :, :, sequentialSegmentIndexMostProximal]
+					else:
+						vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious = (None, None)
+					vectorisedBranchActivationStateBatchSequentialSegmentCurrent, vectorisedBranchActivationTimeBatchSequentialSegmentCurrent, vectorisedBranchActivationLevelBatchSequentialSegmentPreviousSummed = calculateSequentialSegmentsInitialActivationFromHigherBranchParallel(branchIndex1, vectorisedBranchActivationLevelBatch.shape, vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious)
+						
 			if((branchIndex1 > 0) or expectFirstBranchSequentialSegmentConnection):
 				vectorisedBranchActivationLevelBatchSequentialSegment = vectorisedBranchActivationLevelBatch[:, :, :, sequentialSegmentIndex]
 				vectorisedBranchActivationTimeBatchSequentialSegment = vectorisedBranchActivationTimeBatch[:, :, :, sequentialSegmentIndex]
@@ -382,7 +404,7 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 					unfreezePreviousSequentialSegmentOrSubbranchVectorised(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, branchIndex1, sequentialSegmentIndex, vectorisedBranchActivationFlagBatchList, vectorisedBranchActivationFlagBatchSequentialSegmentPrevious)
 						
 				#if(resetConnectionTargetNeuronDendriteAfterSequence):
-				vectorisedBranchActivationStateBatchSequentialSegmentFinalNew = vectorisedBranchActivationStateBatchSequentialSegmentCurrent
+				vectorisedBranchActivationStateBatchSequentialSegmentNew = vectorisedBranchActivationStateBatchSequentialSegmentCurrent
 
 				if(not deactivateSequentialSegmentsIfAllConnectionInputsOff):
 					vectorisedBranchActivationLevelBatchSequentialSegmentCurrent = tf.add(vectorisedBranchActivationLevelBatchSequentialSegmentCurrent, vectorisedBranchActivationLevelBatchSequentialSegmentExisting)		#merge contents of mutually exclusive indices together
@@ -393,8 +415,11 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 			else:
 				vectorisedBranchActivationLevelBatchSequentialSegmentCurrent = tf.cast(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, tf.float32)
 				
-				vectorisedBranchActivationStateBatchSequentialSegmentFinalNew = tf.zeros(shape=vectorisedBranchActivationStateBatchSequentialSegmentCurrent.shape)	#invalid (used for draw compatibility)
-
+				vectorisedBranchActivationStateBatchSequentialSegmentNew = tf.zeros(shape=vectorisedBranchActivationStateBatchSequentialSegmentCurrent.shape)	#invalid (used for draw compatibility)
+			
+			if((branchIndex1 == branchIndex1MostProximal) and (sequentialSegmentIndex == sequentialSegmentIndexMostProximal)):
+				vectorisedBranchActivationStateBatchSequentialSegmentFinalNew = vectorisedBranchActivationStateBatchSequentialSegmentNew
+			
 			vectorisedBranchActivationLevelBatchList[branchIndex1][:, :, :, sequentialSegmentIndex].assign(vectorisedBranchActivationLevelBatchSequentialSegmentCurrent)
 			vectorisedBranchActivationTimeBatchList[branchIndex1][:, :, :, sequentialSegmentIndex].assign(vectorisedBranchActivationTimeBatchSequentialSegmentCurrent)
 			vectorisedBranchActivationFlagBatchList[branchIndex1][:, :, :, sequentialSegmentIndex].assign(vectorisedBranchActivationFlagBatchSequentialSegmentCurrent)
@@ -413,7 +438,7 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 							activationState = vectorisedBranchActivationStateBatchSequentialSegmentCurrent[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
 							activationLevel = vectorisedBranchActivationLevelBatchSequentialSegmentCurrent[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
 							activationTimeSeg = vectorisedBranchActivationTimeBatchSequentialSegmentCurrent[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
-							activationStateNew = vectorisedBranchActivationStateBatchSequentialSegmentFinalNew[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
+							activationStateNew = vectorisedBranchActivationStateBatchSequentialSegmentNew[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
 							sequentialSegment.activationLevel = activationLevel
 							if(activationState):
 								sequentialSegment.activationTime = activationTimeSeg
@@ -443,25 +468,30 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 												
 			drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=wTarget)			
 
-			vectorisedBranchActivationLevelBatchSequentialSegmentPrevious = vectorisedBranchActivationLevelBatchSequentialSegmentCurrent
-			vectorisedBranchActivationTimeBatchSequentialSegmentPrevious = vectorisedBranchActivationTimeBatchSequentialSegmentCurrent
-			vectorisedBranchActivationFlagBatchSequentialSegmentPrevious = vectorisedBranchActivationFlagBatchSequentialSegmentCurrent
+			if(reversePropagationOrder):
+				vectorisedBranchActivationLevelBatchSequentialSegmentPrevious = vectorisedBranchActivationLevelBatchSequentialSegmentCurrent
+				vectorisedBranchActivationTimeBatchSequentialSegmentPrevious = vectorisedBranchActivationTimeBatchSequentialSegmentCurrent
+				vectorisedBranchActivationFlagBatchSequentialSegmentPrevious = vectorisedBranchActivationFlagBatchSequentialSegmentCurrent
 		
 		if(requireSubbranchOrSequentialSegmentForActivation):
 			vectorisedBranchActivationLevelBatchSequentialSegmentPreviousFull =	tf.greater_equal(vectorisedBranchActivationLevelBatchSequentialSegmentPreviousSummed, numberOfHorizontalSubBranchesOrSequentialSegmentsRequiredForActivation)
 			vectorisedBranchActivationLevelBatchSequentialSegmentCurrent = tf.cast(tf.logical_or(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, vectorisedBranchActivationLevelBatchSequentialSegmentPreviousFull), tf.float32)
 			#resetConnectionTargetNeuronDendriteAfterSequence:vectorisedBranchActivationStateBatchSequentialSegmentFinalNew not supported (most proximal sequential segment in dendritic tree must be active)
-			
-		vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch = vectorisedBranchActivationLevelBatchSequentialSegmentCurrent
-		vectorisedBranchActivationTimeBatchSequentialSegmentPreviousBranch = vectorisedBranchActivationTimeBatchSequentialSegmentCurrent
 	
+	if(reversePropagationOrder):
+		vectorisedBranchActivationLevelBatchSequentialSegmentFinal = vectorisedBranchActivationLevelBatchSequentialSegmentPrevious
+		vectorisedBranchActivationTimeBatchSequentialSegmentFinal = vectorisedBranchActivationTimeBatchSequentialSegmentPrevious
+	else:	
+		vectorisedBranchActivationLevelBatchSequentialSegmentFinal = vectorisedBranchActivationLevelBatchList[branchIndex1MostProximal][:, :, :, sequentialSegmentIndexMostProximal]
+		vectorisedBranchActivationTimeBatchSequentialSegmentFinal = vectorisedBranchActivationTimeBatchList[branchIndex1MostProximal][:, :, :, sequentialSegmentIndexMostProximal]
+		
 	if(resetConnectionTargetNeuronDendriteAfterSequence):
 		vectorisedSomaActivationLevel = tf.squeeze(vectorisedBranchActivationStateBatchSequentialSegmentFinalNew, axis=[1,2])	#size:batchSize
 	else:
-		vectorisedSomaActivationLevel = tf.squeeze(vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch, axis=[1,2])	#size:batchSize
-	vectorisedSomaActivationTime = tf.squeeze(vectorisedBranchActivationTimeBatchSequentialSegmentPreviousBranch, axis=[1,2]) #size:batchSize
+		vectorisedSomaActivationLevel = tf.squeeze(vectorisedBranchActivationLevelBatchSequentialSegmentFinal, axis=[1,2])	#size:batchSize
+	vectorisedSomaActivationTime = tf.squeeze(vectorisedBranchActivationTimeBatchSequentialSegmentFinal, axis=[1,2]) #size:batchSize
 	
-	batchSize = vectorisedBranchActivationLevelBatchSequentialSegmentPreviousBranch.shape[0]	#or #batchSize = vectorisedBranchObjectBatchList[0].shape[0]
+	batchSize = vectorisedBranchActivationLevelBatchSequentialSegmentFinal.shape[0]	#or #batchSize = vectorisedBranchObjectBatchList[0].shape[0]
 	for batchIndex in range(batchSize):
 		if(updateNeuronObjectActivationLevels):
 			vectorisedBranchObjectBatchSequentialSegment = vectorisedBranchObjectBatchList[0][batchIndex, 0, 0, 0]	#branchIndex1Arbitrary = 0	#indexArbitrary = 0	#get any (first) sequential segment object in batchIndex neuron

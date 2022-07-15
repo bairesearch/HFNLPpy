@@ -24,7 +24,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 
 
-vectoriseComputation = True	#parallel processing for optimisation
+vectoriseComputation = False	#parallel processing for optimisation
 if(vectoriseComputation):
 	updateNeuronObjectActivationLevels = True	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 else:
@@ -147,8 +147,8 @@ resetSourceNeuronAxonAfterActivation = True	#mandatory
 
 if(biologicalSimulationForward):
 	#dendrite activations reset mode selection (typically select one only):
-	resetConnectionTargetNeuronDendriteAfterSequence = True	#optional
-	resetConnectionTargetNeuronDendriteDuringActivation = False	#optional #requires !overwriteSequentialSegments, !performSummationOfSequentialSegmentInputs
+	resetConnectionTargetNeuronDendriteAfterSequence = False	#optional	#does not reset sequential segment activations during sequence propagation (overwrites them)
+	resetConnectionTargetNeuronDendriteDuringActivation = True	#optional #reset previous sequential segments of newly activated sequential segments  #requires !overwriteSequentialSegments, !performSummationOfSequentialSegmentInputs
 	resetSourceNeuronDendriteAfterActivation = False	#optional	#True: orig implementation	#not compatible with recursive connections (ie nodeX -> nodeX; connection created from repeated words in sentence)	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
 	resetConnectionTargetNeuronDendriteAfterActivation = False	#optional	#reset all connection target neuron dendrites after activation	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
 	resetTargetNeuronDendriteAfterActivation = False	#optional	#only reset expected target neuron dendrites after activation	#not compatible with repeated concepts; consider the sequence of words: Q(1) A(2) R(3) A(4)
@@ -156,9 +156,13 @@ else:
 	resetTargetNeuronDendriteAfterActivation = True	#optional
 
 resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#initialise (dependent var)
+reversePropagationOrder = True
 if(resetConnectionTargetNeuronDendriteDuringActivation):
+	reversePropagationOrder = False
+	emulateVectorisedComputationOrder = True
 	if(not vectoriseComputation):
-		resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#incomplete	#note for HFNLPpy_biologicalSimulationPropagateVectorised this is implied True because entire source propagation round is executed simultaneously in parallel
+		if(not emulateVectorisedComputationOrder):
+			resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#incomplete	#note for HFNLPpy_biologicalSimulationPropagateVectorised this is implied True because entire source propagation round is executed simultaneously in parallel
 
 verifyRepolarisationTime = False	#initialise (dependent var)
 overwriteSequentialSegmentsAfterPropagatingSignal = False	#initialise (dependent var)

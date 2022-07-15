@@ -206,7 +206,7 @@ def calculateNumberOfHorizontalBranches(currentBranchIndex1, numberOfBranches2):
 	return numberOfHorizontalBranches, horizontalBranchWidth
 
 def calculateNumberOfVerticalBranches(numberOfBranches1):
-	numberOfVerticalBranches = numberOfBranches1+1	#or +2
+	numberOfVerticalBranches = numberOfBranches1+1
 	return numberOfVerticalBranches
 		
 def createDendriticTree(conceptNode, numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments):	
