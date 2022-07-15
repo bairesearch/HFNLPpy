@@ -290,16 +290,17 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 		
 	#if(resetConnectionTargetNeuronDendriteAfterSequence):
 	vectorisedBranchActivationStateBatchSequentialSegmentFinalNew = None
-	
+
+	branchSequence = range(numberOfVerticalBranches)
 	if(reversePropagationOrder):
-		branchSequence = reversed(range(numberOfVerticalBranches))
-		sequentialSegmentSequence = reversed(range(numberOfBranchSequentialSegments))
-	else:
-		branchSequence = range(numberOfVerticalBranches)
-		sequentialSegmentSequence = range(numberOfBranchSequentialSegments)
-			
+		branchSequence = reversed(branchSequence)
+
 	for branchIndex1 in branchSequence:
-			
+
+		sequentialSegmentSequence = range(numberOfBranchSequentialSegments)	
+		if(reversePropagationOrder):
+			sequentialSegmentSequence = reversed(sequentialSegmentSequence)
+					
 		vectorisedBranchActivationLevelBatchBuffer = vectorisedBranchActivationLevelBatchListBuffer[branchIndex1]
 		vectorisedBranchActivationTimeBatchBuffer = vectorisedBranchActivationTimeBatchListBuffer[branchIndex1]
 		vectorisedBranchActivationFlagBatchBuffer = vectorisedBranchActivationFlagBatchListBuffer[branchIndex1]

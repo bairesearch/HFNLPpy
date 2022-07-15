@@ -24,9 +24,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 
 
-vectoriseComputation = False	#parallel processing for optimisation
+vectoriseComputation = True	#parallel processing for optimisation
 if(vectoriseComputation):
-	updateNeuronObjectActivationLevels = True	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
+	updateNeuronObjectActivationLevels = False	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 else:
 	updateNeuronObjectActivationLevels = True	#mandatory (typically implied true)
 
@@ -42,6 +42,13 @@ if(biologicalSimulationTestHarness):
 		#emulateVectorisedComputationOrder requires biologicalSimulationForward, !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
 		emulateVectorisedComputationOrder = True	#change standard computation to execute in order of vectorised computation (for comparison)
 	HFNLPnonrandomSeed = True	#always generate the same set of random numbers upon execution
+
+standardComputationOptimised = False	#initialise (dependent var)
+if(not vectoriseComputation):
+	standardComputationOptimised = True	#optional	#False: original implementation	#only perform local propagation at active connections
+reversePropagationOrder = True		#optional	#True: original implementation
+if(emulateVectorisedComputationOrder):
+	emulateVectorisedComputationOrderReversed = reversePropagationOrder	#initialise (dependent var)
 
 enforceMinimumEncodedSequenceLength = False	#do not execute addPredictiveSequenceToNeuron if predictive sequence is short (ie does not use up the majority of numberOfBranches1)
 if(enforceMinimumEncodedSequenceLength):
@@ -156,13 +163,19 @@ else:
 	resetTargetNeuronDendriteAfterActivation = True	#optional
 
 resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#initialise (dependent var)
-reversePropagationOrder = True
 if(resetConnectionTargetNeuronDendriteDuringActivation):
-	reversePropagationOrder = False
-	emulateVectorisedComputationOrder = True
-	if(not vectoriseComputation):
-		if(not emulateVectorisedComputationOrder):
-			resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#incomplete	#note for HFNLPpy_biologicalSimulationPropagateVectorised this is implied True because entire source propagation round is executed simultaneously in parallel
+	if(vectoriseComputation):
+		reversePropagationOrder = False	#mandatory #required to prevent dynamic reset from overwriting active connections of more distal segment before they are propagated
+	else:
+		#reversePropagationOrder = True	#optional
+		emulateVectorisedComputationOrder = True	#mandatory
+		if(emulateVectorisedComputationOrder):
+			emulateVectorisedComputationOrderReversed = False	#mandatory	#required to prevent dynamic reset from overwriting active connections of more distal segment before they are propagated
+		standardComputationOptimised = True	#optional	#only perform local propagation at active connections
+	#depreciated implementation (for reversePropagationOrder);
+	#if(not vectoriseComputation):
+	#	if(not emulateVectorisedComputationOrder):
+	#		resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#incomplete	#note for HFNLPpy_biologicalSimulationPropagateVectorised this is implied True because entire source propagation round is executed simultaneously in parallel
 
 verifyRepolarisationTime = False	#initialise (dependent var)
 overwriteSequentialSegmentsAfterPropagatingSignal = False	#initialise (dependent var)
@@ -192,7 +205,9 @@ if(overwriteSequentialSegments):
 		deactivateSequentialSegmentsIfAllConnectionInputsOff = False	#mandatory implied False (only coded implementation)
 
 deactivateConnectionTargetIfSomaActivationNotFound = True	#default:True #True: orig simulateBiologicalHFnetworkSequenceNodesPropagateParallel:calculateNeuronActivationParallel method, False: orig simulateBiologicalHFnetworkSequenceNodePropagateStandard method
-  
+if(standardComputationOptimised):
+	deactivateConnectionTargetIfSomaActivationNotFound = False	#mandatory	#False: required because calculateNeuronActivationStandardWrapper returns valid somaActivationFound only if((currentBranchIndex1 == branchIndex1MostProximal) and (currentSequentialSegmentIndex == sequentialSegmentIndexMostProximal))
+		 
 algorithmTimingWorkaround1 = False	#insufficient workaround
 
 	
