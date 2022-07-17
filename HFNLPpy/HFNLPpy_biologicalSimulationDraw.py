@@ -33,8 +33,8 @@ if(highResolutionFigure):
 	saveFigDPI = 300	#approx HD	#depth per inch
 	saveFigSize = (16,9)	#in inches
 	
-debugOnlyDrawActiveBranches = False
 debugOnlyDrawTargetNeuron = False
+debugOnlyDrawActiveBranches = False
 
 drawHopfieldGraphEdgeColoursWeights = True
 drawHopfieldGraphNodeColours = True	#node colours not yet coded (pos type of concept node will be different depending on connectivity/instance context)

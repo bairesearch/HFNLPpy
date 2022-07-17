@@ -65,6 +65,8 @@ def simulateBiologicalHFnetworkSequenceNodePropagateParallel(networkConceptNodeD
 #parameters only used for drawBiologicalSimulationDynamic: wSource, sentenceIndex, sentenceConceptNodeList
 def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet):
 	
+	somaActivationFound = False	#is conceptNeuronTarget activated by its prior context?
+
 	#construct batch dendritic tree templates for parallel processing;
 	numberOfVerticalBranches = calculateNumberOfVerticalBranches(numberOfBranches1)
 	vectorisedBranchActivationLevelBatchListList = [[] for _ in range(numberOfVerticalBranches)]	#temporary list before being coverted to tensor for parallel processing
@@ -90,8 +92,8 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 	batchIndex = 0	#batchSampleIndex
 	conceptNeuronBatchIndex = None
 	conceptNeuronBatchIndexFound = False
-	somaActivationFound = False	#is conceptNeuronTarget activated by its prior context?
-		
+	targetConnectionFound = False
+	
 	for conceptNeuronSource in conceptNeuronSourceList:
 
 		if(printVerbose):
@@ -117,6 +119,7 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 							batchIndexOfWTargetDebug = batchIndex
 							print("batchIndex of wTargetDebug = ", batchIndex)
 
+				targetConnectionFound = True
 				if(targetConnectionConceptName == conceptNeuronTarget.nodeName):
 					conceptNeuronBatchIndex = batchIndex
 					conceptNeuronBatchIndexFound = True
@@ -168,11 +171,14 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 	#			print("\t(wSource==wSourceDebug and wTarget==wTargetDebug): branchIndex1 = ", branchIndex1)
 	#			print("\tvectorisedBranchActivationLevelBatchList[branchIndex1] = ", vectorisedBranchActivationLevelBatchList[branchIndex1])
 
-	if(conceptNeuronBatchIndexFound):	#optimsation; only execute calculateNeuronActivationParallel if conceptNeuronTarget input(s) are activated by conceptNeuronSource
-		if(calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationFlagBatchList, vectorisedBranchActivationLevelBatchListBuffer, vectorisedBranchActivationTimeBatchListBuffer, vectorisedBranchActivationFlagBatchListBuffer, vectorisedBranchObjectBatchList, activationTime, wTarget, conceptNeuronTarget, conceptNeuronBatchIndex, batchNeuronsList, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)):
-			somaActivationFound = True
-	else:
-		print("warning !conceptNeuronBatchIndexFound")
+	if(targetConnectionFound):
+		if(conceptNeuronBatchIndexFound or not onlyPropagateIfConceptNeuronTargetActivatedByConceptNeuronSourceVectorised):	#orig optimisation; only execute calculateNeuronActivationParallel if conceptNeuronTarget input(s) are activated by conceptNeuronSource
+			if(calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationFlagBatchList, vectorisedBranchActivationLevelBatchListBuffer, vectorisedBranchActivationTimeBatchListBuffer, vectorisedBranchActivationFlagBatchListBuffer, vectorisedBranchObjectBatchList, activationTime, wTarget, conceptNeuronTarget, conceptNeuronBatchIndex, batchNeuronsList, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)):
+				somaActivationFound = True
+		else:
+			print("warning !conceptNeuronBatchIndexFound")
+	#else:
+	#	print("warning !targetConnectionFound")
 	
 	#save updated activations (ideally these should be able to be dynamically updated by calculateNeuronActivationParallel; store tensors (memory/reference) in a bulk/stacked tensor, write to the bulk tensor and have the individual tensors updated)
 	for batchIndex, batchNeuron in enumerate(batchNeuronsList):

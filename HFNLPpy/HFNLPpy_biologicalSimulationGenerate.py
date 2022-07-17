@@ -28,7 +28,7 @@ from HFNLPpy_biologicalSimulationNode import *
 
 printVerbose = False
 
-def addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptNodeList, dendriticBranch, dendriticBranchMaxW, branchIndex1, sequentialSegmentIndex, expectFurtherSubbranches=True):
+def addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptNodeList, dendriticBranch, predictiveSequenceLength, dendriticBranchMaxW, branchIndex1, sequentialSegmentIndex, expectFurtherSubbranches=True):
 	
 	activationTime = 0	#unactivated
 	spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
@@ -72,17 +72,20 @@ def addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptN
 				expectFurtherSubbranches2 = True
 				if(len(subbranch.subbranches) == 0):
 					expectFurtherSubbranches2 = False	
-				addPredictiveSequenceToNeuronSubsequenceGeneration(conceptNeuron, sentenceIndex, sentenceConceptNodeList, subbranch, dendriticBranchMaxW, branchIndex1+1, 0, expectFurtherSubbranches2)
+				addPredictiveSequenceToNeuronSubsequenceGeneration(conceptNeuron, sentenceIndex, sentenceConceptNodeList, subbranch, predictiveSequenceLength, dendriticBranchMaxW, branchIndex1+1, 0, expectFurtherSubbranches2)
 		else:
-			addPredictiveSequenceToNeuronSubsequenceGeneration(conceptNeuron, sentenceIndex, sentenceConceptNodeList, dendriticBranch, dendriticBranchMaxW, branchIndex1, sequentialSegmentIndex+1, expectFurtherSubbranches)
+			addPredictiveSequenceToNeuronSubsequenceGeneration(conceptNeuron, sentenceIndex, sentenceConceptNodeList, dendriticBranch, predictiveSequenceLength, dendriticBranchMaxW, branchIndex1, sequentialSegmentIndex+1, expectFurtherSubbranches)
 	else:
 		currentSequentialSegmentInput.firstInputInSequence = True
 		#print("setting currentSequentialSegmentInput.firstInputInSequence, branchIndex1 = ", branchIndex1)
 
-def addPredictiveSequenceToNeuronSubsequenceGeneration(conceptNeuron, sentenceIndex, sentenceConceptNodeList, dendriticBranch, dendriticBranchMaxW, branchIndex1, sequentialSegmentIndex, expectFurtherSubbranches):
+def addPredictiveSequenceToNeuronSubsequenceGeneration(conceptNeuron, sentenceIndex, sentenceConceptNodeList, dendriticBranch, predictiveSequenceLength, dendriticBranchMaxW, branchIndex1, sequentialSegmentIndex, expectFurtherSubbranches):
 	#lengthOfSubsequenceScale = random.uniform(0, 1)
 	#dendriticSubBranchMaxW = int(lengthOfSubsequenceScale*dendriticBranchMaxW)	
 	lengthOfSubsequence = int(np.random.exponential()*subsequenceLengthCalibration)	#the more proximal the previous context, the more likely to form a synapse
+	if(reduceCompletenessOfEncodingWithSequenceLength):
+		lengthOfSubsequence = int(lengthOfSubsequence*(predictiveSequenceLength/reduceCompletenessOfEncodingWithSequenceLengthCalibration)) #the shorter the sequence, the more likely to form a synapse
+		
 	#lengthOfSubsequence = max(1, lengthOfSubsequence)
 	lengthOfSubsequence = lengthOfSubsequence + 1	#ensure >= 1
 	dendriticSubBranchMaxW = dendriticBranchMaxW-lengthOfSubsequence
@@ -91,7 +94,7 @@ def addPredictiveSequenceToNeuronSubsequenceGeneration(conceptNeuron, sentenceIn
 		expectFurtherSubbranches = False			
 	#print("no further subbranches")
 	
-	addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptNodeList, dendriticBranch, dendriticSubBranchMaxW, branchIndex1, sequentialSegmentIndex, expectFurtherSubbranches)
+	addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptNodeList, dendriticBranch, predictiveSequenceLength, dendriticSubBranchMaxW, branchIndex1, sequentialSegmentIndex, expectFurtherSubbranches)
 
 #adds predictive synapse such that subsequences occur in order
 def addPredictiveSynapseToNeuron(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=False, nodeTargetSequentialSegmentInput=None):

@@ -107,11 +107,12 @@ def simulateBiologicalHFnetworkSequenceSyntacticalBranchDPAdd(networkConceptNode
 			identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulationHierarchical(sentenceConceptNodeList, DPbranchHeadNode, contextConceptNodesListLocal)
 		else:
 			identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalSimulation(sentenceConceptNodeList, DPbranchHeadNode, contextConceptNodesListLocal)			
+		predictiveSequenceLength = len(contextConceptNodesListLocal)
 		dendriticBranchMaxW = len(contextConceptNodesListLocal) - 1	#index of last predictive neuron in artificial contextConceptNodesListLocal sequence (index of target concept is not in contextConceptNodesListLocal)
 		expectFurtherSubbranches = True
 		if(dendriticBranchMaxW == 0):
 			expectFurtherSubbranches = False
-		HFNLPpy_biologicalSimulationGenerate.addPredictiveSequenceToNeuron(conceptNode, sentenceIndex, contextConceptNodesListLocal, conceptNode.dendriticTree, dendriticBranchMaxW, currentBranchIndex1, 0, expectFurtherSubbranches)
+		HFNLPpy_biologicalSimulationGenerate.addPredictiveSequenceToNeuron(conceptNode, sentenceIndex, contextConceptNodesListLocal, conceptNode.dendriticTree, predictiveSequenceLength, dendriticBranchMaxW, currentBranchIndex1, 0, expectFurtherSubbranches)
 
 	if(debugDrawAfterAddPredictiveSequence):
 		HFNLPpy_biologicalSimulation.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)	#draw for debugging

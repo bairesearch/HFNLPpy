@@ -29,8 +29,8 @@ if(vectoriseComputation):
 	updateNeuronObjectActivationLevels = False	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 else:
 	updateNeuronObjectActivationLevels = True	#mandatory (typically implied true)
-
-drawBiologicalSimulationDynamicHighlightNewActivations = True	#useful with resetConnectionTargetNeuronDendriteAfterSequence/resetConnectionTargetNeuronDendriteDuringActivation to visually distinguish between new activations (at current time) and prior activations
+ 
+drawBiologicalSimulationDynamicHighlightNewActivations = False	#useful with resetConnectionTargetNeuronDendriteAfterSequence/resetConnectionTargetNeuronDendriteDuringActivation to visually distinguish between new activations (at current time) and prior activations
 if(drawBiologicalSimulationDynamicHighlightNewActivations):
 	highlightNewActivationColor = 'magenta'	#'black'
 
@@ -50,10 +50,22 @@ reversePropagationOrder = True		#optional	#True: original implementation
 if(emulateVectorisedComputationOrder):
 	emulateVectorisedComputationOrderReversed = reversePropagationOrder	#initialise (dependent var)
 
-enforceMinimumEncodedSequenceLength = False	#do not execute addPredictiveSequenceToNeuron if predictive sequence is short (ie does not use up the majority of numberOfBranches1)
+subsequenceLengthCalibration = 0.3	#orig: 1.0	#reduce proportional to number of branches
+reduceCompletenessOfEncodingWithSequenceLength = False	#when a prediction sequence is short ensure almost every previous word is encoded in branch structure	#the shorter the sequence, the more likely to form a synapse
+if(reduceCompletenessOfEncodingWithSequenceLength):
+	reduceCompletenessOfEncodingWithSequenceLengthCalibration = 10.0	#subsequence encoding length modifier = predictiveSequenceLength/reduceCompletenessOfEncodingWithSequenceLengthCalibration
+#probabilityOfSubsequenceThreshold = 0.01	#FUTURE: calibrate depending on number of branches/sequentialSegments etc
+	
+enforceMinimumEncodedSequenceLength = True	#do not execute addPredictiveSequenceToNeuron if predictive sequence is short (ie does not use up the majority of numberOfBranches1)
 if(enforceMinimumEncodedSequenceLength):
 	minimumEncodedSequenceLength = 4	#should be high enough to fill a significant proportion of dendrite vertical branch length (numberOfBranches1)	#~seedHFnetworkSubsequenceLength
 	
+onlyPropagateIfConceptNeuronTargetActivatedByConceptNeuronSourceVectorised = False	#True: orig implementation
+if(vectoriseComputation):
+	if(enforceMinimumEncodedSequenceLength):
+		onlyPropagateIfConceptNeuronTargetActivatedByConceptNeuronSourceVectorised = False	#mandatory
+
+
 seedHFnetworkSubsequence = False #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
 if(seedHFnetworkSubsequence):
 	#seedHFnetworkSubsequence currently requires !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
@@ -235,10 +247,6 @@ else:
 	#[1,2,4,8]	#number of new horizontal branches created at each vertical branch
 numberOfBranchSequentialSegments = 1	#1+	#sequential inputs (FUTURE: if > 1: each branch segment may require sequential inputs)
 #numberOfBranchSequentialSegmentInputs = 1	#1+	#nonSequentialInputs	#in current implementation (non-parallel generative network) number of inputs at sequential segment is dynamically increased on demand #not used; currently encode infinite number of
-
-#probabilityOfSubsequenceThreshold = 0.01	#FUTURE: calibrate depending on number of branches/sequentialSegments etc
-
-subsequenceLengthCalibration = 1.0
 
 numberOfHorizontalSubBranchesRequiredForActivation = 2	#calibrate
 numberOfHorizontalSubBranchesTrained = numberOfBranches2

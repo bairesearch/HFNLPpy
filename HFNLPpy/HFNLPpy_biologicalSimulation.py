@@ -170,6 +170,7 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 		else:
 			#if(printVerbose):
 			print("!somaActivationFound: ", end='')
+			predictiveSequenceLength = wTarget	#wSource+1
 			dendriticBranchMaxW = wTarget-1
 			expectFurtherSubbranches = True
 			if(wTarget == 1):
@@ -177,13 +178,13 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 			
 			addPredictiveSequenceToNeuron = False
 			if(enforceMinimumEncodedSequenceLength):
-				if(dendriticBranchMaxW >= minimumEncodedSequenceLength-1):
+				if(dendriticBranchMaxW+1 >= minimumEncodedSequenceLength):
 					addPredictiveSequenceToNeuron = True
 			else:
 				addPredictiveSequenceToNeuron = True
 			if(addPredictiveSequenceToNeuron):
 				print("addPredictiveSequenceToNeuron")
-				HFNLPpy_biologicalSimulationGenerate.addPredictiveSequenceToNeuron(conceptNeuronTarget, sentenceIndex, sentenceConceptNodeList, conceptNeuronTarget.dendriticTree, dendriticBranchMaxW, 0, 0, expectFurtherSubbranches)
+				HFNLPpy_biologicalSimulationGenerate.addPredictiveSequenceToNeuron(conceptNeuronTarget, sentenceIndex, sentenceConceptNodeList, conceptNeuronTarget.dendriticTree, predictiveSequenceLength, dendriticBranchMaxW, 0, 0, expectFurtherSubbranches)
 			else:
 				print("")	#add new line
 				
