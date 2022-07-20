@@ -30,7 +30,7 @@ from HFNLPpy_biologicalSimulationNode import *
 #if(biologicalSimulationForward):	#required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic
 if(vectoriseComputation):		#dynamic draw should use vectoriseComputation, as this activates all target neuron synapses of wSource simultaneously 
 	if(updateNeuronObjectActivationLevels):
-		drawBiologicalSimulationDynamic = False	#draw dynamic activation levels of biological simulation	#optional
+		drawBiologicalSimulationDynamic = True	#draw dynamic activation levels of biological simulation	#optional
 		if(drawBiologicalSimulationDynamic):
 			drawBiologicalSimulationDynamicPlot = True	#default: False
 			drawBiologicalSimulationDynamicSave = False	#default: True	#save to file
@@ -47,12 +47,12 @@ if(vectoriseComputation):		#dynamic draw should use vectoriseComputation, as thi
 printVerbose = False
 printConnectionTargetActivations = False
 
-debugCalculateNeuronActivationParallel = False	#requires !drawBiologicalSimulationDynamicHighlightNewActivations
+debugCalculateNeuronActivationParallel = True	#requires !drawBiologicalSimulationDynamicHighlightNewActivations
 if(debugCalculateNeuronActivationParallel):
-	sentenceIndexDebug = 1
-	wSourceDebug = 14
+	sentenceIndexDebug = 397	#397	#1	#10	#397
+	wSourceDebug = 3	#14
+	wTargetDebug = 4	#8
 	batchIndexOfWTargetDebug = None
-	wTargetDebug = 8
 else:
 	wTargetDebug = None
 
@@ -674,7 +674,8 @@ def unfreezePreviousSequentialSegmentOrSubbranchVectorised(vectorisedBranchActiv
 
 def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=None):
 	if(drawBiologicalSimulationDynamic):
-		if(not debugCalculateNeuronActivationParallel or (sentenceIndex == sentenceIndexDebug and wSource >= wSourceDebug)):
+		if(not debugCalculateNeuronActivationParallel or (sentenceIndex == sentenceIndexDebug and wTarget == wSource+1)):
+		#if(not debugCalculateNeuronActivationParallel or (sentenceIndex == sentenceIndexDebug and wSource >= wSourceDebug)):
 			print("branchIndex1 = ", branchIndex1, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
 			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
 				fileName = generateBiologicalSimulationDynamicFileName(True, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)

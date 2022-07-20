@@ -24,15 +24,23 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 
 
-vectoriseComputation = True	#parallel processing for optimisation
+#### computation type ####
+
+vectoriseComputation = False	#parallel processing for optimisation
 if(vectoriseComputation):
-	updateNeuronObjectActivationLevels = False	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
+	updateNeuronObjectActivationLevels = True	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 else:
 	updateNeuronObjectActivationLevels = True	#mandatory (typically implied true)
  
-drawBiologicalSimulationDynamicHighlightNewActivations = False	#useful with resetConnectionTargetNeuronDendriteAfterSequence/resetConnectionTargetNeuronDendriteDuringActivation to visually distinguish between new activations (at current time) and prior activations
+ 
+#### draw ####
+
+drawBiologicalSimulationDynamicHighlightNewActivations = True	#useful with resetConnectionTargetNeuronDendriteAfterSequence/resetConnectionTargetNeuronDendriteDuringActivation to visually distinguish between new activations (at current time) and prior activations	#if debugCalculateNeuronActivation*: incompatible with first call of draw since activationStateNew is reset by getActivationColor
 if(drawBiologicalSimulationDynamicHighlightNewActivations):
 	highlightNewActivationColor = 'magenta'	#'black'
+
+
+#### test harness (compare standard/vectorised computation) ####
 
 biologicalSimulationTestHarness = False
 HFNLPnonrandomSeed = False	#initialise (dependent var)
@@ -43,15 +51,19 @@ if(biologicalSimulationTestHarness):
 		emulateVectorisedComputationOrder = True	#change standard computation to execute in order of vectorised computation (for comparison)
 	HFNLPnonrandomSeed = True	#always generate the same set of random numbers upon execution
 
-standardComputationOptimised = False	#initialise (dependent var)
-if(not vectoriseComputation):
-	standardComputationOptimised = True	#optional	#False: original implementation	#only perform local propagation at active connections
+
+#### propagation algorithm (dendrite activation) ####
+
 reversePropagationOrder = True		#optional	#True: original implementation
 if(emulateVectorisedComputationOrder):
 	emulateVectorisedComputationOrderReversed = reversePropagationOrder	#initialise (dependent var)
 
-subsequenceLengthCalibration = 0.3	#orig: 1.0	#reduce proportional to number of branches
-reduceCompletenessOfEncodingWithSequenceLength = False	#when a prediction sequence is short ensure almost every previous word is encoded in branch structure	#the shorter the sequence, the more likely to form a synapse
+
+#### dendritic encoding calibration ####
+
+subsequenceLengthCalibration = 0.5	#0.3	#orig: 1.0	#reduce proportional to number of branches
+reduceCompletenessOfEncodingWithPreviousContextDistance = True	#the more proximal the previous context, the more likely to form a synapse
+reduceCompletenessOfEncodingWithSequenceLength = False	#when a predictive sequence is short ensure almost every previous word is encoded in branch structure	#the shorter the sequence, the more likely to form a synapse
 if(reduceCompletenessOfEncodingWithSequenceLength):
 	reduceCompletenessOfEncodingWithSequenceLengthCalibration = 10.0	#subsequence encoding length modifier = predictiveSequenceLength/reduceCompletenessOfEncodingWithSequenceLengthCalibration
 #probabilityOfSubsequenceThreshold = 0.01	#FUTURE: calibrate depending on number of branches/sequentialSegments etc
@@ -60,19 +72,20 @@ enforceMinimumEncodedSequenceLength = True	#do not execute addPredictiveSequence
 if(enforceMinimumEncodedSequenceLength):
 	minimumEncodedSequenceLength = 4	#should be high enough to fill a significant proportion of dendrite vertical branch length (numberOfBranches1)	#~seedHFnetworkSubsequenceLength
 	
-onlyPropagateIfConceptNeuronTargetActivatedByConceptNeuronSourceVectorised = False	#True: orig implementation
-if(vectoriseComputation):
-	if(enforceMinimumEncodedSequenceLength):
-		onlyPropagateIfConceptNeuronTargetActivatedByConceptNeuronSourceVectorised = False	#mandatory
+preventGenerationOfDuplicateConnections = True	#note sequentialSegment inputs will be stored as a dictionary indexed by source node name (else indexed by sequentialSegmentInputIndex)
+	
 
+#### seed HF network with subsequence ####
 
-seedHFnetworkSubsequence = False #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
+seedHFnetworkSubsequence = True #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
 if(seedHFnetworkSubsequence):
 	#seedHFnetworkSubsequence currently requires !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
 	seedHFnetworkSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
 	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
 	seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant = True
 
+
+#### encode syntax in dendritic branch structure ####
 
 supportForNonBinarySubbranchSize = False	#initialise (dependent var)
 performSummationOfSequentialSegmentInputsAcrossBranch = False	#initialise (dependent var)
@@ -93,6 +106,7 @@ if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 		#if(not biologicalSimulationEncodeSyntaxInDendriticBranchStructureLinearHierarchical):
 		#	implied biologicalSimulationEncodeSyntaxInDendriticBranchStructureLinearCrawl = True: adds the nodes in reverse order of tree crawl to a linear contextConceptNodesList) - will also perform propagate/predict in reverse order of tree crawl
 
+#non binary/consistent branch encoding;
 if(supportForNonBinarySubbranchSize):
 	performSummationOfSequentialSegmentInputsAcrossBranch = True
 	debugBiologicalSimulationEncodeSyntaxInDendriticBranchStructure = False	#reduce number of subbranches to support and draw simpler dependency tree (use with drawBiologicalSimulationDynamic)
@@ -106,20 +120,15 @@ if(allowNegativeActivationTimes):
 else:
 	minimumActivationTime = 0	#alternatively set -1;	#initial activation time of dendritic sequence set artificially low such that passSegmentActivationTimeTests automatically pass (not required (as passSegmentActivationTimeTests are ignored for currentSequentialSegmentInput.firstInputInSequence)
 	
-	
-preventGenerationOfDuplicateConnections = True	#note sequentialSegment inputs will be stored as a dictionary indexed by source node name (else indexed by sequentialSegmentInputIndex)
 
-storeSequentialSegmentInputIndexValues = False	#not required	#index record value not robust if inputs are removed (synaptic atrophy)	#HFNLPpy_biologicalSimulationDraw can use currentSequentialSegmentInputIndexDynamic instead
+#### standard computation ####
+
+standardComputationOptimised = False	#initialise (dependent var)
+if(not vectoriseComputation):
+	standardComputationOptimised = True	#optional	#False: original implementation	#only perform local propagation at active connections
 
 
-performSummationOfSequentialSegmentInputs = False #allows sequential segment activation to be dependent on summation of individual local inputs #support multiple source neurons fired simultaneously	#consider renaming to performSummationOfSequentialSegmentInputsLocal
-if(performSummationOfSequentialSegmentInputs):
-	weightedSequentialSegmentInputs = True
-	#summationOfSequentialSegmentInputsFirstInputInSequenceOverride = True	#mandatory (only implementation coded) #True: orig HFNLPpy_biologicalSimulationPropagateStandard method	 #False: orig HFNLPpy_biologicalSimulationPropagateVectorised method
-if(weightedSequentialSegmentInputs):
-	sequentialSegmentMinActivationLevel = 1.0	#requirement: greater or equal to sequentialSegmentMinActivationLevel
-else:
-	sequentialSegmentMinActivationLevel = 1	#always 1 (not used)
+#### vectorised computation ####
 
 if(vectoriseComputation):
 	import tensorflow as tf
@@ -134,6 +143,25 @@ if(vectoriseComputation):
 		recordVectorisedBranchObjectList = False	#vectorisedBranchObjectList is not required as it is not necessary to convert vectorised activations back to denditicTree object structure (DendriticBranch/SequentialSegment/SequentialSegmentInput); activation levels are not required to be stored in denditicTree object structure (DendriticBranch/SequentialSegment/SequentialSegmentInput)
 else:
 	vectoriseComputationCurrentDendriticInput = False
+
+onlyPropagateIfConceptNeuronTargetActivatedByConceptNeuronSourceVectorised = False	#True: orig implementation
+if(vectoriseComputation):
+	if(enforceMinimumEncodedSequenceLength):
+		onlyPropagateIfConceptNeuronTargetActivatedByConceptNeuronSourceVectorised = False	#mandatory
+	
+	
+#### dendritic branch/sequential segment activation level cache ####
+
+storeBranchActivationState = True	#True: orig implementation	#False: storeBranchActivationLevel
+
+performSummationOfSequentialSegmentInputs = False #allows sequential segment activation to be dependent on summation of individual local inputs #support multiple source neurons fired simultaneously	#consider renaming to performSummationOfSequentialSegmentInputsLocal
+if(performSummationOfSequentialSegmentInputs):
+	weightedSequentialSegmentInputs = True
+	#summationOfSequentialSegmentInputsFirstInputInSequenceOverride = True	#mandatory (only implementation coded) #True: orig HFNLPpy_biologicalSimulationPropagateStandard method	 #False: orig HFNLPpy_biologicalSimulationPropagateVectorised method
+if(weightedSequentialSegmentInputs):
+	sequentialSegmentMinActivationLevel = 1.0	#requirement: greater or equal to sequentialSegmentMinActivationLevel
+else:
+	sequentialSegmentMinActivationLevel = 1	#always 1 (not used)
 
 #default activation levels;
 #key:
@@ -154,13 +182,17 @@ vectorisedActivationLevelOff = 0.0
 vectorisedActivationLevelOn = 1.0
 vectorisedActivationTimeFlagDefault = 0	#boolean flag (not a numeric activation time)
 vectorisedActivationTimeFlagFirstInputInSequence = 1	#boolean flag (not a numeric activation time)
-	
+
+
+#### propagation algorithm (source/target activation) ####
 
 if(vectoriseComputation):
 	biologicalSimulationForward = True	#mandatory (only implementation) #required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic
 else:
-	biologicalSimulationForward = True	#optional	#orig implementation; False (simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup)
+	biologicalSimulationForward = True	#optional	#True: default (mandatory for many configurations)	#orig implementation; False (simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup)
 
+
+#### activation reset ####
 
 resetSourceNeuronAxonAfterActivation = True	#mandatory
 
@@ -222,7 +254,9 @@ if(standardComputationOptimised):
 		 
 algorithmTimingWorkaround1 = False	#insufficient workaround
 
-	
+
+#### input/synaptic activation level cache ####
+
 if(vectoriseComputation):
 	recordSequentialSegmentInputActivationLevels = True	#optional
 	if(updateNeuronObjectActivationLevels):
@@ -235,8 +269,12 @@ if(vectoriseComputation):
 		if(vectoriseComputionUseSequentialSegmentInputActivationLevels):
 			numberOfSequentialSegmentInputs = 100	#max number available
 
+storeSequentialSegmentInputIndexValues = False	#not required	#index record value not robust if inputs are removed (synaptic atrophy)	#HFNLPpy_biologicalSimulationDraw can use currentSequentialSegmentInputIndexDynamic instead
 
-numberOfBranches1 = 3	#number of vertical branches -1
+
+#### dendritic structure ####
+
+numberOfBranches1 = 5	#number of vertical branches -1
 if(supportForNonBinarySubbranchSize):
 	if(debugBiologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 		numberOfBranches2 = 4
@@ -248,8 +286,17 @@ else:
 numberOfBranchSequentialSegments = 1	#1+	#sequential inputs (FUTURE: if > 1: each branch segment may require sequential inputs)
 #numberOfBranchSequentialSegmentInputs = 1	#1+	#nonSequentialInputs	#in current implementation (non-parallel generative network) number of inputs at sequential segment is dynamically increased on demand #not used; currently encode infinite number of
 
-numberOfHorizontalSubBranchesRequiredForActivation = 2	#calibrate
+sequentialSegmentIndexMostProximal = 0
+branchIndex1MostProximal = 0
+
+
+#### dendritic encoding/propagation ####
+
+#dendritic structure (encoding requirements):
 numberOfHorizontalSubBranchesTrained = numberOfBranches2
+
+#dendritic structure (propagation requirements):
+numberOfHorizontalSubBranchesRequiredForActivation = 2	#calibrate
 
 trainSubsetOfHorizontalSubbranches = False	#optional
 if(trainSubsetOfHorizontalSubbranches):
@@ -266,9 +313,4 @@ if(numberOfHorizontalSubBranchesTrained == 2 and numberOfHorizontalSubBranchesRe
 		
 activationRepolarisationTime = 1	#calibrate
 
-sequentialSegmentIndexMostProximal = 0
-branchIndex1MostProximal = 0
-
-
-storeBranchActivationState = True	#True: orig implementation	#False: storeBranchActivationLevel
 

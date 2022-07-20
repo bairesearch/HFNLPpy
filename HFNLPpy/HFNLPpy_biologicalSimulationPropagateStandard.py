@@ -27,7 +27,7 @@ from HFNLPpy_biologicalSimulationNode import *
 
 
 #if(biologicalSimulationForward):	#required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic?
-drawBiologicalSimulationDynamic = False	#draw dynamic activation levels of biological simulation
+drawBiologicalSimulationDynamic = True	#draw dynamic activation levels of biological simulation
 if(drawBiologicalSimulationDynamic):
 	drawBiologicalSimulationDynamicPlot = True	#default: False
 	drawBiologicalSimulationDynamicSave = False	#default: True	#save to file
@@ -44,7 +44,7 @@ printConnectionTargetActivations = False
 
 debugCalculateNeuronActivationStandard = False		#requires !drawBiologicalSimulationDynamicHighlightNewActivations
 if(debugCalculateNeuronActivationStandard):
-	sentenceIndexDebug = 1	#10	#397
+	sentenceIndexDebug = 397	#397	#1	#10	#397
 	wSourceDebug = 3
 	wTargetDebug = 4
 else:
@@ -431,7 +431,8 @@ def calculateNeuronActivationSequentialSegment(connection, currentBranchIndex1, 
 								previousSequentialSegment = subbranch.sequentialSegments[sequentialSegmentIndexMostProximal]
 								previousSequentialSegment.frozen = False
 
-						drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
+						if(not emulateVectorisedComputationOrder):
+							drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
 
 				else:
 					if(deactivateSequentialSegmentsIfTimeTestsFail):
@@ -443,7 +444,8 @@ def calculateNeuronActivationSequentialSegment(connection, currentBranchIndex1, 
 						currentSequentialSegment.activationLevel = sequentialSegmentActivationLevel
 						currentSequentialSegment.activationTime = sequentialSegmentActivationTime	
 
-						#drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
+						if(not emulateVectorisedComputationOrder):
+							drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
 	else:
 		sequentialSegmentActivationState = sequentialSegmentActivationStatePrior
 		sequentialSegmentActivationLevel = sequentialSegmentActivationLevelPrior
@@ -511,9 +513,9 @@ def findConnectionSynapseInSequentialSegment(currentSequentialSegment, connectio
 	
 def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=None):
 	if(drawBiologicalSimulationDynamic):
+		if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug and wTarget == wSource+1)):
 		#if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug and wSource >= wSourceDebug)):	#wSource == wSourceDebug
 		#if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug)):
-		if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug and wTarget == wSource+1)):
 			if(emulateVectorisedComputationOrder):
 				print("branchIndex1 = ", branchIndex1, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
 			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):

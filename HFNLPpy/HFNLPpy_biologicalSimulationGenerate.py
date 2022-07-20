@@ -28,6 +28,8 @@ from HFNLPpy_biologicalSimulationNode import *
 
 printVerbose = False
 
+debugSubsequenceGeneration = True
+
 def addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptNodeList, dendriticBranch, predictiveSequenceLength, dendriticBranchMaxW, branchIndex1, sequentialSegmentIndex, expectFurtherSubbranches=True):
 	
 	activationTime = 0	#unactivated
@@ -35,9 +37,9 @@ def addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptN
 	numberOfWordsInSequence = len(sentenceConceptNodeList)
 	
 	#no prediction found for previous sequence; generate prediction for conceptNeuron (encode subsequences in dendrite)
-
+	
 	if((branchIndex1 > 0) or expectFirstBranchSequentialSegmentConnection):
-		previousContextConceptNode = sentenceConceptNodeList[dendriticBranchMaxW]
+		previousContextConceptNode = sentenceConceptNodeList[dendriticBranchMaxW]	
 		currentSequentialSegment = dendriticBranch.sequentialSegments[sequentialSegmentIndex]
 		createNewConnection, existingSequentialSegmentInput = verifyCreateNewConnection(currentSequentialSegment, previousContextConceptNode)
 		if(createNewConnection):
@@ -83,6 +85,10 @@ def addPredictiveSequenceToNeuronSubsequenceGeneration(conceptNeuron, sentenceIn
 	#lengthOfSubsequenceScale = random.uniform(0, 1)
 	#dendriticSubBranchMaxW = int(lengthOfSubsequenceScale*dendriticBranchMaxW)	
 	lengthOfSubsequence = int(np.random.exponential()*subsequenceLengthCalibration)	#the more proximal the previous context, the more likely to form a synapse
+	if(reduceCompletenessOfEncodingWithPreviousContextDistance):
+		distanceOfPreviousContextNode = (conceptNeuron.w-dendriticBranchMaxW)
+		#print("distanceOfPreviousContextNode = ", distanceOfPreviousContextNode)
+		lengthOfSubsequence = int(lengthOfSubsequence*distanceOfPreviousContextNode)
 	if(reduceCompletenessOfEncodingWithSequenceLength):
 		lengthOfSubsequence = int(lengthOfSubsequence*(predictiveSequenceLength/reduceCompletenessOfEncodingWithSequenceLengthCalibration)) #the shorter the sequence, the more likely to form a synapse
 		
