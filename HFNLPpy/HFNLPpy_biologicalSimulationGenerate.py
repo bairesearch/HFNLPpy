@@ -82,18 +82,28 @@ def addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptN
 		#print("setting currentSequentialSegmentInput.firstInputInSequence, branchIndex1 = ", branchIndex1)
 
 def addPredictiveSequenceToNeuronSubsequenceGeneration(conceptNeuron, sentenceIndex, sentenceConceptNodeList, dendriticBranch, predictiveSequenceLength, dendriticBranchMaxW, branchIndex1, sequentialSegmentIndex, expectFurtherSubbranches):
-	#lengthOfSubsequenceScale = random.uniform(0, 1)
-	#dendriticSubBranchMaxW = int(lengthOfSubsequenceScale*dendriticBranchMaxW)	
-	lengthOfSubsequence = int(np.random.exponential()*subsequenceLengthCalibration)	#the more proximal the previous context, the more likely to form a synapse
+	if(subsequenceLengthRandExponential):
+		lengthOfSubsequence = np.random.exponential()*subsequenceLengthCalibration	#the more proximal the previous context, the more likely to form a synapse	
+	else:
+		lengthOfSubsequenceScale = np.random.uniform(0, 1) #random.uniform(0, 1)
+		lengthOfSubsequence = lengthOfSubsequenceScale*subsequenceLengthCalibration
+
 	if(reduceCompletenessOfEncodingWithPreviousContextDistance):
 		distanceOfPreviousContextNode = (conceptNeuron.w-dendriticBranchMaxW)
 		#print("distanceOfPreviousContextNode = ", distanceOfPreviousContextNode)
-		lengthOfSubsequence = int(lengthOfSubsequence*distanceOfPreviousContextNode)
+		lengthOfSubsequence = lengthOfSubsequence*distanceOfPreviousContextNode
 	if(reduceCompletenessOfEncodingWithSequenceLength):
-		lengthOfSubsequence = int(lengthOfSubsequence*(predictiveSequenceLength/reduceCompletenessOfEncodingWithSequenceLengthCalibration)) #the shorter the sequence, the more likely to form a synapse
-		
-	#lengthOfSubsequence = max(1, lengthOfSubsequence)
+		lengthOfSubsequence = lengthOfSubsequence*(predictiveSequenceLength/reduceCompletenessOfEncodingWithSequenceLengthCalibration) #the shorter the sequence, the more likely to form a synapse
+
+	lengthOfSubsequence = int(lengthOfSubsequence)
+	
 	lengthOfSubsequence = lengthOfSubsequence + 1	#ensure >= 1
+	if(verifyPropagationTime):
+		lengthOfSubsequence = min(lengthOfSubsequence, int(activationPropagationTimeMax))
+	
+	if(printVerbose):
+		print("lengthOfSubsequence = ", lengthOfSubsequence)
+		
 	dendriticSubBranchMaxW = dendriticBranchMaxW-lengthOfSubsequence
 	dendriticSubBranchMaxW = max(dendriticSubBranchMaxW, 0)	#ensure >=0 (if zero then subbranch.seqentialSegment.firstInputInSequence will be set to true)	
 	if(dendriticSubBranchMaxW == 0):

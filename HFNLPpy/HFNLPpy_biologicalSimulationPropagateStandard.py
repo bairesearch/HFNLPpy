@@ -27,7 +27,7 @@ from HFNLPpy_biologicalSimulationNode import *
 
 
 #if(biologicalSimulationForward):	#required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic?
-drawBiologicalSimulationDynamic = True	#draw dynamic activation levels of biological simulation
+drawBiologicalSimulationDynamic = False	#draw dynamic activation levels of biological simulation
 if(drawBiologicalSimulationDynamic):
 	drawBiologicalSimulationDynamicPlot = True	#default: False
 	drawBiologicalSimulationDynamicSave = False	#default: True	#save to file
@@ -44,7 +44,7 @@ printConnectionTargetActivations = False
 
 debugCalculateNeuronActivationStandard = False		#requires !drawBiologicalSimulationDynamicHighlightNewActivations
 if(debugCalculateNeuronActivationStandard):
-	sentenceIndexDebug = 397	#397	#1	#10	#397
+	sentenceIndexDebug = 10	#208	#397	#1	#10	#397
 	wSourceDebug = 3
 	wTargetDebug = 4
 else:
@@ -394,12 +394,13 @@ def calculateNeuronActivationSequentialSegment(connection, currentBranchIndex1, 
 
 				passSegmentActivationTimeTests = False
 				if(currentSequentialSegmentInput.firstInputInSequence):
-					if(verifyRepolarised(currentSequentialSegment, activationTime)):	#ensure that the segment isnt in a repolarisation state (ie it can be activated)
+					if(verifyReactivationTime(currentSequentialSegment, activationTime)):	#ensure that the segment isnt in a repolarisation state (ie it can be activated)
 						passSegmentActivationTimeTests = True	#if input corresponds to first in sequence, then enforce no previous dendritic activation requirements
 				else:
 					if(sequentialSegmentActivationStatePrior):	#previous sequential segment/subbranch was activated		#only accept sequential segment activation if previous was activated
+						#print("currentBranchIndex1 = ", currentBranchIndex1)
 						if(verifySequentialActivationTime(activationTime, sequentialSegmentActivationTimePrior)):	#ignore existing activation level if it occured at an earlier/same time than/as sequentialSegmentActivationTimePrior
-							if(verifyRepolarised(currentSequentialSegment, activationTime)):	#ensure that the segment isnt in a repolarisation state (ie it can be activated)
+							if(verifyReactivationTime(currentSequentialSegment, activationTime)):	#ensure that the segment isnt in a repolarisation state (ie it can be activated)
 								passSegmentActivationTimeTests = True	#sequentialSegmentActivationLevel implies subbranchesActive: previous (ie more distal) branch was active
 
 				if(passSegmentActivationTimeTests):

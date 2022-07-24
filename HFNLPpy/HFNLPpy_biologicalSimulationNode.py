@@ -322,29 +322,43 @@ def printIndentation(level):
 	for indentation in range(level):
 		print('\t', end='')
 
-def verifyRepolarised(currentSequentialSegment, activationTime):
-	if(verifyRepolarisationTime):
-		if(calculateSequentialSegmentActivationState(currentSequentialSegment.activationLevel)):
-			repolarised = False
+def verifyReactivationTime(currentSequentialSegment, activationTime):
+	repolarised = False
+	if(calculateSequentialSegmentActivationState(currentSequentialSegment.activationLevel)):
+		if(verifyRepolarisationTime):
 			if(activationTime >= currentSequentialSegment.activationTime+activationRepolarisationTime):
 				#do not reactivate sequential segment if already activated by same source neuron
 				repolarised = True
 		else:
-			repolarised = True
+			repolarised = True	
 	else:
 		repolarised = True
-	return repolarised
+	activationTimeVerified = repolarised
+	return activationTimeVerified
 	
 	
-def verifySequentialActivationTime(currentSequentialSegmentActivationTime, previousSequentialSegmentActivationTime):
+def verifySequentialActivationTime(activationTime, previousSequentialSegmentActivationTime):
 	sequentiality = False
 	if(algorithmTimingWorkaround1):
-		if(currentSequentialSegmentActivationTime >= previousSequentialSegmentActivationTime):
+		if(activationTime >= previousSequentialSegmentActivationTime):
 			sequentiality = True	
 	else:
-		if(currentSequentialSegmentActivationTime > previousSequentialSegmentActivationTime):
+		if(activationTime > previousSequentialSegmentActivationTime):
 			sequentiality = True
-	return sequentiality
+	
+	propagate = False
+	if(verifyPropagationTime):
+		#print("activationTime = ", activationTime)
+		#print("previousSequentialSegmentActivationTime = ", previousSequentialSegmentActivationTime)
+		#print("activationPropagationTimeMax = ", activationPropagationTimeMax)
+		if(activationTime <= previousSequentialSegmentActivationTime+activationPropagationTimeMax):
+			propagate = True
+	else:
+		propagate = True
+		
+	activationTimeVerified = sequentiality and propagate
+		
+	return activationTimeVerified
 
 #last access time	
 def calculateActivationTimeSequence(wordIndex):

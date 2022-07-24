@@ -30,7 +30,7 @@ from HFNLPpy_biologicalSimulationNode import *
 #if(biologicalSimulationForward):	#required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic
 if(vectoriseComputation):		#dynamic draw should use vectoriseComputation, as this activates all target neuron synapses of wSource simultaneously 
 	if(updateNeuronObjectActivationLevels):
-		drawBiologicalSimulationDynamic = True	#draw dynamic activation levels of biological simulation	#optional
+		drawBiologicalSimulationDynamic = False	#draw dynamic activation levels of biological simulation	#optional
 		if(drawBiologicalSimulationDynamic):
 			drawBiologicalSimulationDynamicPlot = True	#default: False
 			drawBiologicalSimulationDynamicSave = False	#default: True	#save to file
@@ -47,9 +47,9 @@ if(vectoriseComputation):		#dynamic draw should use vectoriseComputation, as thi
 printVerbose = False
 printConnectionTargetActivations = False
 
-debugCalculateNeuronActivationParallel = True	#requires !drawBiologicalSimulationDynamicHighlightNewActivations
+debugCalculateNeuronActivationParallel = False	#requires !drawBiologicalSimulationDynamicHighlightNewActivations
 if(debugCalculateNeuronActivationParallel):
-	sentenceIndexDebug = 397	#397	#1	#10	#397
+	sentenceIndexDebug = 208	#1	#10	#397
 	wSourceDebug = 3	#14
 	wTargetDebug = 4	#8
 	batchIndexOfWTargetDebug = None
@@ -388,10 +388,8 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 				
 				#apply previous sequentialSegment/subbranch activation time tests;
 				#note if firstSequentialSegmentInSequence and previous sequential segments/subbranch time tests fail, then sequential segment will still activate
-				if(algorithmTimingWorkaround1):
-					vectorisedBranchActivationLevelBatchSequentialSegmentCurrentTimeTests = tf.greater_equal(activationTime, vectorisedBranchActivationTimeBatchSequentialSegmentCurrent)	#ensure activationTime of sequentialSegment is greater than that of previous sequential segments/subbranch - equivalent to verifySequentialActivationTime			
-				else:
-					vectorisedBranchActivationLevelBatchSequentialSegmentCurrentTimeTests = tf.greater(activationTime, vectorisedBranchActivationTimeBatchSequentialSegmentCurrent)	#ensure activationTime of sequentialSegment is greater than that of previous sequential segments/subbranch - equivalent to verifySequentialActivationTime
+				vectorisedBranchActivationLevelBatchSequentialSegmentCurrentTimeTests = verifySequentialActivationTimeVectorised(activationTime, vectorisedBranchActivationTimeBatchSequentialSegmentCurrent)
+
 				vectorisedBranchActivationLevelBatchSequentialSegmentCurrentTimeTests = tf.logical_or(vectorisedBranchActivationLevelBatchSequentialSegmentCurrentTimeTests, vectorisedBranchActivationFlagBatchSequentialSegmentFirstInputInSequence)
 				vectorisedBranchActivationStateBatchSequentialSegmentCurrent = tf.logical_and(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, vectorisedBranchActivationLevelBatchSequentialSegmentCurrentTimeTests)
 				
@@ -593,11 +591,11 @@ def calculateVectorisedBranchActivationNewBatchSequentialSegmentMask(vectorisedB
 			vectorisedBranchActivationStateBatchSequentialSegmentOverwriteFrozenTests = tf.logical_not(vectorisedBranchActivationFlagBatchSequentialSegmentOverwriteFrozen)
 			vectorisedBranchActivationStateBatchSequentialSegmentOverwriteFrozenTests = tf.logical_and(vectorisedBranchActivationStateBatchSequentialSegmentOverwriteFrozenTests, vectorisedBranchActivationStateBatchSequentialSegmentOverwrite)	#required because frozen flag tests is only valid for valid times (ie states=On)
 			vectorisedBranchActivationNewBatchSequentialSegmentMask = tf.logical_or(vectorisedBranchActivationStateBatchSequentialSegmentOverwriteFrozenTests, vectorisedBranchActivationStateBatchSequentialSegmentNonOverwrite)
-		if(verifyRepolarisationTime):
+		if(verifyActivationTime):
 			vectorisedBranchActivationStateBatchSequentialSegmentOverwrite = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, vectorisedBranchActivationStateBatchSequentialSegment)
 			vectorisedBranchActivationStateBatchSequentialSegmentNonOverwrite = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, tf.logical_not(vectorisedBranchActivationStateBatchSequentialSegment))
 			vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite = tf.multiply(vectorisedBranchActivationTimeBatchSequentialSegment, tf.cast(vectorisedBranchActivationStateBatchSequentialSegmentOverwrite, tf.float32))
-			vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests = verifyRepolarisedVectorised(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite, activationTime)
+			vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests = verifyReactivationTimeVectorised(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite, activationTime)
 			vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests = tf.logical_and(vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests, vectorisedBranchActivationStateBatchSequentialSegmentOverwrite)	#required because verifyRepolarisedVectorised is only valid for valid times (ie states=On)
 			vectorisedBranchActivationNewBatchSequentialSegmentMask = tf.logical_or(vectorisedBranchActivationStateBatchSequentialSegmentOverwriteTimeTests, vectorisedBranchActivationStateBatchSequentialSegmentNonOverwrite)
 	else:
@@ -614,14 +612,29 @@ def getFirstInputInSequenceFlagFromVectorisedBranchActivationFlagBatchSequential
 	return vectorisedBranchActivationFlagBatchSequentialSegmentFirstInputInSequence
 	
 
-def verifyRepolarisedVectorised(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite, activationTime):	
-	#sync with verifyRepolarised
+def verifyReactivationTimeVectorised(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite, activationTime):	
+	#sync with verifyReactivationTime
 	if(verifyRepolarisationTime):
 		repolarised = tf.greater_equal(activationTime, tf.add(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite, activationRepolarisationTime))
 	else:
-		print("verifyRepolarisedVectorised error: requires verifyRepolarisationTime")
-		exit()
+		repolarised = tf.cast(tf.ones(vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite.shape), tf.bool)
 	return repolarised
+
+def verifySequentialActivationTimeVectorised(activationTime, vectorisedBranchActivationTimeBatchSequentialSegmentCurrent):	
+	#sync with verifySequentialActivationTime
+	if(algorithmTimingWorkaround1):
+		sequentiality = tf.greater_equal(activationTime, vectorisedBranchActivationTimeBatchSequentialSegmentCurrent)	#ensure activationTime of sequentialSegment is greater than that of previous sequential segments/subbranch - equivalent to verifySequentialActivationTime			
+	else:
+		sequentiality = tf.greater(activationTime, vectorisedBranchActivationTimeBatchSequentialSegmentCurrent)	#ensure activationTime of sequentialSegment is greater than that of previous sequential segments/subbranch - equivalent to verifySequentialActivationTime
+
+	if(verifyPropagationTime):
+		propagate = tf.less_equal(activationTime, tf.add(vectorisedBranchActivationTimeBatchSequentialSegmentCurrent, activationPropagationTimeMax))
+	else:
+		propagate = tf.cast(tf.ones(vectorisedBranchActivationTimeBatchSequentialSegmentCurrent.shape), tf.bool)
+	
+	vectorisedBranchActivationLevelBatchSequentialSegmentCurrentTimeTests = tf.logical_and(sequentiality, propagate)
+	
+	return vectorisedBranchActivationLevelBatchSequentialSegmentCurrentTimeTests
 						
 def deactivatePreviousSequentialSegmentOrSubbranchVectorised(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, branchIndex1, sequentialSegmentIndex, vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious):
 	#sync with deactivatePreviousSequentialSegmentOrSubbranch

@@ -26,9 +26,9 @@ import numpy as np
 
 #### computation type ####
 
-vectoriseComputation = False	#parallel processing for optimisation
+vectoriseComputation = True	#parallel processing for optimisation
 if(vectoriseComputation):
-	updateNeuronObjectActivationLevels = True	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
+	updateNeuronObjectActivationLevels = False	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 else:
 	updateNeuronObjectActivationLevels = True	#mandatory (typically implied true)
  
@@ -59,22 +59,6 @@ if(emulateVectorisedComputationOrder):
 	emulateVectorisedComputationOrderReversed = reversePropagationOrder	#initialise (dependent var)
 
 
-#### dendritic encoding calibration ####
-
-subsequenceLengthCalibration = 0.5	#0.3	#orig: 1.0	#reduce proportional to number of branches
-reduceCompletenessOfEncodingWithPreviousContextDistance = True	#the more proximal the previous context, the more likely to form a synapse
-reduceCompletenessOfEncodingWithSequenceLength = False	#when a predictive sequence is short ensure almost every previous word is encoded in branch structure	#the shorter the sequence, the more likely to form a synapse
-if(reduceCompletenessOfEncodingWithSequenceLength):
-	reduceCompletenessOfEncodingWithSequenceLengthCalibration = 10.0	#subsequence encoding length modifier = predictiveSequenceLength/reduceCompletenessOfEncodingWithSequenceLengthCalibration
-#probabilityOfSubsequenceThreshold = 0.01	#FUTURE: calibrate depending on number of branches/sequentialSegments etc
-	
-enforceMinimumEncodedSequenceLength = True	#do not execute addPredictiveSequenceToNeuron if predictive sequence is short (ie does not use up the majority of numberOfBranches1)
-if(enforceMinimumEncodedSequenceLength):
-	minimumEncodedSequenceLength = 4	#should be high enough to fill a significant proportion of dendrite vertical branch length (numberOfBranches1)	#~seedHFnetworkSubsequenceLength
-	
-preventGenerationOfDuplicateConnections = True	#note sequentialSegment inputs will be stored as a dictionary indexed by source node name (else indexed by sequentialSegmentInputIndex)
-	
-
 #### seed HF network with subsequence ####
 
 seedHFnetworkSubsequence = True #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
@@ -84,6 +68,38 @@ if(seedHFnetworkSubsequence):
 	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
 	seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant = True
 
+
+#### dendritic encoding calibration ####
+
+reduceCompletenessOfEncodingWithPreviousContextDistance = True	#the more proximal the previous context, the more likely to form a synapse
+reduceCompletenessOfEncodingWithSequenceLength = False	#when a predictive sequence is short ensure almost every previous word is encoded in branch structure	#the shorter the sequence, the more likely to form a synapse
+reduceCompletenessOfEncodingCalibration = False		#initialise (dependent var)
+if(reduceCompletenessOfEncodingWithPreviousContextDistance):
+	reduceCompletenessOfEncodingCalibration = True
+if(reduceCompletenessOfEncodingWithSequenceLength):
+	reduceCompletenessOfEncodingWithSequenceLengthCalibration = 10.0	#subsequence encoding length modifier = predictiveSequenceLength/reduceCompletenessOfEncodingWithSequenceLengthCalibration
+	reduceCompletenessOfEncodingCalibration = True
+
+subsequenceLengthRandExponential = False	#orig: True
+if(subsequenceLengthRandExponential):
+	subsequenceLengthRandCalibration = 3.0	#5.0
+else:
+	#subsequenceLengthRandLinear
+	subsequenceLengthRandCalibration = 3.0
+subsequenceLengthCalibration = 1.0*subsequenceLengthRandCalibration	#CONSIDER: reduce proportional to number of vertical branches
+
+if(reduceCompletenessOfEncodingCalibration):
+	averageSentenceLength = 10.0
+	subsequenceLengthCalibration = subsequenceLengthCalibration/averageSentenceLength	
+
+#probabilityOfSubsequenceThreshold = 0.01	#FUTURE: calibrate depending on number of branches/sequentialSegments etc
+	
+enforceMinimumEncodedSequenceLength = True	#do not execute addPredictiveSequenceToNeuron if predictive sequence is short (ie does not use up the majority of numberOfBranches1)
+if(enforceMinimumEncodedSequenceLength):
+	minimumEncodedSequenceLength = 4	#should be high enough to fill a significant proportion of dendrite vertical branch length (numberOfBranches1)	#~seedHFnetworkSubsequenceLength
+	
+preventGenerationOfDuplicateConnections = True	#note sequentialSegment inputs will be stored as a dictionary indexed by source node name (else indexed by sequentialSegmentInputIndex)
+	
 
 #### encode syntax in dendritic branch structure ####
 
@@ -274,7 +290,7 @@ storeSequentialSegmentInputIndexValues = False	#not required	#index record value
 
 #### dendritic structure ####
 
-numberOfBranches1 = 5	#number of vertical branches -1
+numberOfBranches1 = 5	#5	#3	#number of vertical branches -1
 if(supportForNonBinarySubbranchSize):
 	if(debugBiologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 		numberOfBranches2 = 4
@@ -310,7 +326,11 @@ if(numberOfHorizontalSubBranchesTrained == 2 and numberOfHorizontalSubBranchesRe
 		numberOfHorizontalSubBranchesRequiredForActivation = 1
 		numberOfHorizontalSubBranchesOrSequentialSegmentsRequiredForActivation = 2
 		#resetConnectionTargetNeuronDendriteAfterSequence:vectorisedBranchActivationStateBatchSequentialSegmentFinalNew/newActivationFoundFinalSequentialSegment not supported (most proximal sequential segment in dendritic tree must be active)
-		
-activationRepolarisationTime = 1	#calibrate
 
+if(verifyRepolarisationTime):	
+	activationRepolarisationTime = 1	#calibrate
+
+verifyPropagationTime = False	#default: False	#early activation of sequential segments (from out of context connections) may prevent verifyPropagationTime time requirements from being met
+if(verifyPropagationTime):
+	activationPropagationTimeMax = 3	#max propagation time between sequential segments
 
