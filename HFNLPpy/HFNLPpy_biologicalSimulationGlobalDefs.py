@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-ATNLP Biological Simulation Global Defs
+HFNLP Biological Simulation Global Defs
 
 """
 
@@ -33,23 +33,75 @@ else:
 	updateNeuronObjectActivationLevels = True	#mandatory (typically implied true)
  
  
+#### test harness (compare standard/vectorised computation) ####
+
+biologicalSimulationTestHarness = True
+
+writeBiologicalSimulation = False	#initialise (dependent var)
+writeBiologicalSimulationActivationStates = False	#initialise (dependent var)
+writeBiologicalSimulationNetworkLastSentenceOnly = False	#initialise (dependent var)
+HFNLPnonrandomSeed = False	#initialise (dependent var)
+emulateVectorisedComputationOrder = False	#initialise (dependent var)
+
+if(biologicalSimulationTestHarness):
+	writeBiologicalSimulation = True	#write biological simulation to xml file
+	if(writeBiologicalSimulation):
+		writeBiologicalSimulationActivationStates = True	#print final activation states of network (only valid with writeBiologicalSimulationDynamic)
+	if(not vectoriseComputation):
+		#emulateVectorisedComputationOrder requires biologicalSimulationForward, !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
+		emulateVectorisedComputationOrder = True	#change standard computation to execute in order of vectorised computation (for comparison)
+	HFNLPnonrandomSeed = True	#always generate the same set of random numbers upon execution
+
+
+#### write (xml) ####
+
+if(writeBiologicalSimulation):
+	writeBiologicalSimulationNetwork = True	#default: True
+	writeBiologicalSimulationSentence = False	#default: False
+	if(writeBiologicalSimulationNetwork):
+		writeBiologicalSimulationNetworkLastSentenceOnly = True	#only write network (xml/graph) at last sentence
+	if(updateNeuronObjectActivationLevels or not vectoriseComputation):
+		writeBiologicalSimulationDynamic = False	#default: False	#write dynamic activation levels of biological simulation	#optional
+		if(writeBiologicalSimulationDynamic):
+			writeBiologicalSimulationSentenceDynamic = True	#default: True	#write graph for sentence neurons and their dendritic tree
+			writeBiologicalSimulationNetworkDynamic = False	#default: True	#write graph for entire network (not just sentence)
+	else:
+		print("HFNLPpy_biologicalSimulationPropagateVectorised warning: updateNeuronObjectActivationLevels is required for vectoriseComputation:writeBiologicalSimulationDynamic (if writeBiologicalSimulationDynamic is required; either enable updateNeuronObjectActivationLevels or disable vectoriseComputation)")
+		writeBiologicalSimulationDynamic = False	#mandatory: False
+
+
 #### draw ####
 
 drawBiologicalSimulationDynamicHighlightNewActivations = True	#useful with resetConnectionTargetNeuronDendriteAfterSequence/resetConnectionTargetNeuronDendriteDuringActivation to visually distinguish between new activations (at current time) and prior activations	#if debugCalculateNeuronActivation*: incompatible with first call of draw since activationStateNew is reset by getActivationColor
 if(drawBiologicalSimulationDynamicHighlightNewActivations):
 	highlightNewActivationColor = 'magenta'	#'black'
 
+drawBiologicalSimulation = False	#optional
+if(drawBiologicalSimulation):
+	drawBiologicalSimulationPlot = True	#default: True
+	drawBiologicalSimulationSave = False	#default: False	#save to file
+	drawBiologicalSimulationSentence = True	#default: True	#draw graph for sentence neurons and their dendritic tree
+	drawBiologicalSimulationNetwork = False	#default: False	#draw graph for entire network (not just sentence)
 
-#### test harness (compare standard/vectorised computation) ####
+#if(biologicalSimulationForward):	#required for drawBiologicalSimulationSentenceDynamic/drawBiologicalSimulationNetworkDynamic
+if(updateNeuronObjectActivationLevels or not vectoriseComputation):
+	drawBiologicalSimulationDynamic = False	#draw dynamic activation levels of biological simulation	#optional
+	if(drawBiologicalSimulationDynamic):
+		drawBiologicalSimulationDynamicPlot = True	#default: True
+		drawBiologicalSimulationDynamicSave = False	#default: False	#save to file
+		drawBiologicalSimulationSentenceDynamic = True	#default: True	#draw graph for sentence neurons and their dendritic tree
+		drawBiologicalSimulationNetworkDynamic = False	#default: False	#draw graph for entire network (not just sentence)
+else:
+	print("HFNLPpy_biologicalSimulationPropagateVectorised warning: updateNeuronObjectActivationLevels is required for vectoriseComputation:drawBiologicalSimulationDynamic (if drawBiologicalSimulationDynamic is required; either enable updateNeuronObjectActivationLevels or disable vectoriseComputation)")
+	drawBiologicalSimulationDynamic = False	#mandatory: False
 
-biologicalSimulationTestHarness = False
-HFNLPnonrandomSeed = False	#initialise (dependent var)
-emulateVectorisedComputationOrder = False	#initialise (dependent var)
-if(biologicalSimulationTestHarness):
-	if(not vectoriseComputation):
-		#emulateVectorisedComputationOrder requires biologicalSimulationForward, !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
-		emulateVectorisedComputationOrder = True	#change standard computation to execute in order of vectorised computation (for comparison)
-	HFNLPnonrandomSeed = True	#always generate the same set of random numbers upon execution
+debugCalculateNeuronActivation = False
+if(debugCalculateNeuronActivation):
+	sentenceIndexDebug = 10	#208	#397	#1	#10	#397
+	wSourceDebug = 3
+	wTargetDebug = 4
+else:
+	wTargetDebug = None	
 
 
 #### propagation algorithm (dendrite activation) ####
@@ -61,7 +113,7 @@ if(emulateVectorisedComputationOrder):
 
 #### seed HF network with subsequence ####
 
-seedHFnetworkSubsequence = True #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
+seedHFnetworkSubsequence = False #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
 if(seedHFnetworkSubsequence):
 	#seedHFnetworkSubsequence currently requires !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
 	seedHFnetworkSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
@@ -85,7 +137,7 @@ if(subsequenceLengthRandExponential):
 	subsequenceLengthRandCalibration = 3.0	#5.0
 else:
 	#subsequenceLengthRandLinear
-	subsequenceLengthRandCalibration = 3.0
+	subsequenceLengthRandCalibration = 3.0	#2.0
 subsequenceLengthCalibration = 1.0*subsequenceLengthRandCalibration	#CONSIDER: reduce proportional to number of vertical branches
 
 if(reduceCompletenessOfEncodingCalibration):
@@ -203,7 +255,7 @@ vectorisedActivationTimeFlagFirstInputInSequence = 1	#boolean flag (not a numeri
 #### propagation algorithm (source/target activation) ####
 
 if(vectoriseComputation):
-	biologicalSimulationForward = True	#mandatory (only implementation) #required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic
+	biologicalSimulationForward = True	#mandatory (only implementation) #required for drawBiologicalSimulationSentenceDynamic/drawBiologicalSimulationNetworkDynamic
 else:
 	biologicalSimulationForward = True	#optional	#True: default (mandatory for many configurations)	#orig implementation; False (simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup)
 

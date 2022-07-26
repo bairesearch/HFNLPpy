@@ -59,7 +59,7 @@ def simulateBiologicalHFnetworkSequenceTrainSP(networkConceptNodeDict, sentenceI
 		for conceptNeuron in connectionTargetNeuronSet:
 			resetDendriticTreeActivation(conceptNeuron)
 	
-	HFNLPpy_biologicalSimulation.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
+	HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
 		
 def simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchDP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPgovernorNode, activationTime, connectionTargetNeuronSet, contextConceptNodesList=None):
 	somaActivationFound = False
@@ -115,7 +115,7 @@ def simulateBiologicalHFnetworkSequenceSyntacticalBranchDPAdd(networkConceptNode
 		HFNLPpy_biologicalSimulationGenerate.addPredictiveSequenceToNeuron(conceptNode, sentenceIndex, contextConceptNodesListLocal, conceptNode.dendriticTree, predictiveSequenceLength, dendriticBranchMaxW, currentBranchIndex1, 0, expectFurtherSubbranches)
 
 	if(debugDrawAfterAddPredictiveSequence):
-		HFNLPpy_biologicalSimulation.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)	#draw for debugging
+		HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)	#draw for debugging
 
 	
 def calculateNeuronActivationSyntacticalBranchDPforward(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPbranchSourceNode, DPbranchTargetNode, activationTime, connectionTargetNeuronSet):
@@ -288,7 +288,7 @@ def simulateBiologicalHFnetworkSequenceSyntacticalBranchCPPropagate(networkConce
 def simulateBiologicalHFnetworkSequenceSyntacticalBranchCPAdd(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, CPbranchHeadNode, activationTime, connectionTargetNeuronSet):
 	addPredictiveSequenceToNeuronSyntacticalBranchCP(sentenceIndex, sentenceConceptNodeList, CPbranchHeadNode)
 	if(debugDrawAfterAddPredictiveSequence):
-		HFNLPpy_biologicalSimulation.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
+		HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
 
 def addPredictiveSequenceToNeuronSyntacticalBranchCP(conceptNeuron, sentenceIndex, sentenceConceptNodeList, CPtargetNode, dendriticBranch, currentBranchIndex1):
 

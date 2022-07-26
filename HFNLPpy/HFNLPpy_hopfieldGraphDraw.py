@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-ATNLP Hopfield Graph Draw Class
+HFNLP Hopfield Graph Draw Class
 
 """
 

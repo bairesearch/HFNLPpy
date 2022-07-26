@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-ATNLP Biological Simulation Draw - draw sentence/network graph with dendritic trees
+HFNLP Biological Simulation Draw - draw sentence/network graph with dendritic trees
 
 definition of colour scheme: HFNLPbiologicalImplementationDevelopment-07June2022b.pdf
 
@@ -27,6 +27,9 @@ from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 from HFNLPpy_biologicalSimulationGlobalDefs import *
 from HFNLPpy_biologicalSimulationNode import *
+
+if(writeBiologicalSimulation):
+	import HFNLPpy_biologicalSimulationXML
 
 highResolutionFigure = True
 if(highResolutionFigure):
@@ -66,6 +69,76 @@ conceptNodeSizeDrawSentence = 1000.0	#node diameter
 
 drawDendriticBranchOrthogonal = True
 
+
+def drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences=0):
+	if(drawBiologicalSimulation):
+		if(drawBiologicalSimulationSentence):
+			fileName = generateBiologicalSimulationFileName(True, sentenceIndex, write=False)
+			clearHopfieldGraph()
+			drawHopfieldGraphSentence(sentenceConceptNodeList)
+			print("drawBiologicalSimulationSentence: HFNLPpy_biologicalSimulationDraw.displayHopfieldGraph()")
+			displayHopfieldGraph(drawBiologicalSimulationPlot, drawBiologicalSimulationSave, fileName)
+		if(drawBiologicalSimulationNetwork):
+			fileName = generateBiologicalSimulationFileName(False, sentenceIndex, write=False)
+			clearHopfieldGraph()
+			drawHopfieldGraphNetwork(networkConceptNodeDict)
+			print("drawBiologicalSimulationNetwork: HFNLPpy_biologicalSimulationDraw.displayHopfieldGraph()")
+			displayHopfieldGraph(drawBiologicalSimulationPlot, drawBiologicalSimulationSave, fileName)	
+	if(writeBiologicalSimulation):
+		if(writeBiologicalSimulationSentence):	
+			fileName = generateBiologicalSimulationFileName(True, sentenceIndex, write=True)
+			HFNLPpy_biologicalSimulationXML.writeHopfieldGraphSentence(sentenceConceptNodeList, fileName)
+		if(writeBiologicalSimulationNetwork):
+			if(not writeBiologicalSimulationNetworkLastSentenceOnly or (sentenceIndex == numberOfSentences-1)):
+				fileName = generateBiologicalSimulationFileName(False, sentenceIndex, write=True)
+				HFNLPpy_biologicalSimulationXML.writeHopfieldGraphNetwork(networkConceptNodeDict, fileName)
+	
+def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=None):
+	if(drawBiologicalSimulationDynamic):
+		if(not debugCalculateNeuronActivation or (sentenceIndex == sentenceIndexDebug and wTarget == wSource+1)):
+			if(emulateVectorisedComputationOrder):
+				print("branchIndex1 = ", branchIndex1, ", sequentialSegmentIndex = ", sequentialSegmentIndex)	#CHECKTHIS
+			if(drawBiologicalSimulationSentenceDynamic):
+				fileName = generateBiologicalSimulationDynamicSequentialSegmentFileName(True, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
+				clearHopfieldGraph()
+				drawHopfieldGraphSentence(sentenceConceptNodeList, activationTime=activationTime, wTarget=wTargetDebug)
+				displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
+			if(drawBiologicalSimulationNetworkDynamic):
+				fileName = generateBiologicalSimulationDynamicSequentialSegmentFileName(False, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
+				clearHopfieldGraph()
+				drawHopfieldGraphNetwork(networkConceptNodeDict, activationTime=activationTime, wTarget=wTargetDebug)
+				displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)				
+	if(writeBiologicalSimulationDynamic):
+		if(writeBiologicalSimulationSentenceDynamic):	
+			fileName = generateBiologicalSimulationDynamicSequentialSegmentFileName(True, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
+			HFNLPpy_biologicalSimulationXML.writeHopfieldGraphSentence(sentenceConceptNodeList, fileName, activationTime=activationTime)
+		if(writeBiologicalSimulationNetworkDynamic):
+			#if(sentenceIndex == numberOfSentences-1):
+			fileName = generateBiologicalSimulationDynamicSequentialSegmentFileName(False, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
+			HFNLPpy_biologicalSimulationXML.writeHopfieldGraphNetwork(networkConceptNodeDict, fileName, activationTime=activationTime)
+				
+def drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=None):
+	if(drawBiologicalSimulationDynamic):
+		if(not debugCalculateNeuronActivation or (sentenceIndex == sentenceIndexDebug and wSource >= wSourceDebug)):	#wSource == wSourceDebug
+			if(drawBiologicalSimulationSentenceDynamic):
+				fileName = generateBiologicalSimulationDynamicNeuronFileName(True, wSource, sentenceIndex)
+				clearHopfieldGraph()
+				drawHopfieldGraphSentence(sentenceConceptNodeList, activationTime=activationTime, wTarget=wTargetDebug)
+				displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
+			if(drawBiologicalSimulationNetworkDynamic):
+				fileName = generateBiologicalSimulationDynamicNeuronFileName(False, wSource, sentenceIndex)
+				clearHopfieldGraph()
+				drawHopfieldGraphNetwork(networkConceptNodeDict, activationTime=activationTime, wTarget=wTargetDebug)
+				displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)	
+	if(writeBiologicalSimulationDynamic):
+		if(writeBiologicalSimulationSentenceDynamic):	
+			fileName = generateBiologicalSimulationDynamicNeuronFileName(True, wSource, sentenceIndex)
+			HFNLPpy_biologicalSimulationXML.writeHopfieldGraphSentence(sentenceConceptNodeList, fileName, activationTime=activationTime)
+		if(writeBiologicalSimulationNetworkDynamic):
+			#if(sentenceIndex == numberOfSentences-1):
+			fileName = generateBiologicalSimulationDynamicNeuronFileName(False, wSource, sentenceIndex)
+			HFNLPpy_biologicalSimulationXML.writeHopfieldGraphNetwork(networkConceptNodeDict, fileName, activationTime=activationTime)
+								
 def clearHopfieldGraph():
 	hopfieldGraph.clear()	#only draw graph for single sentence
 	if(drawHopfieldGraphNodeColours):
@@ -308,12 +381,6 @@ def displayHopfieldGraph(plot=True, save=False, fileName=None):
 	else:
 		plt.clf()
 
-		
-def pointOnCircle(radius, angleDegrees, centre=[0,0]):
-	angle = radians(angleDegrees)
-	x = centre[0] + (radius * cos(angle))
-	y = centre[1] + (radius * sin(angle))
-	return x, y
 	
 
 def getActivationColor(neuronObject, colorActive, colorInactive, highlightNewActivations=True):

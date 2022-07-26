@@ -47,6 +47,7 @@ if(vectoriseComputation):
 	import HFNLPpy_biologicalSimulationPropagateVectorised
 else:
 	import HFNLPpy_biologicalSimulationPropagateStandard
+import HFNLPpy_biologicalSimulationDraw
 
 printVerbose = False
 
@@ -55,17 +56,9 @@ printVerbose = False
 #if(vectoriseComputation):
 #	alwaysAddPredictionInputFromPreviousConcept = True #ensures that simulateBiologicalHFnetworkSequenceNodePropagateParallel:conceptNeuronBatchIndexFound
 
-drawBiologicalSimulation = False	#default: True
-if(drawBiologicalSimulation):
-	drawBiologicalSimulationDendriticTreeSentence = True	#default: True	#draw graph for sentence neurons and their dendritic tree
-	if(drawBiologicalSimulationDendriticTreeSentence):
-		import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawSentence
-	drawBiologicalSimulationDendriticTreeNetwork = False	#default: True	#draw graph for entire network (not just sentence)
-	if(drawBiologicalSimulationDendriticTreeNetwork):
-		import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawNetwork
 
 
-def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList):
+def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, numberOfSentences):
 	
 	connectionTargetNeuronSet = set()	#for posthoc network deactivation
 	if(not seedHFnetworkSubsequenceBasic):
@@ -114,7 +107,7 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, targetSentenc
 			
 	resetConnectionTargetNeurons(connectionTargetNeuronSet, False)
 
-	drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList)
+	HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, numberOfSentences)
 
 def verifySeedSentenceIsReplicant(articles, numberOfSentences):
 	result = False
@@ -141,13 +134,13 @@ def compareSentenceStrings(sentence1, sentence2):
 	return result
 	
 
-def trainBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList):
-	simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)	
+def trainBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences):
+	simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences)	
 
 
 #if (!biologicalSimulation:useDependencyParseTree):
 
-def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList):
+def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences):
 
 	#cannot clear now as HFNLPpy_biologicalSimulationDrawSentence/HFNLPpy_biologicalSimulationDrawNetwork memory structure is not independent (diagnose reason for this);
 	
@@ -191,7 +184,7 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 	#reset dendritic trees
 	resetConnectionTargetNeurons(connectionTargetNeuronSet, False)
 
-	drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
+	HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences)
 
 			
 def simulateBiologicalHFnetworkSequenceNodePropagateWrapper(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, connectionTargetNeuronSet):
@@ -259,17 +252,5 @@ def simulateBiologicalHFnetworkSequenceNodePropagateForwardFull(networkConceptNo
 	return somaActivationFound
 
 	
-def drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList):
-	if(drawBiologicalSimulation):
-		if(drawBiologicalSimulationDendriticTreeSentence):
-			HFNLPpy_biologicalSimulationDrawSentence.clearHopfieldGraph()
-			HFNLPpy_biologicalSimulationDrawSentence.drawHopfieldGraphSentence(sentenceConceptNodeList)
-			print("HFNLPpy_biologicalSimulationDrawSentence.displayHopfieldGraph()")
-			HFNLPpy_biologicalSimulationDrawSentence.displayHopfieldGraph()
-		if(drawBiologicalSimulationDendriticTreeNetwork):
-			HFNLPpy_biologicalSimulationDrawNetwork.clearHopfieldGraph()
-			HFNLPpy_biologicalSimulationDrawNetwork.drawHopfieldGraphNetwork(networkConceptNodeDict)
-			print("HFNLPpy_biologicalSimulationDrawNetwork.displayHopfieldGraph()")
-			HFNLPpy_biologicalSimulationDrawNetwork.displayHopfieldGraph()
 			
 			

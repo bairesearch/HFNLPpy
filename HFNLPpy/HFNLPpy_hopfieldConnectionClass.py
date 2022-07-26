@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-ATNLP Hopfield Connection Class
+HFNLP Hopfield Connection Class
 
 """
 

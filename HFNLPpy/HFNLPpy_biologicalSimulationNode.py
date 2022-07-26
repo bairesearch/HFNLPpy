@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-ATNLP Biological Simulation Node Classes
+HFNLP Biological Simulation Node Classes
 
 """
 
@@ -413,26 +413,54 @@ def sequentialSegmentActivationLevelAboveZero(activationLevel):
 	return result
 	
 
-def generateBiologicalSimulationFileName(sentenceOrNetwork, wSource, sentenceIndex=None):
+def generateBiologicalSimulationFileName(sentenceOrNetwork, sentenceIndex=None, write=False):
+	fileName = "biologicalSimulation"
+	if(sentenceOrNetwork):
+		fileName = fileName + "Sentence"
+		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
+	else:
+		fileName = fileName + "Network"
+		if(not writeBiologicalSimulationNetworkLastSentenceOnly):
+			fileName = fileName + "sentenceIndex" + str(sentenceIndex)
+	if(biologicalSimulationTestHarness):
+		if(vectoriseComputation):
+			fileName = fileName + "VectorisedComputation"
+		else:
+			fileName = fileName + "StandardComputation"
+	return fileName
+	
+def generateBiologicalSimulationDynamicNeuronFileName(sentenceOrNetwork, wSource, sentenceIndex=None):
 	fileName = "biologicalSimulationDynamic"
 	if(sentenceOrNetwork):
 		fileName = fileName + "Sentence"
+		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
 	else:
 		fileName = fileName + "Network"
 		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
 	fileName = fileName + "Wsource" + str(wSource)
+	if(biologicalSimulationTestHarness):
+		if(vectoriseComputation):
+			fileName = fileName + "VectorisedComputation"
+		else:
+			fileName = fileName + "StandardComputation"
 	return fileName
 
-def generateBiologicalSimulationDynamicFileName(sentenceOrNetwork, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex=None):
+def generateBiologicalSimulationDynamicSequentialSegmentFileName(sentenceOrNetwork, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex=None):
 	fileName = "biologicalSimulationDynamic"
 	if(sentenceOrNetwork):
 		fileName = fileName + "Sentence"
+		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
 	else:
 		fileName = fileName + "Network"
 		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
 	fileName = fileName + "Wsource" + str(wSource)
 	fileName = fileName + "branchIndex1" + str(branchIndex1)
 	fileName = fileName + "sequentialSegmentIndex" + str(sequentialSegmentIndex)
+	if(biologicalSimulationTestHarness):
+		if(vectoriseComputation):
+			fileName = fileName + "VectorisedComputation"
+		else:
+			fileName = fileName + "StandardComputation"
 	return fileName
 	
 def findSequentialSegmentInputBySourceNode(sequentialSegment, sourceConceptNode):

@@ -63,7 +63,7 @@ def addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptN
 		if(isMostDistalSequentialSegmentInBranch(sequentialSegmentIndex)):
 			if(trainSubsetOfHorizontalSubbranches):
 				subbranchIndices = list(range(len(dendriticBranch.subbranches)))
-				random.shuffle(subbranchIndices)
+				np.random.shuffle(subbranchIndices)	#random.shuffle(subbranchIndices)
 			#for subbranchIndex, subbranch in enumerate(dendriticBranch.subbranches):
 			for i in range(numberOfHorizontalSubBranchesTrained):
 				if(trainSubsetOfHorizontalSubbranches):

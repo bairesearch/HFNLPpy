@@ -24,31 +24,11 @@ from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 from HFNLPpy_biologicalSimulationGlobalDefs import *
 from HFNLPpy_biologicalSimulationNode import *
-
-
-#if(biologicalSimulationForward):	#required for drawBiologicalSimulationDendriticTreeSentenceDynamic/drawBiologicalSimulationDendriticTreeNetworkDynamic?
-drawBiologicalSimulationDynamic = False	#draw dynamic activation levels of biological simulation
-if(drawBiologicalSimulationDynamic):
-	drawBiologicalSimulationDynamicPlot = True	#default: False
-	drawBiologicalSimulationDynamicSave = False	#default: True	#save to file
-	drawBiologicalSimulationDendriticTreeSentenceDynamic = True	#default: True	#draw graph for sentence neurons and their dendritic tree
-	if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
-		import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawSentenceDynamic
-	drawBiologicalSimulationDendriticTreeNetworkDynamic = False	#default: True	#draw graph for entire network (not just sentence)
-	if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
-		import HFNLPpy_biologicalSimulationDraw as HFNLPpy_biologicalSimulationDrawNetworkDynamic
-
+import HFNLPpy_biologicalSimulationDraw
 
 printVerbose = False
 printConnectionTargetActivations = False
 
-debugCalculateNeuronActivationStandard = False		#requires !drawBiologicalSimulationDynamicHighlightNewActivations
-if(debugCalculateNeuronActivationStandard):
-	sentenceIndexDebug = 10	#208	#397	#1	#10	#397
-	wSourceDebug = 3
-	wTargetDebug = 4
-else:
-	wTargetDebug = None
 	
 #emulateVectorisedComputationOrder:
 
@@ -71,7 +51,7 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateStandardEmulateVectorisedCo
 			for conceptNeuronSource in conceptNeuronSourceList:
 				if(simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, branchIndex1Target, sequentialSegmentIndexTarget, connectionTargetActivationFoundSet)):
 					somaActivationFound = True
-			drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)
+			HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)
 		
 	for conceptNeuronSource in conceptNeuronSourceList:
 		resetSourceNeuronAfterActivation(conceptNeuronSource)
@@ -96,7 +76,7 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandardEmulateVectorisedCom
 		for sequentialSegmentIndexTarget in sequentialSegmentSequence:
 			if(simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, branchIndex1Target, sequentialSegmentIndexTarget, connectionTargetActivationFoundSet)):
 				somaActivationFound = True			
-			drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)
+			HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)
 		
 	resetSourceNeuronAfterActivation(conceptNeuronSource)
 	
@@ -141,7 +121,7 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 					somaActivationFound = True
 
 			if(not emulateVectorisedComputationOrder):
-				drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
+				HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
 	
 	if(not emulateVectorisedComputationOrder):
 		resetSourceNeuronAfterActivation(conceptNeuronSource)
@@ -194,7 +174,7 @@ def simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget(networkC
 				#if(printVerbose):
 				#print("somaActivationFound")
 
-			drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)	
+			HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)	
 
 		if(resetSourceNeuronAxonAfterActivation):
 			resetAxonsActivationConnectionList(connectionList)
@@ -433,7 +413,7 @@ def calculateNeuronActivationSequentialSegment(connection, currentBranchIndex1, 
 								previousSequentialSegment.frozen = False
 
 						if(not emulateVectorisedComputationOrder):
-							drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
+							HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
 
 				else:
 					if(deactivateSequentialSegmentsIfTimeTestsFail):
@@ -446,7 +426,7 @@ def calculateNeuronActivationSequentialSegment(connection, currentBranchIndex1, 
 						currentSequentialSegment.activationTime = sequentialSegmentActivationTime	
 
 						if(not emulateVectorisedComputationOrder):
-							drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
+							HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
 	else:
 		sequentialSegmentActivationState = sequentialSegmentActivationStatePrior
 		sequentialSegmentActivationLevel = sequentialSegmentActivationLevelPrior
@@ -512,36 +492,4 @@ def findConnectionSynapseInSequentialSegment(currentSequentialSegment, connectio
 				currentSequentialSegmentInput = currentSequentialSegmentInputTest
 	return foundConnectionSynapse, currentSequentialSegmentInput	
 	
-def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=None):
-	if(drawBiologicalSimulationDynamic):
-		if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug and wTarget == wSource+1)):
-		#if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug and wSource >= wSourceDebug)):	#wSource == wSourceDebug
-		#if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug)):
-			if(emulateVectorisedComputationOrder):
-				print("branchIndex1 = ", branchIndex1, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
-			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
-				fileName = generateBiologicalSimulationDynamicFileName(True, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
-				HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()
-				HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList, activationTime, wTarget=wTargetDebug)
-				HFNLPpy_biologicalSimulationDrawSentenceDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
-			if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
-				fileName = generateBiologicalSimulationDynamicFileName(False, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
-				HFNLPpy_biologicalSimulationDrawNetworkDynamic.clearHopfieldGraph()
-				HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict, activationTime, wTarget=wTargetDebug)
-				HFNLPpy_biologicalSimulationDrawNetworkDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)				
-
-def drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=None):
-	if(drawBiologicalSimulationDynamic):
-		if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug and wSource >= wSourceDebug)):	#wSource == wSourceDebug
-		#if(not debugCalculateNeuronActivationStandard or (sentenceIndex == sentenceIndexDebug)):
-			if(drawBiologicalSimulationDendriticTreeSentenceDynamic):
-				fileName = generateBiologicalSimulationFileName(True, wSource, sentenceIndex)
-				HFNLPpy_biologicalSimulationDrawSentenceDynamic.clearHopfieldGraph()
-				HFNLPpy_biologicalSimulationDrawSentenceDynamic.drawHopfieldGraphSentence(sentenceConceptNodeList, activationTime, wTarget=wTargetDebug)
-				HFNLPpy_biologicalSimulationDrawSentenceDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)
-			if(drawBiologicalSimulationDendriticTreeNetworkDynamic):
-				fileName = generateBiologicalSimulationFileName(False, wSource, sentenceIndex)
-				HFNLPpy_biologicalSimulationDrawNetworkDynamic.clearHopfieldGraph()
-				HFNLPpy_biologicalSimulationDrawNetworkDynamic.drawHopfieldGraphNetwork(networkConceptNodeDict, activationTime, wTarget=wTargetDebug)
-				HFNLPpy_biologicalSimulationDrawNetworkDynamic.displayHopfieldGraph(drawBiologicalSimulationDynamicPlot, drawBiologicalSimulationDynamicSave, fileName)	
 

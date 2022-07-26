@@ -86,9 +86,9 @@ def generateHopfieldGraphNetwork(articles):
 	
 	if(HFNLPnonrandomSeed):
 		np.random.seed(0)
-		random.seed(0)
 		print("np.random.randint(0,9) = ", np.random.randint(0,9))
-		print("random.randint(0,9) = ", random.randint(0,9))
+		#random.seed(0)	#not used
+		#print("random.randint(0,9) = ", random.randint(0,9))
 
 	if(seedHFnetworkSubsequence):
 		HFNLPpy_biologicalSimulation.verifySeedSentenceIsReplicant(articles, numberOfSentences)
@@ -150,21 +150,19 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 		sentenceConceptNodeList.append(conceptNode)
 						
 	if(biologicalSimulation):
-	
 		trainSentence = True
-		if(seedHFnetworkSubsequence):
-			if(sentenceIndex == numberOfSentences-1):
+		if(sentenceIndex == numberOfSentences-1):
+			if(seedHFnetworkSubsequence):
 				trainSentence = False
 				seedSentenceConceptNodeList = sentenceConceptNodeList
-				HFNLPpy_biologicalSimulation.seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceConceptNodeList)
-				
+				HFNLPpy_biologicalSimulation.seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceConceptNodeList, numberOfSentences)
 		if(trainSentence):		
 			if(useDependencyParseTree):
 				print("HFNLPpy_biologicalSimulationSyntacticalGraph.simulateBiologicalHFnetworkSP")
 				HFNLPpy_biologicalSimulationSyntacticalGraph.trainBiologicalHFnetworkSP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode, identifySyntacticalDependencyRelations)		
 			else:
 				print("HFNLPpy_biologicalSimulation.simulateBiologicalHFnetwork")
-				HFNLPpy_biologicalSimulation.trainBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
+				HFNLPpy_biologicalSimulation.trainBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences)			
 	else:
 		#connection vars;
 		if(useDependencyParseTree):
