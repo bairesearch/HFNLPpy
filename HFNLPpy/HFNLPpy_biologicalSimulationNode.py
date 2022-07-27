@@ -412,17 +412,17 @@ def sequentialSegmentActivationLevelAboveZero(activationLevel):
 			result = False
 	return result
 	
-
+	
 def generateBiologicalSimulationFileName(sentenceOrNetwork, sentenceIndex=None, write=False):
 	fileName = "biologicalSimulation"
 	if(sentenceOrNetwork):
 		fileName = fileName + "Sentence"
-		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
+		fileName = fileName + "sentenceIndex" + convertIntToString(sentenceIndex)
 	else:
 		fileName = fileName + "Network"
-		if(not writeBiologicalSimulationNetworkLastSentenceOnly):
-			fileName = fileName + "sentenceIndex" + str(sentenceIndex)
-	if(biologicalSimulationTestHarness):
+		if(not outputBiologicalSimulationNetworkLastSentenceOnly):
+			fileName = fileName + "sentenceIndex" + convertIntToString(sentenceIndex)
+	if(outputFileNameComputationType):
 		if(vectoriseComputation):
 			fileName = fileName + "VectorisedComputation"
 		else:
@@ -433,12 +433,12 @@ def generateBiologicalSimulationDynamicNeuronFileName(sentenceOrNetwork, wSource
 	fileName = "biologicalSimulationDynamic"
 	if(sentenceOrNetwork):
 		fileName = fileName + "Sentence"
-		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
+		fileName = fileName + "sentenceIndex" + convertIntToString(sentenceIndex)
 	else:
 		fileName = fileName + "Network"
-		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
-	fileName = fileName + "Wsource" + str(wSource)
-	if(biologicalSimulationTestHarness):
+		fileName = fileName + "sentenceIndex" + convertIntToString(sentenceIndex)
+	fileName = fileName + "Wsource" + convertIntToString(wSource)
+	if(outputFileNameComputationType):
 		if(vectoriseComputation):
 			fileName = fileName + "VectorisedComputation"
 		else:
@@ -449,20 +449,24 @@ def generateBiologicalSimulationDynamicSequentialSegmentFileName(sentenceOrNetwo
 	fileName = "biologicalSimulationDynamic"
 	if(sentenceOrNetwork):
 		fileName = fileName + "Sentence"
-		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
+		fileName = fileName + "sentenceIndex" + convertIntToString(sentenceIndex)
 	else:
 		fileName = fileName + "Network"
-		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
-	fileName = fileName + "Wsource" + str(wSource)
-	fileName = fileName + "branchIndex1" + str(branchIndex1)
-	fileName = fileName + "sequentialSegmentIndex" + str(sequentialSegmentIndex)
-	if(biologicalSimulationTestHarness):
+		fileName = fileName + "sentenceIndex" + convertIntToString(sentenceIndex)
+	fileName = fileName + "Wsource" + convertIntToString(wSource)
+	fileName = fileName + "branchIndex1" + convertIntToString(branchIndex1)
+	fileName = fileName + "sequentialSegmentIndex" + convertIntToString(sequentialSegmentIndex)
+	if(outputFileNameComputationType):
 		if(vectoriseComputation):
 			fileName = fileName + "VectorisedComputation"
 		else:
 			fileName = fileName + "StandardComputation"
 	return fileName
-	
+
+def convertIntToString(integer, zeroPadLength=3):
+	string = str(integer).zfill(zeroPadLength)
+	return string
+		
 def findSequentialSegmentInputBySourceNode(sequentialSegment, sourceConceptNode):
 	foundSequentialSegmentInput = False
 	sequentialSegmentInput = None
@@ -475,25 +479,29 @@ def findSequentialSegmentInputBySourceNode(sequentialSegment, sourceConceptNode)
 		exit()
 	return foundSequentialSegmentInput, sequentialSegmentInput
 
-def applySomaActivation(conceptNeuronConnectionTarget, conceptNeuronTarget, somaActivationLevel, connectionTargetActivationFoundSet=None):
-	somaActivationFound = False
+def applySomaActivation(conceptNeuronConnectionTarget, conceptNeuronTarget, somaActivationFoundCurrent, connectionTargetActivationFoundSet=None):
 	if(deactivateConnectionTargetIfSomaActivationNotFound):
-		conceptNeuronConnectionTarget.activationLevel = somaActivationLevel	
-	if(somaActivationLevel):
+		conceptNeuronConnectionTarget.activationLevel = somaActivationFoundCurrent	
+	if(somaActivationFoundCurrent):
 		if(not deactivateConnectionTargetIfSomaActivationNotFound):
-			conceptNeuronConnectionTarget.activationLevel = somaActivationLevel
+			conceptNeuronConnectionTarget.activationLevel = somaActivationFoundCurrent
 			if(biologicalSimulationTestHarness):
 				if(emulateVectorisedComputationOrder):
 					if(conceptNeuronConnectionTarget not in(connectionTargetActivationFoundSet)):
 						connectionTargetActivationFoundSet.add(conceptNeuronConnectionTarget)	#current implementation only words for !deactivateConnectionTargetIfSomaActivationNotFound
-						print("biologicalSimulationTestHarness: conceptNeuronConnectionTarget somaActivationLevel = ", conceptNeuronConnectionTarget.nodeName)
+						print("biologicalSimulationTestHarness: conceptNeuronConnectionTarget somaActivationFoundCurrent = ", conceptNeuronConnectionTarget.nodeName)
 				else:
-					print("biologicalSimulationTestHarness: conceptNeuronConnectionTarget somaActivationLevel = ", conceptNeuronConnectionTarget.nodeName)
+					print("biologicalSimulationTestHarness: conceptNeuronConnectionTarget somaActivationFoundCurrent = ", conceptNeuronConnectionTarget.nodeName)
+	somaActivationFound = calculateSomaActivationFound(conceptNeuronConnectionTarget, conceptNeuronTarget, somaActivationFoundCurrent)
+	return somaActivationFound
+	
+def calculateSomaActivationFound(conceptNeuronConnectionTarget, conceptNeuronTarget, somaActivationFoundCurrent):
+	somaActivationFound = False
+	if(somaActivationFoundCurrent):
 		if(conceptNeuronConnectionTarget == conceptNeuronTarget):
 			somaActivationFound = True
 	return somaActivationFound
-	
-						
+							
 def isMostDistalSequentialSegmentInBranch(sequentialSegmentIndex):
 	result = False
 	if(sequentialSegmentIndex == numberOfBranchSequentialSegments-1):

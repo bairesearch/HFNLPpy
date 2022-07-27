@@ -89,15 +89,15 @@ def drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, senten
 			fileName = generateBiologicalSimulationFileName(True, sentenceIndex, write=True)
 			HFNLPpy_biologicalSimulationXML.writeHopfieldGraphSentence(sentenceConceptNodeList, fileName)
 		if(writeBiologicalSimulationNetwork):
-			if(not writeBiologicalSimulationNetworkLastSentenceOnly or (sentenceIndex == numberOfSentences-1)):
+			if(not outputBiologicalSimulationNetworkLastSentenceOnly or (sentenceIndex == numberOfSentences-1)):
 				fileName = generateBiologicalSimulationFileName(False, sentenceIndex, write=True)
 				HFNLPpy_biologicalSimulationXML.writeHopfieldGraphNetwork(networkConceptNodeDict, fileName)
 	
 def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=None):
 	if(drawBiologicalSimulationDynamic):
 		if(not debugCalculateNeuronActivation or (sentenceIndex == sentenceIndexDebug and wTarget == wSource+1)):
-			if(emulateVectorisedComputationOrder):
-				print("branchIndex1 = ", branchIndex1, ", sequentialSegmentIndex = ", sequentialSegmentIndex)	#CHECKTHIS
+			#if(vectorisedComputation or emulateVectorisedComputationOrder):
+			#	print("branchIndex1 = ", branchIndex1, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
 			if(drawBiologicalSimulationSentenceDynamic):
 				fileName = generateBiologicalSimulationDynamicSequentialSegmentFileName(True, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
 				clearHopfieldGraph()

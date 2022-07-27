@@ -417,54 +417,76 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 				deactivatePreviousSequentialSegmentOrSubbranchVectorised(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, branchIndex1, sequentialSegmentIndex, vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious)
 																
 			if(updateNeuronObjectActivationLevels):
-				vectorisedBranchObjectBatchSequentialSegment = vectorisedBranchObjectBatch[:, :, :, sequentialSegmentIndex]	#requires recordVectorisedBranchObjectList
-				for batchIndex in range(vectorisedBranchObjectBatchSequentialSegment.shape[0]):
-					batchNeuron = batchNeuronsList[batchIndex]
-					for horizontalBranchIndex in range(vectorisedBranchObjectBatchSequentialSegment.shape[1]):
-						for branchIndex2 in range(vectorisedBranchObjectBatchSequentialSegment.shape[2]):
-							sequentialSegment = vectorisedBranchObjectBatchSequentialSegment[batchIndex, horizontalBranchIndex, branchIndex2]
-							activationState = vectorisedBranchActivationStateBatchSequentialSegmentCurrent[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
-							activationLevel = vectorisedBranchActivationLevelBatchSequentialSegmentCurrent[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
-							activationTimeSeg = vectorisedBranchActivationTimeBatchSequentialSegmentCurrent[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
-							activationStateNew = vectorisedBranchActivationStateBatchSequentialSegmentNew[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
-							sequentialSegment.activationLevel = activationLevel
-							if(activationState):
-								sequentialSegment.activationTime = activationTimeSeg
-								#print("activate sequential segment: batchNeuron = ", batchNeuron.nodeName, ", branchIndex1 = ", branchIndex1, ", horizontalBranchIndex = ", horizontalBranchIndex, ", branchIndex2 = ", branchIndex2, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
-								if(resetConnectionTargetNeuronDendriteDuringActivation):
-									deactivatePreviousSequentialSegmentOrSubbranch(sequentialSegment)
-							if(activationStateNew):
-								if(drawBiologicalSimulationDynamicHighlightNewActivations):
-									sequentialSegment.activationStateNew = activationStateNew
-								if(overwriteSequentialSegmentsAfterPropagatingSignal):
-									if(not ((branchIndex1 == branchIndex1MostProximal) and (sequentialSegmentIndex == sequentialSegmentIndexMostProximal))):	#never freeze most proximal sequential segment in tree
-										sequentialSegment.frozen = True
-									for subbranch in sequentialSegment.branch.subbranches:	
-										previousSequentialSegment = subbranch.sequentialSegments[sequentialSegmentIndexMostProximal]
-										previousSequentialSegment.frozen = False	
-							if(sequentialSegmentIndex == sequentialSegmentIndexMostProximal):
-								#update branch object parameters;
-								if(storeBranchActivationState):
-									sequentialSegment.branch.activationLevel = activationState
-								else:
-									sequentialSegment.branch.activationLevel = activationLevel
-								if(drawBiologicalSimulationDynamicHighlightNewActivations):
-									sequentialSegment.branch.activationStateNew = activationStateNew
-
-							#if(activationState):
-							#	print("activate branch: batchNeuron = ", batchNeuron.nodeName, ", branchIndex1 = ", branchIndex1, ", horizontalBranchIndex = ", horizontalBranchIndex, ", branchIndex2 = ", branchIndex2, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
-												
-			HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=wTarget)			
-
+				calculateNeuronActivationParallelUpdateNeuronObjects(vectorisedBranchObjectBatch, sequentialSegmentIndex, batchNeuronsList, vectorisedBranchActivationStateBatchSequentialSegmentCurrent, vectorisedBranchActivationLevelBatchSequentialSegmentCurrent, vectorisedBranchActivationTimeBatchSequentialSegmentCurrent, vectorisedBranchActivationStateBatchSequentialSegmentNew)
+					
 			if(reversePropagationOrder):
 				vectorisedBranchActivationLevelBatchSequentialSegmentPrevious = vectorisedBranchActivationLevelBatchSequentialSegmentCurrent
 				vectorisedBranchActivationTimeBatchSequentialSegmentPrevious = vectorisedBranchActivationTimeBatchSequentialSegmentCurrent
 				vectorisedBranchActivationFlagBatchSequentialSegmentPrevious = vectorisedBranchActivationFlagBatchSequentialSegmentCurrent
+
+			if(not vectorisedComputationActivateSomaAfterFinishingPropagation):
+				if((branchIndex1 == branchIndex1MostProximal) and (sequentialSegmentIndex == sequentialSegmentIndexMostProximal)):
+					if(calculateNeuronActivationParallelSoma(vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious, vectorisedBranchActivationStateBatchSequentialSegmentFinalNew, vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationFlagBatchList, vectorisedBranchObjectBatchList, activationTime, wTarget, conceptNeuronTarget, conceptNeuronBatchIndex, batchNeuronsList, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)):
+						somaActivationFound = True		
+							
+			HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=wTarget)			
 		
 		if(requireSubbranchOrSequentialSegmentForActivation):
 			vectorisedBranchActivationLevelBatchSequentialSegmentPreviousFull =	tf.greater_equal(vectorisedBranchActivationLevelBatchSequentialSegmentPreviousSummed, numberOfHorizontalSubBranchesOrSequentialSegmentsRequiredForActivation)
 			vectorisedBranchActivationLevelBatchSequentialSegmentCurrent = tf.cast(tf.logical_or(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, vectorisedBranchActivationLevelBatchSequentialSegmentPreviousFull), tf.float32)
 			#resetConnectionTargetNeuronDendriteAfterSequence:vectorisedBranchActivationStateBatchSequentialSegmentFinalNew not supported (most proximal sequential segment in dendritic tree must be active)
+	
+	if(vectorisedComputationActivateSomaAfterFinishingPropagation):
+		if(calculateNeuronActivationParallelSoma(vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious, vectorisedBranchActivationStateBatchSequentialSegmentFinalNew, vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationFlagBatchList, vectorisedBranchObjectBatchList, activationTime, wTarget, conceptNeuronTarget, conceptNeuronBatchIndex, batchNeuronsList, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)):
+			somaActivationFound = True			
+		
+	#print("somaActivationFound = ", somaActivationFound)
+	
+	HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
+						
+	return somaActivationFound
+
+def calculateNeuronActivationParallelUpdateNeuronObjects(vectorisedBranchObjectBatch, sequentialSegmentIndex, batchNeuronsList, vectorisedBranchActivationStateBatchSequentialSegmentCurrent, vectorisedBranchActivationLevelBatchSequentialSegmentCurrent, vectorisedBranchActivationTimeBatchSequentialSegmentCurrent, vectorisedBranchActivationStateBatchSequentialSegmentNew):
+	vectorisedBranchObjectBatchSequentialSegment = vectorisedBranchObjectBatch[:, :, :, sequentialSegmentIndex]	#requires recordVectorisedBranchObjectList
+	for batchIndex in range(vectorisedBranchObjectBatchSequentialSegment.shape[0]):
+		batchNeuron = batchNeuronsList[batchIndex]
+		for horizontalBranchIndex in range(vectorisedBranchObjectBatchSequentialSegment.shape[1]):
+			for branchIndex2 in range(vectorisedBranchObjectBatchSequentialSegment.shape[2]):
+				sequentialSegment = vectorisedBranchObjectBatchSequentialSegment[batchIndex, horizontalBranchIndex, branchIndex2]
+				activationState = vectorisedBranchActivationStateBatchSequentialSegmentCurrent[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
+				activationLevel = vectorisedBranchActivationLevelBatchSequentialSegmentCurrent[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
+				activationTimeSeg = vectorisedBranchActivationTimeBatchSequentialSegmentCurrent[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
+				activationStateNew = vectorisedBranchActivationStateBatchSequentialSegmentNew[batchIndex, horizontalBranchIndex, branchIndex2].numpy()
+				sequentialSegment.activationLevel = activationLevel
+				if(activationState):
+					sequentialSegment.activationTime = activationTimeSeg
+					#print("activate sequential segment: batchNeuron = ", batchNeuron.nodeName, ", branchIndex1 = ", branchIndex1, ", horizontalBranchIndex = ", horizontalBranchIndex, ", branchIndex2 = ", branchIndex2, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
+					if(resetConnectionTargetNeuronDendriteDuringActivation):
+						deactivatePreviousSequentialSegmentOrSubbranch(sequentialSegment)
+				if(activationStateNew):
+					if(drawBiologicalSimulationDynamicHighlightNewActivations):
+						sequentialSegment.activationStateNew = activationStateNew
+					if(overwriteSequentialSegmentsAfterPropagatingSignal):
+						if(not ((branchIndex1 == branchIndex1MostProximal) and (sequentialSegmentIndex == sequentialSegmentIndexMostProximal))):	#never freeze most proximal sequential segment in tree
+							sequentialSegment.frozen = True
+						for subbranch in sequentialSegment.branch.subbranches:	
+							previousSequentialSegment = subbranch.sequentialSegments[sequentialSegmentIndexMostProximal]
+							previousSequentialSegment.frozen = False	
+				if(sequentialSegmentIndex == sequentialSegmentIndexMostProximal):
+					#update branch object parameters;
+					if(storeBranchActivationState):
+						sequentialSegment.branch.activationLevel = activationState
+					else:
+						sequentialSegment.branch.activationLevel = activationLevel
+					if(drawBiologicalSimulationDynamicHighlightNewActivations):
+						sequentialSegment.branch.activationStateNew = activationStateNew
+
+				#if(activationState):
+				#	print("activate branch: batchNeuron = ", batchNeuron.nodeName, ", branchIndex1 = ", branchIndex1, ", horizontalBranchIndex = ", horizontalBranchIndex, ", branchIndex2 = ", branchIndex2, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
+							
+
+def calculateNeuronActivationParallelSoma(vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious, vectorisedBranchActivationStateBatchSequentialSegmentFinalNew, vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationFlagBatchList, vectorisedBranchObjectBatchList, activationTime, wTarget, conceptNeuronTarget, conceptNeuronBatchIndex, batchNeuronsList, wSource=None, networkConceptNodeDict=None, sentenceIndex=None, sentenceConceptNodeList=None):
+	somaActivationFound = False
 	
 	if(reversePropagationOrder):
 		vectorisedBranchActivationLevelBatchSequentialSegmentFinal = vectorisedBranchActivationLevelBatchSequentialSegmentPrevious
@@ -487,20 +509,16 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 		else:
 			batchNeuron = batchNeuronsList[batchIndex]
 		somaActivationLevel = vectorisedSomaActivationLevel[batchIndex].numpy()
-		somaActivationLevel = bool(somaActivationLevel)
+		somaActivationFoundCurrent = bool(somaActivationLevel)
 		
 		if(printConnectionTargetActivations):
 			print("calculateNeuronActivationParallel: conceptNeuronConnectionTarget = ", batchNeuron.nodeName, ", somaActivationLevel = ", somaActivationLevel)
 		
-		if(applySomaActivation(batchNeuron, conceptNeuronTarget, somaActivationLevel)):
+		if(applySomaActivation(batchNeuron, conceptNeuronTarget, somaActivationFoundCurrent)):
 			somaActivationFound = True
-
-	#print("somaActivationFound = ", somaActivationFound)
-	
-	HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
-						
+			
 	return somaActivationFound
-
+			
 def calculateSequentialSegmentActivationStateVectorisedBuffer(vectorisedBranchActivationLevelBatchSequentialSegmentBuffer):
 	#sync with calculateSequentialSegmentActivationState(activationLevel, vectorised=True)
 	if(weightedSequentialSegmentInputs):

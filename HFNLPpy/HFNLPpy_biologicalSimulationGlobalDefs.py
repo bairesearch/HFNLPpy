@@ -28,7 +28,7 @@ import numpy as np
 
 vectoriseComputation = True	#parallel processing for optimisation
 if(vectoriseComputation):
-	updateNeuronObjectActivationLevels = False	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
+	updateNeuronObjectActivationLevels = True	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 else:
 	updateNeuronObjectActivationLevels = True	#mandatory (typically implied true)
  
@@ -39,29 +39,44 @@ biologicalSimulationTestHarness = True
 
 writeBiologicalSimulation = False	#initialise (dependent var)
 writeBiologicalSimulationActivationStates = False	#initialise (dependent var)
-writeBiologicalSimulationNetworkLastSentenceOnly = False	#initialise (dependent var)
-HFNLPnonrandomSeed = False	#initialise (dependent var)
+outputFileNameComputationType = False	#initialise (dependent var)
+outputBiologicalSimulationNetworkLastSentenceOnly = False	#initialise (dependent var)
+
 emulateVectorisedComputationOrder = False	#initialise (dependent var)
+emulateVectorisedComputationOrderVerifyTargetConnectionFound = True	#initialise (dependent var)
+emulateVectorisedComputationOrderPreactivateAxonsAndTargetInputs = False	#initialise (dependent var)
+vectorisedComputationActivateSomaAfterFinishingPropagation = True	#initialise (dependent var)	#orig: True
+emulateVectorisedComputationOrderActivateSomaAfterFinishingPropagation = False	#initialise (dependent var)	#orig: False	#requires storeBranchActivationState
+
+HFNLPnonrandomSeed = False	#initialise (dependent var)
 
 if(biologicalSimulationTestHarness):
 	writeBiologicalSimulation = True	#write biological simulation to xml file
 	if(writeBiologicalSimulation):
 		writeBiologicalSimulationActivationStates = True	#print final activation states of network (only valid with writeBiologicalSimulationDynamic)
-	if(not vectoriseComputation):
+		outputFileNameComputationType = False	#optional
+	if(vectoriseComputation):
+		vectorisedComputationActivateSomaAfterFinishingPropagation = True	#sync (True or False)
+	else:	
+		emulateVectorisedComputationOrderActivateSomaAfterFinishingPropagation = True	#sync (True or False)
 		#emulateVectorisedComputationOrder requires biologicalSimulationForward, !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
 		emulateVectorisedComputationOrder = True	#change standard computation to execute in order of vectorised computation (for comparison)
+		if(emulateVectorisedComputationOrder):
+			emulateVectorisedComputationOrderVerifyTargetConnectionFound = True
+			emulateVectorisedComputationOrderPreactivateAxonsAndTargetInputs = True			
 	HFNLPnonrandomSeed = True	#always generate the same set of random numbers upon execution
-
+	
 
 #### write (xml) ####
 
+writeBiologicalSimulationDynamic = False	#initialise (dependent var)
 if(writeBiologicalSimulation):
 	writeBiologicalSimulationNetwork = True	#default: True
 	writeBiologicalSimulationSentence = False	#default: False
 	if(writeBiologicalSimulationNetwork):
-		writeBiologicalSimulationNetworkLastSentenceOnly = True	#only write network (xml/graph) at last sentence
+		outputBiologicalSimulationNetworkLastSentenceOnly = True	#only write network (xml/graph) at last sentence	#optional
 	if(updateNeuronObjectActivationLevels or not vectoriseComputation):
-		writeBiologicalSimulationDynamic = False	#default: False	#write dynamic activation levels of biological simulation	#optional
+		writeBiologicalSimulationDynamic = True	#default: False	#write dynamic activation levels of biological simulation	#optional
 		if(writeBiologicalSimulationDynamic):
 			writeBiologicalSimulationSentenceDynamic = True	#default: True	#write graph for sentence neurons and their dendritic tree
 			writeBiologicalSimulationNetworkDynamic = False	#default: True	#write graph for entire network (not just sentence)
