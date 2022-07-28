@@ -95,9 +95,10 @@ def drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, senten
 	
 def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=None):
 	if(drawBiologicalSimulationDynamic):
-		if(not debugCalculateNeuronActivation or (sentenceIndex == sentenceIndexDebug and wTarget == wSource+1)):
-			#if(vectorisedComputation or emulateVectorisedComputationOrder):
-			#	print("branchIndex1 = ", branchIndex1, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
+		if(not debugCalculateNeuronActivation or (sentenceIndex == sentenceIndexDebug and wTarget == wSource+1)):	#default
+		#if(not debugCalculateNeuronActivation or (sentenceIndex == sentenceIndexDebug and wSourceDebug == wSource)):	#useful with debugOnlyDrawTargetNeuron
+			if(vectoriseComputation or emulateVectorisedComputationOrder):
+				print("branchIndex1 = ", branchIndex1, ", sequentialSegmentIndex = ", sequentialSegmentIndex)
 			if(drawBiologicalSimulationSentenceDynamic):
 				fileName = generateBiologicalSimulationDynamicSequentialSegmentFileName(True, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
 				clearHopfieldGraph()

@@ -479,16 +479,16 @@ def findSequentialSegmentInputBySourceNode(sequentialSegment, sourceConceptNode)
 		exit()
 	return foundSequentialSegmentInput, sequentialSegmentInput
 
-def applySomaActivation(conceptNeuronConnectionTarget, conceptNeuronTarget, somaActivationFoundCurrent, connectionTargetActivationFoundSet=None):
-	if(deactivateConnectionTargetIfSomaActivationNotFound):
+def applySomaActivation(conceptNeuronConnectionTarget, conceptNeuronTarget, somaActivationFoundCurrent, deactivateConnectionTarget, connectionTargetActivationFoundSet=None):
+	if(deactivateConnectionTarget):
 		conceptNeuronConnectionTarget.activationLevel = somaActivationFoundCurrent	
 	if(somaActivationFoundCurrent):
-		if(not deactivateConnectionTargetIfSomaActivationNotFound):
+		if(not deactivateConnectionTarget):
 			conceptNeuronConnectionTarget.activationLevel = somaActivationFoundCurrent
 			if(biologicalSimulationTestHarness):
 				if(emulateVectorisedComputationOrder):
 					if(conceptNeuronConnectionTarget not in(connectionTargetActivationFoundSet)):
-						connectionTargetActivationFoundSet.add(conceptNeuronConnectionTarget)	#current implementation only words for !deactivateConnectionTargetIfSomaActivationNotFound
+						connectionTargetActivationFoundSet.add(conceptNeuronConnectionTarget)	#current implementation only works for !deactivateConnectionTargetIfSomaActivationNotFound
 						print("biologicalSimulationTestHarness: conceptNeuronConnectionTarget somaActivationFoundCurrent = ", conceptNeuronConnectionTarget.nodeName)
 				else:
 					print("biologicalSimulationTestHarness: conceptNeuronConnectionTarget somaActivationFoundCurrent = ", conceptNeuronConnectionTarget.nodeName)

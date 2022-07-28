@@ -51,7 +51,7 @@ emulateVectorisedComputationOrderActivateSomaAfterFinishingPropagation = False	#
 HFNLPnonrandomSeed = False	#initialise (dependent var)
 
 if(biologicalSimulationTestHarness):
-	writeBiologicalSimulation = True	#write biological simulation to xml file
+	writeBiologicalSimulation = True	#default: True	#write biological simulation to xml file
 	if(writeBiologicalSimulation):
 		writeBiologicalSimulationActivationStates = True	#print final activation states of network (only valid with writeBiologicalSimulationDynamic)
 		outputFileNameComputationType = False	#optional
@@ -110,11 +110,11 @@ else:
 	print("HFNLPpy_biologicalSimulationPropagateVectorised warning: updateNeuronObjectActivationLevels is required for vectoriseComputation:drawBiologicalSimulationDynamic (if drawBiologicalSimulationDynamic is required; either enable updateNeuronObjectActivationLevels or disable vectoriseComputation)")
 	drawBiologicalSimulationDynamic = False	#mandatory: False
 
-debugCalculateNeuronActivation = False
+debugCalculateNeuronActivation = False	#default: False
 if(debugCalculateNeuronActivation):
-	sentenceIndexDebug = 10	#208	#397	#1	#10	#397
-	wSourceDebug = 3
-	wTargetDebug = 4
+	sentenceIndexDebug = 3	#10	#208	#397	#1	#10	#397
+	wSourceDebug = 9	#3
+	wTargetDebug = 15	#4
 else:
 	wTargetDebug = None	
 
@@ -333,7 +333,8 @@ if(overwriteSequentialSegments):
 
 deactivateConnectionTargetIfSomaActivationNotFound = True	#default:True #True: orig simulateBiologicalHFnetworkSequenceNodesPropagateParallel:calculateNeuronActivationParallel method, False: orig simulateBiologicalHFnetworkSequenceNodePropagateStandard method
 if(standardComputationOptimised):
-	deactivateConnectionTargetIfSomaActivationNotFound = False	#mandatory	#False: required because calculateNeuronActivationStandardWrapper returns valid somaActivationFound only if((currentBranchIndex1 == branchIndex1MostProximal) and (currentSequentialSegmentIndex == sequentialSegmentIndexMostProximal))
+	if(not emulateVectorisedComputationOrderActivateSomaAfterFinishingPropagation):
+		deactivateConnectionTargetIfSomaActivationNotFound = False	#mandatory	#False: required because calculateNeuronActivationStandardWrapper returns valid somaActivationFound only if((currentBranchIndex1 == branchIndex1MostProximal) and (currentSequentialSegmentIndex == sequentialSegmentIndexMostProximal))
 		 
 algorithmTimingWorkaround1 = False	#insufficient workaround
 

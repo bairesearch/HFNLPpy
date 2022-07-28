@@ -116,7 +116,7 @@ def activateTargetConnectionSomas(conceptNeuronSourceList, networkConceptNodeDic
 				conceptNeuronConnectionTarget = networkConceptNodeDict[targetConnectionConceptName]
 				firstBranchActivationState = conceptNeuronConnectionTarget.dendriticTree.activationLevel	#requires storeBranchActivationState
 				somaActivationFoundCurrent = firstBranchActivationState
-				if(applySomaActivation(conceptNeuronConnectionTarget, conceptNeuronTarget, somaActivationFoundCurrent, connectionTargetActivationFoundSet)):
+				if(applySomaActivation(conceptNeuronConnectionTarget, conceptNeuronTarget, somaActivationFoundCurrent, deactivateConnectionTargetIfSomaActivationNotFound, connectionTargetActivationFoundSet)):
 					somaActivationFound = True
 	return somaActivationFound	
 			
@@ -160,7 +160,7 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 				if(printConnectionTargetActivations):
 					print("simulateBiologicalHFnetworkSequenceNodePropagateStandard: conceptNeuronConnectionTarget = ", conceptNeuronConnectionTarget.nodeName, ", somaActivationLevel = ", somaActivationLevel)
 				if(not emulateVectorisedComputationOrderActivateSomaAfterFinishingPropagation):
-					if(applySomaActivation(conceptNeuronConnectionTarget, conceptNeuronTarget, somaActivationFoundCurrent, connectionTargetActivationFoundSet)):
+					if(applySomaActivation(conceptNeuronConnectionTarget, conceptNeuronTarget, somaActivationFoundCurrent, deactivateConnectionTargetIfSomaActivationNotFound, connectionTargetActivationFoundSet)):
 						somaActivationFound = True
 				#elif(calculateSomaActivation(conceptNeuronConnectionTarget, conceptNeuronTarget, somaActivationFoundCurrent)):	#optional (somaActivationFound is recalculated by simulateBiologicalHFnetworkSequenceNodesPropagateStandardEmulateVectorisedComputationOrder/simulateBiologicalHFnetworkSequenceNodePropagateStandardEmulateVectorisedComputationOrder)
 					#somaActivationFound = True

@@ -83,7 +83,8 @@ def writeHopfieldGraphNodeDendriticBranch(doc, tag, text, line, conceptNode, den
 
 def writeHopfieldGraphNodeSequentialSegment(doc, tag, text, line, currentBranchIndex1, conceptNode, sequentialSegment, currentSequentialSegmentIndex, activationTime):
 	activationState = getActivationState(sequentialSegment)
-	with tag('sequentialSegment', sequentialSegmentIndex=currentSequentialSegmentIndex, activationState=activationState):
+	#with tag('sequentialSegment', sequentialSegmentIndex=currentSequentialSegmentIndex, activationState=activationState):	#default
+	with tag('sequentialSegment', sequentialSegmentIndex=currentSequentialSegmentIndex, branchIndex1=currentBranchIndex1, branchIndex2=sequentialSegment.branch.branchIndex2, horizontalBranchIndex=sequentialSegment.branch.horizontalBranchIndex, activationState=activationState):	#additional attributes displayed for debug only
 		for currentSequentialSegmentInputIndexDynamic, currentSequentialSegmentInput in enumerate(sequentialSegment.inputs.values()):	#note currentSequentialSegmentInputIndexDynamic is valid even if inputs have been removed from dictionary (although order not guaranteed)
 			if(storeSequentialSegmentInputIndexValues):
 				currentSequentialSegmentInputIndex = currentSequentialSegmentInput.sequentialSegmentInputIndex
