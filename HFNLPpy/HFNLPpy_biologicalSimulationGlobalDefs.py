@@ -28,7 +28,7 @@ import numpy as np
 
 vectoriseComputation = True	#parallel processing for optimisation
 if(vectoriseComputation):
-	updateNeuronObjectActivationLevels = True	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
+	updateNeuronObjectActivationLevels = False	#optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 else:
 	updateNeuronObjectActivationLevels = True	#mandatory (typically implied true)
  
@@ -51,7 +51,7 @@ emulateVectorisedComputationOrderActivateSomaAfterFinishingPropagation = False	#
 HFNLPnonrandomSeed = False	#initialise (dependent var)
 
 if(biologicalSimulationTestHarness):
-	writeBiologicalSimulation = True	#default: True	#write biological simulation to xml file
+	writeBiologicalSimulation = False	#default: True	#write biological simulation to xml file
 	if(writeBiologicalSimulation):
 		writeBiologicalSimulationActivationStates = True	#print final activation states of network (only valid with writeBiologicalSimulationDynamic)
 		outputFileNameComputationType = False	#optional
@@ -128,7 +128,7 @@ if(emulateVectorisedComputationOrder):
 
 #### seed HF network with subsequence ####
 
-seedHFnetworkSubsequence = False #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
+seedHFnetworkSubsequence = True #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
 if(seedHFnetworkSubsequence):
 	#seedHFnetworkSubsequence currently requires !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
 	seedHFnetworkSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
@@ -152,7 +152,7 @@ if(subsequenceLengthRandExponential):
 	subsequenceLengthRandCalibration = 3.0	#5.0
 else:
 	#subsequenceLengthRandLinear
-	subsequenceLengthRandCalibration = 3.0	#2.0
+	subsequenceLengthRandCalibration = 2.0	#3.0	#2.0
 subsequenceLengthCalibration = 1.0*subsequenceLengthRandCalibration	#CONSIDER: reduce proportional to number of vertical branches
 
 if(reduceCompletenessOfEncodingCalibration):
