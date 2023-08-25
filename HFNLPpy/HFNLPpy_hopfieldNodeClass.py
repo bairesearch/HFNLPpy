@@ -1,7 +1,7 @@
 """HFNLPpy_hopfieldNodeClass.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -23,7 +23,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import numpy as np
 
-from HFNLPpy_biologicalSimulationNode import biologicalSimulationNodePropertiesInitialisation
+from HFNLPpy_SANIbiologicalSimulationNode import biologicalSimulationNodePropertiesInitialisation
 
 	
 storeConceptNodesByLemma = True	#else store by word (morphology included)
@@ -36,7 +36,7 @@ graphNodeTypeStart = 5	#start of sequence - used by biologicalImplementationReus
 nodeNameStart = "SEQUENCESTARTNODE"
 
 class HopfieldNode:
-	def __init__(self, networkIndex, nodeName, wordVector, nodeGraphType, activationTime, biologicalSimulation, w, sentenceIndex):
+	def __init__(self, networkIndex, nodeName, wordVector, nodeGraphType, activationTime, SANIbiologicalSimulation, w, sentenceIndex):
 		#primary vars;
 		self.networkIndex = networkIndex
 		self.nodeName = str(nodeName)
@@ -56,7 +56,7 @@ class HopfieldNode:
 		#self.sourceConnectionList = []
 		#self.targetConnectionList = []
 
-		if(biologicalSimulation):
+		if(SANIbiologicalSimulation):
 			biologicalSimulationNodePropertiesInitialisation(self)
 
 								
@@ -67,7 +67,7 @@ def calculateActivationTime(sentenceIndex):
 	
 #creation time
 def calculateSpatioTemporalIndex(sentenceIndex):
-	#for biologicalPrototype: e.g. 1) interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause); or 2) store spatiotemporal index synapses on separate dendritic branch
+	#for SANIbiologicalPrototype: e.g. 1) interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause); or 2) store spatiotemporal index synapses on separate dendritic branch
 	spatioTemporalIndex = sentenceIndex
 	return spatioTemporalIndex
 

@@ -1,7 +1,7 @@
-"""HFNLPpy_biologicalSimulationPropagateStandard.py
+"""HFNLPpy_SANIbiologicalSimulationPropagateStandard.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -22,9 +22,9 @@ import numpy as np
 
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
-from HFNLPpy_biologicalSimulationGlobalDefs import *
-from HFNLPpy_biologicalSimulationNode import *
-import HFNLPpy_biologicalSimulationDraw
+from HFNLPpy_SANIbiologicalSimulationGlobalDefs import *
+from HFNLPpy_SANIbiologicalSimulationNode import *
+import HFNLPpy_SANIbiologicalSimulationDraw
 
 printVerbose = False
 printConnectionTargetActivations = False
@@ -54,12 +54,12 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateStandardEmulateVectorisedCo
 				for conceptNeuronSource in conceptNeuronSourceList:
 					if(simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, branchIndex1Target, sequentialSegmentIndexTarget, connectionTargetActivationFoundSet)):
 						somaActivationFound = True
-				HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)
+				HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)
 
 		if(activateTargetConnectionSomas(conceptNeuronSourceList, networkConceptNodeDict, conceptNeuronTarget, connectionTargetActivationFoundSet)):
 			somaActivationFound = True
 		 
-		HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
+		HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
 
 		for conceptNeuronSource in conceptNeuronSourceList:
 			resetSourceNeuronAfterActivation(conceptNeuronSource)
@@ -86,12 +86,12 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandardEmulateVectorisedCom
 			for sequentialSegmentIndexTarget in sequentialSegmentSequence:
 				if(simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, branchIndex1Target, sequentialSegmentIndexTarget, connectionTargetActivationFoundSet)):
 					somaActivationFound = True			
-				HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)
+				HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)
 
 		if(activateTargetConnectionSomas([conceptNeuronSource], networkConceptNodeDict, conceptNeuronTarget, connectionTargetActivationFoundSet)):
 			somaActivationFound = True
 		
-		HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
+		HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
 
 		resetSourceNeuronAfterActivation(conceptNeuronSource)
 	
@@ -166,7 +166,7 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 					#somaActivationFound = True
 
 			if(not emulateVectorisedComputationOrder):
-				HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
+				HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
 	
 	if(not emulateVectorisedComputationOrder):
 		resetSourceNeuronAfterActivation(conceptNeuronSource)
@@ -219,7 +219,7 @@ def simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget(networkC
 				#if(printVerbose):
 				#print("somaActivationFound")
 
-			HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)	
+			HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)	
 
 		if(resetSourceNeuronAxonAfterActivation):
 			resetAxonsActivationConnectionList(connectionList)
@@ -458,7 +458,7 @@ def calculateNeuronActivationSequentialSegment(connection, currentBranchIndex1, 
 								previousSequentialSegment.frozen = False
 
 						if(not emulateVectorisedComputationOrder):
-							HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
+							HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
 
 				else:
 					if(deactivateSequentialSegmentsIfTimeTestsFail):
@@ -471,7 +471,7 @@ def calculateNeuronActivationSequentialSegment(connection, currentBranchIndex1, 
 						currentSequentialSegment.activationTime = sequentialSegmentActivationTime	
 
 						if(not emulateVectorisedComputationOrder):
-							HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
+							HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
 	else:
 		sequentialSegmentActivationState = sequentialSegmentActivationStatePrior
 		sequentialSegmentActivationLevel = sequentialSegmentActivationLevelPrior

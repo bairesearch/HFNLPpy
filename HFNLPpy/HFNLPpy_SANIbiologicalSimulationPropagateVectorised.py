@@ -1,7 +1,7 @@
-"""HFNLPpy_biologicalSimulationPropagateVectorised.py
+"""HFNLPpy_SANIbiologicalSimulationPropagateVectorised.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -23,9 +23,9 @@ import numpy as np
 
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
-from HFNLPpy_biologicalSimulationGlobalDefs import *
-from HFNLPpy_biologicalSimulationNode import *
-import HFNLPpy_biologicalSimulationDraw
+from HFNLPpy_SANIbiologicalSimulationGlobalDefs import *
+from HFNLPpy_SANIbiologicalSimulationNode import *
+import HFNLPpy_SANIbiologicalSimulationDraw
 
 printVerbose = False
 printConnectionTargetActivations = False
@@ -433,7 +433,7 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 					if(calculateNeuronActivationParallelSoma(vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious, vectorisedBranchActivationStateBatchSequentialSegmentFinalNew, vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationFlagBatchList, vectorisedBranchObjectBatchList, activationTime, wTarget, conceptNeuronTarget, conceptNeuronBatchIndex, batchNeuronsList, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)):
 						somaActivationFound = True		
 							
-			HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=wTarget)			
+			HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=wTarget)			
 		
 		if(requireSubbranchOrSequentialSegmentForActivation):
 			#currently requires !reversePropagationOrder
@@ -448,7 +448,7 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 		
 	#print("somaActivationFound = ", somaActivationFound)
 	
-	HFNLPpy_biologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
+	HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
 						
 	return somaActivationFound
 

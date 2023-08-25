@@ -1,7 +1,7 @@
-"""HFNLPpy_biologicalSimulationGlobalDefs.py
+"""HFNLPpy_SANIbiologicalSimulationGlobalDefs.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -81,7 +81,7 @@ if(writeBiologicalSimulation):
 			writeBiologicalSimulationSentenceDynamic = True	#default: True	#write graph for sentence neurons and their dendritic tree
 			writeBiologicalSimulationNetworkDynamic = False	#default: True	#write graph for entire network (not just sentence)
 	else:
-		print("HFNLPpy_biologicalSimulationPropagateVectorised warning: updateNeuronObjectActivationLevels is required for vectoriseComputation:writeBiologicalSimulationDynamic (if writeBiologicalSimulationDynamic is required; either enable updateNeuronObjectActivationLevels or disable vectoriseComputation)")
+		print("HFNLPpy_SANIbiologicalSimulationPropagateVectorised warning: updateNeuronObjectActivationLevels is required for vectoriseComputation:writeBiologicalSimulationDynamic (if writeBiologicalSimulationDynamic is required; either enable updateNeuronObjectActivationLevels or disable vectoriseComputation)")
 		writeBiologicalSimulationDynamic = False	#mandatory: False
 
 
@@ -107,7 +107,7 @@ if(updateNeuronObjectActivationLevels or not vectoriseComputation):
 		drawBiologicalSimulationSentenceDynamic = True	#default: True	#draw graph for sentence neurons and their dendritic tree
 		drawBiologicalSimulationNetworkDynamic = False	#default: False	#draw graph for entire network (not just sentence)
 else:
-	print("HFNLPpy_biologicalSimulationPropagateVectorised warning: updateNeuronObjectActivationLevels is required for vectoriseComputation:drawBiologicalSimulationDynamic (if drawBiologicalSimulationDynamic is required; either enable updateNeuronObjectActivationLevels or disable vectoriseComputation)")
+	print("HFNLPpy_SANIbiologicalSimulationPropagateVectorised warning: updateNeuronObjectActivationLevels is required for vectoriseComputation:drawBiologicalSimulationDynamic (if drawBiologicalSimulationDynamic is required; either enable updateNeuronObjectActivationLevels or disable vectoriseComputation)")
 	drawBiologicalSimulationDynamic = False	#mandatory: False
 
 debugCalculateNeuronActivation = False	#default: False
@@ -221,7 +221,7 @@ if(vectoriseComputation):
 	batchSizeDefault = 100	#high batch size allowed since parallel processing simple/small scalar operations (on effective boolean synaptic inputs), lowered proportional to max (most distal) numberOfHorizontalBranches	#not used (createDendriticTreeVectorised is never called with batched=True)
 	
 	if(updateNeuronObjectActivationLevels):
-		recordVectorisedBranchObjectList = True	#vectorisedBranchObjectList is required to convert vectorised activations back to denditicTree object structure (DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic:updateNeuronObjectActivationLevels (as HFNLPpy_biologicalSimulationDraw currently only supports drawing of denditicTree object structure activations)  
+		recordVectorisedBranchObjectList = True	#vectorisedBranchObjectList is required to convert vectorised activations back to denditicTree object structure (DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic:updateNeuronObjectActivationLevels (as HFNLPpy_SANIbiologicalSimulationDraw currently only supports drawing of denditicTree object structure activations)  
 	else:
 		recordVectorisedBranchObjectList = False	#vectorisedBranchObjectList is not required as it is not necessary to convert vectorised activations back to denditicTree object structure (DendriticBranch/SequentialSegment/SequentialSegmentInput); activation levels are not required to be stored in denditicTree object structure (DendriticBranch/SequentialSegment/SequentialSegmentInput)
 else:
@@ -240,7 +240,7 @@ storeBranchActivationState = True	#True: orig implementation	#False: storeBranch
 performSummationOfSequentialSegmentInputs = False #allows sequential segment activation to be dependent on summation of individual local inputs #support multiple source neurons fired simultaneously	#consider renaming to performSummationOfSequentialSegmentInputsLocal
 if(performSummationOfSequentialSegmentInputs):
 	weightedSequentialSegmentInputs = True
-	#summationOfSequentialSegmentInputsFirstInputInSequenceOverride = True	#mandatory (only implementation coded) #True: orig HFNLPpy_biologicalSimulationPropagateStandard method	 #False: orig HFNLPpy_biologicalSimulationPropagateVectorised method
+	#summationOfSequentialSegmentInputsFirstInputInSequenceOverride = True	#mandatory (only implementation coded) #True: orig HFNLPpy_SANIbiologicalSimulationPropagateStandard method	 #False: orig HFNLPpy_SANIbiologicalSimulationPropagateVectorised method
 if(weightedSequentialSegmentInputs):
 	sequentialSegmentMinActivationLevel = 1.0	#requirement: greater or equal to sequentialSegmentMinActivationLevel
 else:
@@ -302,7 +302,7 @@ if(resetConnectionTargetNeuronDendriteDuringActivation):
 	#depreciated implementation (for reversePropagationOrder);
 	#if(not vectoriseComputation):
 	#	if(not emulateVectorisedComputationOrder):
-	#		resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#incomplete	#note for HFNLPpy_biologicalSimulationPropagateVectorised this is implied True because entire source propagation round is executed simultaneously in parallel
+	#		resetConnectionTargetNeuronDendriteDuringActivationFreezeUntilRoundCompletion = False	#incomplete	#note for HFNLPpy_SANIbiologicalSimulationPropagateVectorised this is implied True because entire source propagation round is executed simultaneously in parallel
 
 verifyRepolarisationTime = False	#initialise (dependent var)
 overwriteSequentialSegmentsAfterPropagatingSignal = False	#initialise (dependent var)
@@ -346,14 +346,14 @@ if(vectoriseComputation):
 	if(updateNeuronObjectActivationLevels):
 		recordSequentialSegmentInputActivationLevels = True	#required for draw of active simulation - required by drawBiologicalSimulationDynamic:updateNeuronObjectActivationLevels	
 else:
-	recordSequentialSegmentInputActivationLevels = True	#optional (not required by HFNLPpy_biologicalSimulationPropagateStandard processing, and dynamic draw is not supported)
+	recordSequentialSegmentInputActivationLevels = True	#optional (not required by HFNLPpy_SANIbiologicalSimulationPropagateStandard processing, and dynamic draw is not supported)
 if(vectoriseComputation):
 	if(recordSequentialSegmentInputActivationLevels):
 		vectoriseComputionUseSequentialSegmentInputActivationLevels	= False	#not yet implemented	#not required as local segment inputs must fire simultaneously; so they can be stored as a segment scalar value	#only ever used in buffer processing
 		if(vectoriseComputionUseSequentialSegmentInputActivationLevels):
 			numberOfSequentialSegmentInputs = 100	#max number available
 
-storeSequentialSegmentInputIndexValues = False	#not required	#index record value not robust if inputs are removed (synaptic atrophy)	#HFNLPpy_biologicalSimulationDraw can use currentSequentialSegmentInputIndexDynamic instead
+storeSequentialSegmentInputIndexValues = False	#not required	#index record value not robust if inputs are removed (synaptic atrophy)	#HFNLPpy_SANIbiologicalSimulationDraw can use currentSequentialSegmentInputIndexDynamic instead
 
 
 #### dendritic structure ####

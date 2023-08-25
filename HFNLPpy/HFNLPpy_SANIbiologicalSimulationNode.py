@@ -1,7 +1,7 @@
-"""HFNLPpy_biologicalSimulationNode.py
+"""HFNLPpy_SANIbiologicalSimulationNode.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -24,9 +24,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 import random
 
-from HFNLPpy_biologicalSimulationGlobalDefs import *
+from HFNLPpy_SANIbiologicalSimulationGlobalDefs import *
 
-#currently used for HFNLPpy_biologicalSimulationDraw:getActivationColor only;
+#currently used for HFNLPpy_SANIbiologicalSimulationDraw:getActivationColor only;
 objectTypeConceptNeuron = 1
 objectTypeDendriticBranch = 2
 objectTypeSequentialSegment = 3
@@ -414,7 +414,7 @@ def sequentialSegmentActivationLevelAboveZero(activationLevel):
 	
 	
 def generateBiologicalSimulationFileName(sentenceOrNetwork, sentenceIndex=None, write=False):
-	fileName = "biologicalSimulation"
+	fileName = "SANIbiologicalSimulation"
 	if(sentenceOrNetwork):
 		fileName = fileName + "Sentence"
 		fileName = fileName + "sentenceIndex" + convertIntToString(sentenceIndex)

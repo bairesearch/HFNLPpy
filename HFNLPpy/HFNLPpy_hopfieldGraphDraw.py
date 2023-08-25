@@ -1,7 +1,7 @@
 """HFNLPpy_hopfieldGraphDraw.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -89,7 +89,7 @@ def drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNod
 	spatioTemporalIndex = connection.spatioTemporalIndex
 	if(drawGraphNetwork or (node2 in sentenceConceptNodeList)):	#if HFNLPpy_hopfieldGraphDraw: ensure target node is in sentence (such that connection can be drawn) - see drawHopfieldGraphNodeConnections
 		if(drawHopfieldGraphEdgeColoursWeights):
-			if(connection.biologicalPrototype):
+			if(connection.SANIbiologicalPrototype):
 				if(connection.contextConnection):
 					color = 'blue'
 				else:

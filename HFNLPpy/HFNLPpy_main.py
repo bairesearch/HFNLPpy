@@ -1,7 +1,7 @@
 """HFNLPpy_main.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -9,15 +9,17 @@ MIT License
 # Installation:
 conda create -n anntf2 python=3.7
 source activate anntf2
-conda install -c tensorflow tensorflow=2.3 [required for HFNLPpy_biologicalSimulationPropagateVectorised]
+conda install -c tensorflow tensorflow=2.3 [required for HFNLPpy_SANIbiologicalSimulationPropagateVectorised]
 conda install nltk
 conda install spacy
 python3 -m spacy download en_core_web_md
-conda install networkx [required for HFNLPpy_hopfieldGraphDraw/HFNLPpy_biologicalSimulationDraw]
-pip install matplotlib==2.2.3 [required for HFNLPpy_hopfieldGraphDraw/HFNLPpy_biologicalSimulationDraw]
-pip install yattag [required for HFNLPpy_biologicalSimulationXML]
+conda install networkx [required for HFNLPpy_hopfieldGraphDraw/HFNLPpy_SANIbiologicalSimulationDraw]
+pip install matplotlib==2.2.3 [required for HFNLPpy_hopfieldGraphDraw/HFNLPpy_SANIbiologicalSimulationDraw]
+pip install yattag [required for HFNLPpy_SANIbiologicalSimulationXML]
+pip install torch_geometric [required for HFNLPpy_SCANbiologicalSimulation]
 
 # Usage:
+source activate anntf2
 python3 HFNLPpy_main.py
 
 # Description:

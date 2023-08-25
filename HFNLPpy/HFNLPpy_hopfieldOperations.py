@@ -1,7 +1,7 @@
 """HFNLPpy_hopfieldOperations.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -24,8 +24,8 @@ from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 
 
-def addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, biologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, biologicalSimulation=False, nodeTargetSequentialSegmentInput=None):
-	connection = HopfieldConnection(nodeSource, nodeTarget, spatioTemporalIndex, activationTime, biologicalPrototype, biologicalSimulation)
+def addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, SANIbiologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, SANIbiologicalSimulation=False, nodeTargetSequentialSegmentInput=None):
+	connection = HopfieldConnection(nodeSource, nodeTarget, spatioTemporalIndex, activationTime, SANIbiologicalPrototype, SANIbiologicalSimulation)
 	#nodeSource.targetConnectionList.append(connection)
 	#nodeTarget.sourceConnectionList.append(connection)
 	#print("addConnectionToNode: nodeTarget.nodeName = ", nodeTarget.nodeName)
@@ -35,12 +35,12 @@ def addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIn
 	nodeSource.targetConnectionDict[nodeTarget.nodeName].append(connection)
 	nodeTarget.sourceConnectionDict[nodeSource.nodeName].append(connection)
 	#connection.subsequenceConnection = subsequenceConnection
-	if(biologicalPrototype):
-		connection.biologicalPrototype = biologicalPrototype
+	if(SANIbiologicalPrototype):
+		connection.SANIbiologicalPrototype = SANIbiologicalPrototype
 		connection.weight = weight
 		connection.contextConnection = contextConnection
 		connection.contextConnectionSANIindex = contextConnectionSANIindex
-	if(biologicalSimulation):
-		connection.biologicalSimulation = biologicalSimulation
+	if(SANIbiologicalSimulation):
+		connection.SANIbiologicalSimulation = SANIbiologicalSimulation
 		connection.nodeTargetSequentialSegmentInput = nodeTargetSequentialSegmentInput
 		connection.weight = weight

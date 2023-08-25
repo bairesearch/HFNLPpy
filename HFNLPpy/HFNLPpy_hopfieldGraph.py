@@ -1,7 +1,7 @@
 """HFNLPpy_hopfieldGraph.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -16,8 +16,8 @@ see HFNLPpy_main.py
 HFNLP Hopfield Graph - generate hopfield graph/network based on textual input
 
 - different instances (sentence clauses) are stored via a spatiotemporal connection index
-- biologicalPrototype: add contextual connections to emulate spatiotemporal index restriction (visualise theoretical biological connections without simulation)
-- biologicalSimulation: simulate sequential activation of concept neurons and their dendritic input/synapses
+- SANIbiologicalPrototype: add contextual connections to emulate spatiotemporal index restriction (visualise theoretical biological connections without simulation)
+- SANIbiologicalSimulation: simulate sequential activation of concept neurons and their dendritic input/synapses
 
 """
 
@@ -28,24 +28,35 @@ from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 import HFNLPpy_hopfieldOperations
 
-printVerbose = False
+printVerbose = True
 
-biologicalPrototype = False	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
-biologicalSimulation = True	#simulate sequential activation of dendritic input 
+SCANbiologicalSimulation = True
+SANIbiologicalPrototype = False	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
+SANIbiologicalSimulation = False	#simulate sequential activation of dendritic input 
 useDependencyParseTree = False
 
-if(biologicalSimulation):
-	from HFNLPpy_biologicalSimulationNode import biologicalSimulationEncodeSyntaxInDendriticBranchStructure
-	from HFNLPpy_biologicalSimulationNode import seedHFnetworkSubsequence
-	from HFNLPpy_biologicalSimulationNode import HFNLPnonrandomSeed
+if(SCANbiologicalSimulation):
+	import torch as pt
+	from HFNLPpy_SCANbiologicalSimulationGlobalDefs import seedHFnetworkSubsequence
+	if(seedHFnetworkSubsequence):
+		from HFNLPpy_SCANbiologicalSimulationGlobalDefs import seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant
+	from HFNLPpy_SCANbiologicalSimulationGlobalDefs import HFNLPnonrandomSeed
+	import HFNLPpy_SCANbiologicalSimulation
+	import HFNLPpy_SCANbiologicalSimulationConnectionMatrix
+	useDependencyParseTree = False
+elif(SANIbiologicalSimulation):
+	from HFNLPpy_SANIbiologicalSimulationGlobalDefs import biologicalSimulationEncodeSyntaxInDendriticBranchStructure
+	from HFNLPpy_SANIbiologicalSimulationGlobalDefs import seedHFnetworkSubsequence
+	if(seedHFnetworkSubsequence):
+		from HFNLPpy_SANIbiologicalSimulationGlobalDefs import seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant
+	from HFNLPpy_SANIbiologicalSimulationGlobalDefs import HFNLPnonrandomSeed
+	import HFNLPpy_SANIbiologicalSimulation
 	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 		useDependencyParseTree = True
 	else:
 		useDependencyParseTree = False
 	if(useDependencyParseTree):
-		import HFNLPpy_biologicalSimulationSyntacticalGraph
-	else:
-		import HFNLPpy_biologicalSimulation
+		import HFNLPpy_SANIbiologicalSimulationSyntacticalGraph
 else:
 	useDependencyParseTree = True
 		
@@ -62,12 +73,12 @@ if(useDependencyParseTree):
 		#if supportForNonBinarySubbranchSize True, dendriticTree will support 2+ subbranches, with inputs adjusted by weight depending on number of subbranches expected to be activated
 		#if supportForNonBinarySubbranchSize False, constituency/dependency parser must produce a binary parse tree (or disable biologicalSimulationEncodeSyntaxInDendriticBranchStructureDirect)
 		if(not identifySyntacticalDependencyRelations):
-			print("biologicalSimulation constituency parse tree support has not yet been implemented: synapses are created in most distal branch segments only - requires dendritic tree propagation algorithm mod")
+			print("SANIbiologicalSimulation constituency parse tree support has not yet been implemented: synapses are created in most distal branch segments only - requires dendritic tree propagation algorithm mod")
 			exit()
 	else:
 		identifySyntacticalDependencyRelations = True	#mandatory 	#standard hopfield NLP graph requires words are connected (no intermediary constituency parse tree syntax nodes) 
 
-drawHopfieldGraph = False
+drawHopfieldGraph = True
 if(drawHopfieldGraph):
 	drawHopfieldGraphPlot = True
 	drawHopfieldGraphSave = False
@@ -77,10 +88,15 @@ if(drawHopfieldGraph):
 	drawHopfieldGraphNetwork = True	#default: True	#draw graph for entire network (not just sentence)
 	if(drawHopfieldGraphNetwork):
 		import HFNLPpy_hopfieldGraphDraw as ATNLPtf_hopfieldGraphDrawNetwork
-	
+
+HFconnectionMatrix = None
 networkConceptNodeDict = {}
 networkSize = 0
-
+if(SCANbiologicalSimulation):
+	HFconnectionMatrix = None
+	neuronNamelist = None
+	neuronIDdict = {}
+		
 def generateHopfieldGraphNetwork(articles):
 	numberOfSentences = len(articles)
 	
@@ -90,11 +106,19 @@ def generateHopfieldGraphNetwork(articles):
 		#random.seed(0)	#not used
 		#print("random.randint(0,9) = ", random.randint(0,9))
 
+	if(SCANbiologicalSimulation):
+		global HFconnectionMatrix, neuronNamelist
+		neuronNamelist, HFconnectionMatrix = HFNLPpy_SCANbiologicalSimulationConnectionMatrix.readHFconnectionMatrix()
+		regenerateGraphNodes(neuronNamelist)
+
 	if(seedHFnetworkSubsequence):
-		HFNLPpy_biologicalSimulation.verifySeedSentenceIsReplicant(articles, numberOfSentences)
+		verifySeedSentenceIsReplicant(articles, numberOfSentences)
 
 	for sentenceIndex, sentence in enumerate(articles):
 		generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences)	
+		
+	if(SCANbiologicalSimulation):
+		HFNLPpy_SCANbiologicalSimulationConnectionMatrix.writeHFconnectionMatrix(neuronNamelist, HFconnectionMatrix)
 
 def generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences):
 	print("\n\ngenerateHopfieldGraphSentenceString: sentenceIndex = ", sentenceIndex, "; ", sentence)
@@ -106,6 +130,24 @@ def generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentenc
 	if(sentenceLength > 1):
 		return generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSentences)
 
+def regenerateGraphNodes(neuronNamelist):
+	#regenerates graph nodes from a saved list
+	for neuronID, nodeName in enumerate(neuronNamelist):	
+		w = 0	#sentence artificial var (not used)
+		sentenceIndex = 0	#sentence artificial var (not used)
+		
+		wordVector = None	#getTokenWordVector(token)	#numpy word vector	#not used by SCANbiologicalSimulation
+		#posTag = getTokenPOStag(token)	#not used
+		activationTime = calculateActivationTime(sentenceIndex)	#not used by SCANbiologicalSimulation
+		nodeGraphType = graphNodeTypeConcept
+		networkIndex = getNetworkIndex()
+		conceptNode = HopfieldNode(networkIndex, nodeName, wordVector, nodeGraphType, activationTime, SANIbiologicalSimulation, w, sentenceIndex)
+		addNodeToGraph(conceptNode)
+		if(SCANbiologicalSimulation):
+			neuronIDdict[nodeName] = neuronID
+		if(printVerbose):
+			print("create new conceptNode; ", conceptNode.nodeName)
+		
 def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSentences):
 		
 	activationTime = calculateActivationTime(sentenceIndex)
@@ -127,7 +169,6 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 
 	#declare graph nodes;	
 	for w, token in enumerate(tokenisedSentence):	
-
 		word = getTokenWord(token)
 		lemma = getTokenLemma(token)
 		nodeName = generateHopfieldGraphNodeName(word, lemma)	
@@ -136,6 +177,8 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 			#set sentence artificial vars (for sentence graph only, do not generalise to network graph);
 			conceptNode.w = w
 			conceptNode.sentenceIndex = sentenceIndex
+			if(SCANbiologicalSimulation):
+				neuronID = neuronIDdict[nodeName]
 		else:
 			#primary vars;
 			wordVector = getTokenWordVector(token)	#numpy word vector
@@ -143,26 +186,48 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 			activationTime = calculateActivationTime(sentenceIndex)
 			nodeGraphType = graphNodeTypeConcept
 			networkIndex = getNetworkIndex()
-			conceptNode = HopfieldNode(networkIndex, nodeName, wordVector, nodeGraphType, activationTime, biologicalSimulation, w, sentenceIndex)
+			conceptNode = HopfieldNode(networkIndex, nodeName, wordVector, nodeGraphType, activationTime, SANIbiologicalSimulation, w, sentenceIndex)
 			addNodeToGraph(conceptNode)
+			if(SCANbiologicalSimulation):
+				neuronNamelist.append(nodeName)
+				neuronID = networkIndex
+				neuronIDdict[nodeName] = neuronID
 			if(printVerbose):
 				print("create new conceptNode; ", conceptNode.nodeName)
+		if(SCANbiologicalSimulation):
+			if(w > 0):
+				sourceNeuronID = neuronIDprevious
+				targetNeuronID = neuronID
+				HFNLPpy_SCANbiologicalSimulationConnectionMatrix.updateOrAddConnectionToGraph(neuronNamelist, HFconnectionMatrix, sourceNeuronID, targetNeuronID)
+			neuronIDprevious = neuronID
+			
 		sentenceConceptNodeList.append(conceptNode)
-						
-	if(biologicalSimulation):
-		trainSentence = True
-		if(sentenceIndex == numberOfSentences-1):
-			if(seedHFnetworkSubsequence):
-				trainSentence = False
-				seedSentenceConceptNodeList = sentenceConceptNodeList
-				HFNLPpy_biologicalSimulation.seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceConceptNodeList, numberOfSentences)
+
+	if(SCANbiologicalSimulation):
+		# Set the initial activation state for each neuron at time t
+		HFconnectionMatrix.activation_state = pt.zeros(len(neuronNamelist), dtype=pt.float)
+	
+	trainSentence = True
+	if(sentenceIndex == numberOfSentences-1):
+		if(seedHFnetworkSubsequence):
+			trainSentence = False
+			seedSentenceConceptNodeList = sentenceConceptNodeList
+			if(SCANbiologicalSimulation):
+				HFNLPpy_SCANbiologicalSimulation.seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, neuronIDdict, HFconnectionMatrix, seedSentenceConceptNodeList, numberOfSentences)
+			else:
+				HFNLPpy_SANIbiologicalSimulation.seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceConceptNodeList, numberOfSentences)			
+	if(SCANbiologicalSimulation):
+		if(trainSentence):
+			print("HFNLPpy_SANIbiologicalSimulation.simulateBiologicalHFnetwork")
+			HFNLPpy_SCANbiologicalSimulation.trainBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, neuronIDdict, HFconnectionMatrix, sentenceConceptNodeList, numberOfSentences)
+	elif(SANIbiologicalSimulation):
 		if(trainSentence):		
 			if(useDependencyParseTree):
-				print("HFNLPpy_biologicalSimulationSyntacticalGraph.simulateBiologicalHFnetworkSP")
-				HFNLPpy_biologicalSimulationSyntacticalGraph.trainBiologicalHFnetworkSP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode, identifySyntacticalDependencyRelations)		
+				print("HFNLPpy_SANIbiologicalSimulationSyntacticalGraph.simulateBiologicalHFnetworkSP")
+				HFNLPpy_SANIbiologicalSimulationSyntacticalGraph.trainBiologicalHFnetworkSP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode, identifySyntacticalDependencyRelations)		
 			else:
-				print("HFNLPpy_biologicalSimulation.simulateBiologicalHFnetwork")
-				HFNLPpy_biologicalSimulation.trainBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences)			
+				print("HFNLPpy_SANIbiologicalSimulation.simulateBiologicalHFnetwork")
+				HFNLPpy_SANIbiologicalSimulation.trainBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences)			
 	else:
 		#connection vars;
 		if(useDependencyParseTree):
@@ -175,7 +240,7 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 					previousConceptNode = sentenceConceptNodeList[w-1]
 					spatioTemporalIndex = calculateSpatioTemporalIndex(sentenceIndex)
 					previousContextConceptNodesList = []
-					if(biologicalPrototype):
+					if(SANIbiologicalPrototype):
 						for w2 in range(w-1):
 							previousContextConceptNodesList.append(sentenceConceptNodeList[w2]) 
 					createConnection(conceptNode, previousConceptNode, previousContextConceptNodesList, spatioTemporalIndex, activationTime)
@@ -209,7 +274,7 @@ def connectHopfieldGraphSentenceSyntacticalBranchDP(sentenceConceptNodeList, DPg
 def identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalPrototype(sentenceConceptNodeList, DPgovernorNode, DPdependentNode, previousContextConceptNodesList):
 	conceptNode = sentenceConceptNodeList[DPgovernorNode.w]
 	previousConceptNode = sentenceConceptNodeList[DPdependentNode.w]
-	if(biologicalPrototype):
+	if(SANIbiologicalPrototype):
 		for DPdependentNode2 in DPdependentNode.DPdependentList:
 			previousContextConceptNode = sentenceConceptNodeList[DPdependentNode2.w]
 			previousContextConceptNodesList.append(previousContextConceptNode)
@@ -220,14 +285,14 @@ def identifyHopfieldGraphNodeSyntacticalBranchDPbiologicalPrototype(sentenceConc
 def createConnection(conceptNode, previousConceptNode, previousContextConceptNodesList, spatioTemporalIndex, activationTime):
 	HFNLPpy_hopfieldOperations.addConnectionToNode(previousConceptNode, conceptNode, activationTime, spatioTemporalIndex)
 	
-	if(biologicalPrototype):
+	if(SANIbiologicalPrototype):
 		totalConceptsInSubsequence = 0
 		for previousContextIndex, previousContextConceptNode in enumerate(previousContextConceptNodesList):
 			totalConceptsInSubsequence += 1
 			#multiple connections/synapses are made between current neuron and ealier neurons in sequence, and synapse weights are adjusted such that the particular combination (or permutation if SANI synapses) will fire the neuron
-			weight = 1.0/totalConceptsInSubsequence	#for biologicalPrototype: interpret connection as unique synapse
+			weight = 1.0/totalConceptsInSubsequence	#for SANIbiologicalPrototype: interpret connection as unique synapse
 			#print("weight = ", weight)
-			HFNLPpy_hopfieldOperations.addConnectionToNode(previousContextConceptNode, conceptNode, activationTime, spatioTemporalIndex, biologicalPrototype=biologicalPrototype, weight=weight, contextConnection=True, contextConnectionSANIindex=previousContextIndex)					
+			HFNLPpy_hopfieldOperations.addConnectionToNode(previousContextConceptNode, conceptNode, activationTime, spatioTemporalIndex, SANIbiologicalPrototype=SANIbiologicalPrototype, weight=weight, contextConnection=True, contextConnectionSANIindex=previousContextIndex)					
 
 
 def getGraphNode(nodeName):
@@ -304,5 +369,32 @@ def generateHopfieldGraphFileName(sentenceOrNetwork, sentenceIndex=None):
 		fileName = fileName + "Network"
 		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
 	return fileName
+	
+
+#subsequence seed	
+
+def verifySeedSentenceIsReplicant(articles, numberOfSentences):
+	result = False
+	if(seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant):
+		seedSentence = articles[numberOfSentences-1]
+		for sentenceIndex in range(numberOfSentences-1):
+			sentence = articles[sentenceIndex]
+			if(compareSentenceStrings(seedSentence, sentence)):
+				result = True
+		if(not result):
+			print("verifySeedSentenceIsReplicant warning: seedSentence (last sentence in dataset) was not found eariler in dataset (sentences which are being trained)")
+	return result
+	
+def compareSentenceStrings(sentence1, sentence2):
+	result = True
+	if(len(sentence1) == len(sentence2)):
+		for wordIndex in range(len(sentence1)):
+			word1 = sentence1[wordIndex]
+			word2 = sentence1[wordIndex]
+			if(word1 != word2):
+				result = False
+	else:
+		result = False	
+	return result
 	
 	
