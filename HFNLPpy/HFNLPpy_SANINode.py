@@ -555,3 +555,35 @@ def unfreezeDendriticTreeActivation(currentBranch):
 	for subbranch in currentBranch.subbranches:	
 		unfreezeDendriticTreeActivation(subbranch)
 
+def measureBranchActivationRecurse(currentBranch):
+	branchActivation = 0
+	branchActivation+= measureBranchActivation(currentBranch)	
+	for subbranch in currentBranch.subbranches:	
+		branchActivation+= measureBranchActivationRecurse(subbranch)
+	return branchActivation
+
+def measureBranchActivation(currentBranch):
+	branchActivation = 0
+	#branchActivation+= int(currentBranch.activationLevel)
+	for sequentialSegment in currentBranch.sequentialSegments:
+		branchActivation+= measureSequentialSegmentActivation(sequentialSegment)
+	return branchActivation
+
+def measureSequentialSegmentActivation(sequentialSegment):
+	branchActivation = 0
+	if(recordSequentialSegmentInputActivationLevels):
+		for sequentialSegmentInput in sequentialSegment.inputs.values():
+			branchActivation+= measureSequentialSegmentInputActivation(sequentialSegmentInput)
+	else:
+		branchActivation+= int(sequentialSegment.activationLevel)
+	return branchActivation
+
+def measureSequentialSegmentInputActivation(sequentialSegmentInput):	
+	return int(sequentialSegmentInput.activationLevel)
+	
+def measureDendriticTreeActivationVectorised(conceptNode):
+	branchActivation = 0
+	for vectorisedBranchActivationLevel in conceptNode.vectorisedBranchActivationLevelList:
+		branchIndex1Activation = tf.math.reduce_sum(vectorisedBranchActivationLevel)
+		branchActivation+= branchIndex1Activation
+	return branchActivation

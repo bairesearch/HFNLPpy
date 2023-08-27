@@ -26,8 +26,12 @@ import numpy as np
 
 #### dendritic structure type ####
 
-SANIbiologicalSimulationSimple = True	#single dendritic branch with multiple overloaded segments
+SANIbiologicalSimulationSimple = True	#single dendritic branch with multiple overloaded segments	#does not support resetConnectionTargetNeuronDendriteDuringActivation
 
+selectActivatedTop = True	#select activated top k target neurons during propagation test
+if(selectActivatedTop):
+	selectActivatedTopK = 3
+	
 #### computation type ####
 
 vectoriseComputation = True	#parallel processing for optimisation

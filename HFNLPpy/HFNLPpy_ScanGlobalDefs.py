@@ -25,6 +25,10 @@ import numpy as np
 
 vectoriseComputation = True	#parallel processing for optimisation
 
+selectActivatedTop = True	#select activated top k target neurons during propagation test	#incomplete
+if(selectActivatedTop):
+	selectActivatedTopK = 3
+	
 HFreadSavedConnectionsMatrix = False
 
 HFnumberOfScanIterations = 3	#1	#number of timesteps for scan (burst)
