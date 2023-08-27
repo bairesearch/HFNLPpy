@@ -1,4 +1,4 @@
-"""HFNLPpy_SCANbiologicalSimulationConnectionMatrix.py
+"""HFNLPpy_ScanConnectionMatrix.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -22,7 +22,7 @@ import torch as pt
 import csv
 from torch_geometric.data import Data
 
-from HFNLPpy_SCANbiologicalSimulationGlobalDefs import *
+from HFNLPpy_ScanGlobalDefs import *
 from ANNtf2_loadDataset import datasetFolderRelative
 	
 def readHFconnectionMatrix():

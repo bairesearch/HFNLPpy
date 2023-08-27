@@ -1,4 +1,4 @@
-"""HFNLPpy_SANIbiologicalSimulationDraw.py
+"""HFNLPpy_SANIDraw.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -25,11 +25,11 @@ plt.ioff()	# Turn interactive plotting off
 from math import cos, sin, radians
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
-from HFNLPpy_SANIbiologicalSimulationGlobalDefs import *
-from HFNLPpy_SANIbiologicalSimulationNode import *
+from HFNLPpy_SANIGlobalDefs import *
+from HFNLPpy_SANINode import *
 
 if(writeBiologicalSimulation):
-	import HFNLPpy_SANIbiologicalSimulationXML
+	import HFNLPpy_SANIXML
 
 highResolutionFigure = True
 if(highResolutionFigure):
@@ -76,22 +76,22 @@ def drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, senten
 			fileName = generateBiologicalSimulationFileName(True, sentenceIndex, write=False)
 			clearHopfieldGraph()
 			drawHopfieldGraphSentence(sentenceConceptNodeList)
-			print("drawBiologicalSimulationSentence: HFNLPpy_SANIbiologicalSimulationDraw.displayHopfieldGraph()")
+			print("drawBiologicalSimulationSentence: HFNLPpy_SANIDraw.displayHopfieldGraph()")
 			displayHopfieldGraph(drawBiologicalSimulationPlot, drawBiologicalSimulationSave, fileName)
 		if(drawBiologicalSimulationNetwork):
 			fileName = generateBiologicalSimulationFileName(False, sentenceIndex, write=False)
 			clearHopfieldGraph()
 			drawHopfieldGraphNetwork(networkConceptNodeDict)
-			print("drawBiologicalSimulationNetwork: HFNLPpy_SANIbiologicalSimulationDraw.displayHopfieldGraph()")
+			print("drawBiologicalSimulationNetwork: HFNLPpy_SANIDraw.displayHopfieldGraph()")
 			displayHopfieldGraph(drawBiologicalSimulationPlot, drawBiologicalSimulationSave, fileName)	
 	if(writeBiologicalSimulation):
 		if(writeBiologicalSimulationSentence):	
 			fileName = generateBiologicalSimulationFileName(True, sentenceIndex, write=True)
-			HFNLPpy_SANIbiologicalSimulationXML.writeHopfieldGraphSentence(sentenceConceptNodeList, fileName)
+			HFNLPpy_SANIXML.writeHopfieldGraphSentence(sentenceConceptNodeList, fileName)
 		if(writeBiologicalSimulationNetwork):
 			if(not outputBiologicalSimulationNetworkLastSentenceOnly or (sentenceIndex == numberOfSentences-1)):
 				fileName = generateBiologicalSimulationFileName(False, sentenceIndex, write=True)
-				HFNLPpy_SANIbiologicalSimulationXML.writeHopfieldGraphNetwork(networkConceptNodeDict, fileName)
+				HFNLPpy_SANIXML.writeHopfieldGraphNetwork(networkConceptNodeDict, fileName)
 	
 def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=None):
 	if(drawBiologicalSimulationDynamic):
@@ -112,11 +112,11 @@ def drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkC
 	if(writeBiologicalSimulationDynamic):
 		if(writeBiologicalSimulationSentenceDynamic):	
 			fileName = generateBiologicalSimulationDynamicSequentialSegmentFileName(True, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
-			HFNLPpy_SANIbiologicalSimulationXML.writeHopfieldGraphSentence(sentenceConceptNodeList, fileName, activationTime=activationTime)
+			HFNLPpy_SANIXML.writeHopfieldGraphSentence(sentenceConceptNodeList, fileName, activationTime=activationTime)
 		if(writeBiologicalSimulationNetworkDynamic):
 			#if(sentenceIndex == numberOfSentences-1):
 			fileName = generateBiologicalSimulationDynamicSequentialSegmentFileName(False, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex)
-			HFNLPpy_SANIbiologicalSimulationXML.writeHopfieldGraphNetwork(networkConceptNodeDict, fileName, activationTime=activationTime)
+			HFNLPpy_SANIXML.writeHopfieldGraphNetwork(networkConceptNodeDict, fileName, activationTime=activationTime)
 				
 def drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=None):
 	if(drawBiologicalSimulationDynamic):
@@ -134,11 +134,11 @@ def drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeD
 	if(writeBiologicalSimulationDynamic):
 		if(writeBiologicalSimulationSentenceDynamic):	
 			fileName = generateBiologicalSimulationDynamicNeuronFileName(True, wSource, sentenceIndex)
-			HFNLPpy_SANIbiologicalSimulationXML.writeHopfieldGraphSentence(sentenceConceptNodeList, fileName, activationTime=activationTime)
+			HFNLPpy_SANIXML.writeHopfieldGraphSentence(sentenceConceptNodeList, fileName, activationTime=activationTime)
 		if(writeBiologicalSimulationNetworkDynamic):
 			#if(sentenceIndex == numberOfSentences-1):
 			fileName = generateBiologicalSimulationDynamicNeuronFileName(False, wSource, sentenceIndex)
-			HFNLPpy_SANIbiologicalSimulationXML.writeHopfieldGraphNetwork(networkConceptNodeDict, fileName, activationTime=activationTime)
+			HFNLPpy_SANIXML.writeHopfieldGraphNetwork(networkConceptNodeDict, fileName, activationTime=activationTime)
 								
 def clearHopfieldGraph():
 	hopfieldGraph.clear()	#only draw graph for single sentence
@@ -247,16 +247,17 @@ def drawHopfieldGraphNodeDendriticBranch(conceptNode, posX, posY, dendriticBranc
 	for currentSequentialSegmentIndex, currentSequentialSegment in enumerate(dendriticBranch.sequentialSegments):
 		posYsequentialSegment = posY+currentSequentialSegmentIndex*sequentialSegmentIndexSeparation - (sequentialSegmentIndexSeparation*(numberOfBranchSequentialSegments-1))
 		previousSequentialSegmentNodeName = drawHopfieldGraphNodeSequentialSegment(currentBranchIndex1, conceptNode, posX, posYsequentialSegment, currentSequentialSegment, currentSequentialSegmentIndex, previousSequentialSegmentNodeName, activationTime)
-		
-	for currentBranchIndex2, subbranch in enumerate(dendriticBranch.subbranches):	
-		horizontalSeparation = branchIndex2Separation/(pow(horizontalBranchSeparationDivergence, currentBranchIndex1))	#normalise/shorten at greater distance from soma
-		posXsubbranch = posX-(horizontalSeparation*((numberOfBranches2-1)/2)) + currentBranchIndex2*horizontalSeparation
-		#print("currentBranchIndex2 = ", currentBranchIndex2)
-		#print("horizontalSeparation = ", horizontalSeparation)
-		#print("posXsubbranch = ", posXsubbranch)
-		posYsubbranch = posY+branchIndex1Separation
-		#print("posYsubbranch = ", posYsubbranch)
-		drawHopfieldGraphNodeDendriticBranch(conceptNode, posXsubbranch, posYsubbranch, subbranch, currentBranchIndex1+1, dendriticBranch, posX, posY, activationTime)
+	
+	if((currentBranchIndex1 < numberOfBranches1-1) or not expectFirstBranchSequentialSegmentConnectionStrictNumBranches1):	
+		for currentBranchIndex2, subbranch in enumerate(dendriticBranch.subbranches):	
+			horizontalSeparation = branchIndex2Separation/(pow(horizontalBranchSeparationDivergence, currentBranchIndex1))	#normalise/shorten at greater distance from soma
+			posXsubbranch = posX-(horizontalSeparation*((numberOfBranches2-1)/2)) + currentBranchIndex2*horizontalSeparation
+			#print("currentBranchIndex2 = ", currentBranchIndex2)
+			#print("horizontalSeparation = ", horizontalSeparation)
+			#print("posXsubbranch = ", posXsubbranch)
+			posYsubbranch = posY+branchIndex1Separation
+			#print("posYsubbranch = ", posYsubbranch)
+			drawHopfieldGraphNodeDendriticBranch(conceptNode, posXsubbranch, posYsubbranch, subbranch, currentBranchIndex1+1, dendriticBranch, posX, posY, activationTime)
 
 def drawHopfieldGraphBranch(currentBranchIndex1, parentBranch, currentBranch, drawOrthogonalBranchNode, orthogonalNodeName, activationTime):
 	if(drawHopfieldGraphEdgeColoursWeights):
@@ -328,7 +329,7 @@ def drawHopfieldGraphConnection(connection, drawGraphNetwork, activationTime, se
 	node1 = connection.nodeSource
 	node2 = connection.nodeTargetSequentialSegmentInput
 	spatioTemporalIndex = connection.spatioTemporalIndex
-	if(drawGraphNetwork or (node2.conceptNode in sentenceConceptNodeList)):	#if HFNLPpy_SANIbiologicalSimulationDrawSentence: ensure target node is in sentence (such that connection can be drawn) - see drawHopfieldGraphNodeConnections
+	if(drawGraphNetwork or (node2.conceptNode in sentenceConceptNodeList)):	#if HFNLPpy_SANIDrawSentence: ensure target node is in sentence (such that connection can be drawn) - see drawHopfieldGraphNodeConnections
 		if(drawHopfieldGraphEdgeColoursWeights):
 			#color = node2.sequentialSegment.branch.branchIndex1	#CHECKTHIS: assign colour of connection based on distance of target neuron synapse to soma 
 			color = getActivationColor(connection, 'magenta', 'red', highlightNewActivations=False)

@@ -23,7 +23,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import numpy as np
 
-from HFNLPpy_SANIbiologicalSimulationNode import biologicalSimulationNodePropertiesInitialisation
+from HFNLPpy_SANINode import biologicalSimulationNodePropertiesInitialisation
 
 	
 storeConceptNodesByLemma = True	#else store by word (morphology included)

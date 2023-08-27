@@ -1,4 +1,4 @@
-"""HFNLPpy_SANIbiologicalSimulationSyntacticalGraph.py
+"""HFNLPpy_SANISyntacticalGraph.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -23,14 +23,14 @@ import numpy as np
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 import HFNLPpy_hopfieldOperations
-from HFNLPpy_SANIbiologicalSimulationGlobalDefs import *
-from HFNLPpy_SANIbiologicalSimulationNode import *
-import HFNLPpy_SANIbiologicalSimulation
-import HFNLPpy_SANIbiologicalSimulationGenerate
+from HFNLPpy_SANIGlobalDefs import *
+from HFNLPpy_SANINode import *
+import HFNLPpy_SANI
+import HFNLPpy_SANIGenerate
 if(vectoriseComputation):
-	import HFNLPpy_SANIbiologicalSimulationPropagateVectorised
+	import HFNLPpy_SANIPropagateVectorised
 else:
-	import HFNLPpy_SANIbiologicalSimulationPropagateStandard
+	import HFNLPpy_SANIPropagateStandard
 
 printVerbose = False
 
@@ -59,7 +59,7 @@ def simulateBiologicalHFnetworkSequenceTrainSP(networkConceptNodeDict, sentenceI
 		for conceptNeuron in connectionTargetNeuronSet:
 			resetDendriticTreeActivation(conceptNeuron)
 	
-	HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
+	HFNLPpy_SANIDraw.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
 		
 def simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchDP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPgovernorNode, activationTime, connectionTargetNeuronSet, contextConceptNodesList=None):
 	somaActivationFound = False
@@ -112,10 +112,10 @@ def simulateBiologicalHFnetworkSequenceSyntacticalBranchDPAdd(networkConceptNode
 		expectFurtherSubbranches = True
 		if(dendriticBranchMaxW == 0):
 			expectFurtherSubbranches = False
-		HFNLPpy_SANIbiologicalSimulationGenerate.addPredictiveSequenceToNeuron(conceptNode, sentenceIndex, contextConceptNodesListLocal, conceptNode.dendriticTree, predictiveSequenceLength, dendriticBranchMaxW, currentBranchIndex1, 0, expectFurtherSubbranches)
+		HFNLPpy_SANIGenerate.addPredictiveSequenceToNeuron(conceptNode, sentenceIndex, contextConceptNodesListLocal, conceptNode.dendriticTree, predictiveSequenceLength, dendriticBranchMaxW, currentBranchIndex1, 0, expectFurtherSubbranches)
 
 	if(debugDrawAfterAddPredictiveSequence):
-		HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)	#draw for debugging
+		HFNLPpy_SANIDraw.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)	#draw for debugging
 
 	
 def calculateNeuronActivationSyntacticalBranchDPforward(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPbranchSourceNode, DPbranchTargetNode, activationTime, connectionTargetNeuronSet):
@@ -124,7 +124,7 @@ def calculateNeuronActivationSyntacticalBranchDPforward(networkConceptNodeDict, 
 	conceptNeuronTarget = sentenceConceptNodeList[wTarget]
 	wSource = DPbranchSourceNode.w	#not used (for draw only)	
 	conceptNeuronSource = sentenceConceptNodeList[wSource]
-	somaActivationFound = HFNLPpy_SANIbiologicalSimulation.simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet)	#assumes simulateBiologicalHFnetworkSequenceNodePropagateForward was executed for contiguous wSource
+	somaActivationFound = HFNLPpy_SANI.simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet)	#assumes simulateBiologicalHFnetworkSequenceNodePropagateForward was executed for contiguous wSource
 	return somaActivationFound
 	
 def calculateNeuronActivationSyntacticalBranchDPreverseLookup(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, DPbranchTargetNode, DPgovernorNode, activationTime, connectionTargetNeuronSet):
@@ -137,7 +137,7 @@ def calculateNeuronActivationSyntacticalBranchDPreverseLookup(networkConceptNode
 
 		wSource = DPdependentNode.w	#not used (for draw only)			
 		conceptNeuronSource = sentenceConceptNodeList[wSource]	#previousContextConceptNode
-		if(HFNLPpy_SANIbiologicalSimulationPropagateStandard.simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNodeTarget)):
+		if(HFNLPpy_SANIPropagateStandard.simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNodeTarget)):
 			somaActivationFound = True
 
 	return somaActivationFound
@@ -169,21 +169,21 @@ def addPredictiveSequenceToNeuronSyntacticalBranchDP(conceptNeuron, sentenceInde
 			previousContextConceptNode = sentenceConceptNodeList[DPdependentNode.w]
 			currentSequentialSegmentIndex = 0	#SyntacticalBranchDP/SyntacticalBranchSP SANIbiologicalSimulation implementation does not use local sequential segments (encode sequentiality in branch structure only)
 			currentSequentialSegment = dendriticBranchSub.sequentialSegments[currentSequentialSegmentIndex]
-			createNewConnection, existingSequentialSegmentInput = HFNLPpy_SANIbiologicalSimulationGenerate.verifyCreateNewConnection(currentSequentialSegment, previousContextConceptNode)
+			createNewConnection, existingSequentialSegmentInput = HFNLPpy_SANIGenerate.verifyCreateNewConnection(currentSequentialSegment, previousContextConceptNode)
 			if(createNewConnection):
 				if(performSummationOfSequentialSegmentInputsAcrossBranch):
 					weight = sequentialSegmentMinActivationLevel * (numberOfHorizontalSubBranchesRequiredForActivation/numberOfSubbranchesToConnect)
 					#print("previousContextConceptNode = ", previousContextConceptNode.nodeName, ", conceptNeuron = ", conceptNeuron.nodeName, ", weight = ", weight)
 				else:
 					weight = sequentialSegmentMinActivationLevel
-				newSequentialSegmentSegmentInputIndex = HFNLPpy_SANIbiologicalSimulationGenerate.calculateNewSequentialSegmentInputIndex(currentSequentialSegment)
+				newSequentialSegmentSegmentInputIndex = HFNLPpy_SANIGenerate.calculateNewSequentialSegmentInputIndex(currentSequentialSegment)
 				currentSequentialSegmentInput = SequentialSegmentInput(conceptNeuron, currentSequentialSegment, newSequentialSegmentSegmentInputIndex, previousContextConceptNode)
 				#currentSequentialSegment.inputs.append(currentSequentialSegmentInput)
 				if(preventGenerationOfDuplicateConnections):
 					currentSequentialSegment.inputs[previousContextConceptNode.nodeName] = currentSequentialSegmentInput			
 				else:
 					currentSequentialSegment.inputs[newSequentialSegmentSegmentInputIndex] = currentSequentialSegmentInput
-				HFNLPpy_SANIbiologicalSimulationGenerate.addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, SANIbiologicalPrototype=False, weight=weight, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, SANIbiologicalSimulation=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
+				HFNLPpy_SANIGenerate.addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, SANIbiologicalPrototype=False, weight=weight, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, SANIbiologicalSimulation=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
 			else:
 				currentSequentialSegmentInput = existingSequentialSegmentInput
 
@@ -214,10 +214,10 @@ def calculateNeuronActivationSyntacticalBranchDPlinear(networkConceptNodeDict, s
 	#print("wTarget = ", wTarget)
 	#print("conceptNeuronTarget = ", conceptNeuronTarget.nodeName)
 	if(biologicalSimulationForward):
-		#somaActivationFound = HFNLPpy_SANIbiologicalSimulation.simulateBiologicalHFnetworkSequenceNodePropagateForwardFull(networkConceptNodeDict, sentenceIndex, contextConceptNodesList, wTarget, conceptNeuronTarget)
+		#somaActivationFound = HFNLPpy_SANI.simulateBiologicalHFnetworkSequenceNodePropagateForwardFull(networkConceptNodeDict, sentenceIndex, contextConceptNodesList, wTarget, conceptNeuronTarget)
 		wSource = DPbranchSourceNode.w
 		conceptNeuronSource = sentenceConceptNodeList[wSource]
-		somaActivationFound = HFNLPpy_SANIbiologicalSimulation.simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet)	#assumes simulateBiologicalHFnetworkSequenceNodePropagateForward was executed for contiguous wSource)
+		somaActivationFound = HFNLPpy_SANI.simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet)	#assumes simulateBiologicalHFnetworkSequenceNodePropagateForward was executed for contiguous wSource)
 	else:
 		print("calculateNeuronActivationSyntacticalBranchDPlinear requires biologicalSimulationForward")
 		exit()
@@ -288,7 +288,7 @@ def simulateBiologicalHFnetworkSequenceSyntacticalBranchCPPropagate(networkConce
 def simulateBiologicalHFnetworkSequenceSyntacticalBranchCPAdd(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, CPbranchHeadNode, activationTime, connectionTargetNeuronSet):
 	addPredictiveSequenceToNeuronSyntacticalBranchCP(sentenceIndex, sentenceConceptNodeList, CPbranchHeadNode)
 	if(debugDrawAfterAddPredictiveSequence):
-		HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
+		HFNLPpy_SANIDraw.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)
 
 def addPredictiveSequenceToNeuronSyntacticalBranchCP(conceptNeuron, sentenceIndex, sentenceConceptNodeList, CPtargetNode, dendriticBranch, currentBranchIndex1):
 
@@ -316,21 +316,21 @@ def addPredictiveSequenceToNeuronSyntacticalBranchCP(conceptNeuron, sentenceInde
 			previousContextConceptNode = sentenceConceptNodeList[CPsourceNode.w]
 			currentSequentialSegmentIndex = 0	#SyntacticalBranchDP/SyntacticalBranchSP SANIbiologicalSimulation implementation does not use local sequential segments (encode sequentiality in branch structure only)
 			currentSequentialSegment = dendriticBranchSub.sequentialSegments[currentSequentialSegmentIndex]
-			createNewConnection, existingSequentialSegmentInput = HFNLPpy_SANIbiologicalSimulationGenerate.verifyCreateNewConnection(currentSequentialSegment, previousContextConceptNode)
+			createNewConnection, existingSequentialSegmentInput = HFNLPpy_SANIGenerate.verifyCreateNewConnection(currentSequentialSegment, previousContextConceptNode)
 			if(createNewConnection):
 				if(performSummationOfSequentialSegmentInputsAcrossBranch):
 					weight = sequentialSegmentMinActivationLevel * (numberOfHorizontalSubBranchesRequiredForActivation/numberOfSubbranchesToConnect)
 					#print("weight = ", weight)
 				else:
 					weight = sequentialSegmentMinActivationLevel
-				newSequentialSegmentSegmentInputIndex = HFNLPpy_SANIbiologicalSimulationGenerate.calculateNewSequentialSegmentInputIndex(currentSequentialSegment)
+				newSequentialSegmentSegmentInputIndex = HFNLPpy_SANIGenerate.calculateNewSequentialSegmentInputIndex(currentSequentialSegment)
 				currentSequentialSegmentInput = SequentialSegmentInput(conceptNeuron, currentSequentialSegment, newSequentialSegmentSegmentInputIndex, previousContextConceptNode)
 				#currentSequentialSegment.inputs.append(currentSequentialSegmentInput)
 				if(preventGenerationOfDuplicateConnections):
 					currentSequentialSegment.inputs[previousContextConceptNode.nodeName] = currentSequentialSegmentInput			
 				else:
 					currentSequentialSegment.inputs[newSequentialSegmentSegmentInputIndex] = currentSequentialSegmentInput
-				HFNLPpy_SANIbiologicalSimulationGenerate.addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, SANIbiologicalPrototype=False, weight=weight, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, SANIbiologicalSimulation=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
+				HFNLPpy_SANIGenerate.addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, SANIbiologicalPrototype=False, weight=weight, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, SANIbiologicalSimulation=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
 			else:
 				currentSequentialSegmentInput = existingSequentialSegmentInput
 

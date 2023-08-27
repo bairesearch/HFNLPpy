@@ -1,4 +1,4 @@
-"""HFNLPpy_SANIbiologicalSimulationNode.py
+"""HFNLPpy_SANINode.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -24,9 +24,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 import random
 
-from HFNLPpy_SANIbiologicalSimulationGlobalDefs import *
+from HFNLPpy_SANIGlobalDefs import *
 
-#currently used for HFNLPpy_SANIbiologicalSimulationDraw:getActivationColor only;
+#currently used for HFNLPpy_SANIDraw:getActivationColor only;
 objectTypeConceptNeuron = 1
 objectTypeDendriticBranch = 2
 objectTypeSequentialSegment = 3
@@ -206,7 +206,10 @@ def calculateNumberOfHorizontalBranches(currentBranchIndex1, numberOfBranches2):
 	return numberOfHorizontalBranches, horizontalBranchWidth
 
 def calculateNumberOfVerticalBranches(numberOfBranches1):
-	numberOfVerticalBranches = numberOfBranches1+1
+	if(expectFirstBranchSequentialSegmentConnectionStrictNumBranches1):
+		numberOfVerticalBranches = numberOfBranches1
+	else:
+		numberOfVerticalBranches = numberOfBranches1+1
 	return numberOfVerticalBranches
 		
 def createDendriticTree(conceptNode, numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments):	
@@ -218,8 +221,11 @@ def createDendriticTree(conceptNode, numberOfBranches1, numberOfBranches2, numbe
 def createDendriticTreeBranch(conceptNode, currentBranch, currentBranchIndex1, horizontalBranchIndex, numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments):
 	#printIndentation(currentBranchIndex1)
 	#print("currentBranchIndex1 = ", currentBranchIndex1, ", horizontalBranchIndex = ", horizontalBranchIndex)
-	currentBranch.subbranches = [DendriticBranch(conceptNode, currentBranch, numberOfBranchSequentialSegments, currentBranchIndex1, i, horizontalBranchIndex) for i in range(numberOfBranches2)]	#[DendriticBranch(conceptNode, currentBranch, numberOfBranchSequentialSegments, currentBranchIndex1, currentBranchIndex2)]*numberOfBranches2
+	if(not expectFirstBranchSequentialSegmentConnectionStrictNumBranches1):
+		currentBranch.subbranches = [DendriticBranch(conceptNode, currentBranch, numberOfBranchSequentialSegments, currentBranchIndex1, i, horizontalBranchIndex) for i in range(numberOfBranches2)]	#[DendriticBranch(conceptNode, currentBranch, numberOfBranchSequentialSegments, currentBranchIndex1, currentBranchIndex2)]*numberOfBranches2
 	if(currentBranchIndex1 < numberOfBranches1):
+		if(expectFirstBranchSequentialSegmentConnectionStrictNumBranches1):
+			currentBranch.subbranches = [DendriticBranch(conceptNode, currentBranch, numberOfBranchSequentialSegments, currentBranchIndex1, i, horizontalBranchIndex) for i in range(numberOfBranches2)]	#[DendriticBranch(conceptNode, currentBranch, numberOfBranchSequentialSegments, currentBranchIndex1, currentBranchIndex2)]*numberOfBranches2
 		for subBranchIndex2, subbranch in enumerate(currentBranch.subbranches):
 			createDendriticTreeBranch(conceptNode, subbranch, currentBranchIndex1+1, horizontalBranchIndex*numberOfBranches2+subBranchIndex2, numberOfBranches1, numberOfBranches2, numberOfBranchSequentialSegments)
 	

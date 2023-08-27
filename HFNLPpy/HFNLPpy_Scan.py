@@ -1,4 +1,4 @@
-"""HFNLPpy_SCANbiologicalSimulation.py
+"""HFNLPpy_Scan.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -32,7 +32,7 @@ inference;
 
 import numpy as np
 
-from HFNLPpy_SCANbiologicalSimulationGlobalDefs import *
+from HFNLPpy_ScanGlobalDefs import *
 
 def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, neuronIDdict, HFconnectionMatrix, seedSentenceConceptNodeList, numberOfSentences):
 	for wSource, conceptNeuronSource in enumerate(seedSentenceConceptNodeList):
@@ -52,8 +52,14 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 		HFconnectionMatrix.activation_state[sourceNeuronID] = HFactivationStateOn
 		#print("seedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName)
 		simulateBiologicalHFnetworkSequencePropagateForward(networkConceptNodeDict, sentenceIndex, HFconnectionMatrix, HFnumberOfScanIterations)
-		
+
 def simulateBiologicalHFnetworkSequencePropagateForward(networkConceptNodeDict, sentenceIndex, graph, num_time_steps):
+	if(vectoriseComputation):
+		return simulateBiologicalHFnetworkSequencePropagateForwardParallel(networkConceptNodeDict, sentenceIndex, graph, num_time_steps)
+	else:
+		return simulateBiologicalHFnetworkSequencePropagateForwardStandard(networkConceptNodeDict, sentenceIndex, graph, num_time_steps)
+
+def simulateBiologicalHFnetworkSequencePropagateForwardParallel(networkConceptNodeDict, sentenceIndex, graph, num_time_steps):
 	# Simulate the flow of information (activations) between adjacent neurons for each time step
 	for t in range(num_time_steps):
 		# Use a vectorized operation to update the activation state of each neuron at time t+1
@@ -62,4 +68,15 @@ def simulateBiologicalHFnetworkSequencePropagateForward(networkConceptNodeDict, 
 		activation_state_t1 = graph.activation_state.clone()
 		activation_state_t1[target_neurons] += graph.activation_state[source_neurons] * graph.edge_attr
 		graph.activation_state = activation_state_t1
+		#if(graph.activation_state > HFactivationThreshold):	#incomplete
 		
+def simulateBiologicalHFnetworkSequencePropagateForwardStandard(networkConceptNodeDict, sentenceIndex, graph, num_time_steps):
+	# Simulate the flow of information (activations) between adjacent neurons for each time step
+	for t in range(num_time_steps):
+		for i in range(graph.edge_index.shape[1]):	#for each edge
+			source_neuron, target_neuron = graph.edge_index[:, i]
+			activation_state_t1 = graph.activation_state.clone()
+			activation_state_t1[target_neuron] += graph.activation_state[source_neuron] * graph.edge_attr[i]
+			graph.activation_state = activation_state_t1
+			#if(graph.activation_state[source_neuron] > HFactivationThreshold):	#incomplete
+

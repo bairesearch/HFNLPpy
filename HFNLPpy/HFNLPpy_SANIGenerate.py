@@ -1,4 +1,4 @@
-"""HFNLPpy_SANIbiologicalSimulationGenerate.py
+"""HFNLPpy_SANIGenerate.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -23,8 +23,8 @@ import numpy as np
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 import HFNLPpy_hopfieldOperations
-from HFNLPpy_SANIbiologicalSimulationGlobalDefs import *
-from HFNLPpy_SANIbiologicalSimulationNode import *
+from HFNLPpy_SANIGlobalDefs import *
+from HFNLPpy_SANINode import *
 
 printVerbose = False
 
@@ -61,20 +61,22 @@ def addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptN
 		
 	if(expectFurtherSubbranches):
 		if(isMostDistalSequentialSegmentInBranch(sequentialSegmentIndex)):
-			if(trainSubsetOfHorizontalSubbranches):
-				subbranchIndices = list(range(len(dendriticBranch.subbranches)))
-				np.random.shuffle(subbranchIndices)	#random.shuffle(subbranchIndices)
-			#for subbranchIndex, subbranch in enumerate(dendriticBranch.subbranches):
-			for i in range(numberOfHorizontalSubBranchesTrained):
+			if((branchIndex1 < numberOfBranches1-1) or not expectFirstBranchSequentialSegmentConnectionStrictNumBranches1):
 				if(trainSubsetOfHorizontalSubbranches):
-					subbranchIndex = subbranchIndices[i]
-					subbranch = dendriticBranch.subbranches[subbranchIndex]				
-				else:
-					subbranch = dendriticBranch.subbranches[i]
-				expectFurtherSubbranches2 = True
-				if(len(subbranch.subbranches) == 0):
-					expectFurtherSubbranches2 = False	
-				addPredictiveSequenceToNeuronSubsequenceGeneration(conceptNeuron, sentenceIndex, sentenceConceptNodeList, subbranch, predictiveSequenceLength, dendriticBranchMaxW, branchIndex1+1, 0, expectFurtherSubbranches2)
+					subbranchIndices = list(range(len(dendriticBranch.subbranches)))
+					np.random.shuffle(subbranchIndices)	#random.shuffle(subbranchIndices)
+				#for subbranchIndex, subbranch in enumerate(dendriticBranch.subbranches):
+				for i in range(numberOfHorizontalSubBranchesTrained):
+					if(trainSubsetOfHorizontalSubbranches):
+						subbranchIndex = subbranchIndices[i]
+						subbranch = dendriticBranch.subbranches[subbranchIndex]
+					else:
+						subbranch = dendriticBranch.subbranches[i]
+					expectFurtherSubbranches2 = True
+					if(len(subbranch.subbranches) == 0):
+						expectFurtherSubbranches2 = False
+					#print("expectFurtherSubbranches2 = ", expectFurtherSubbranches2)
+					addPredictiveSequenceToNeuronSubsequenceGeneration(conceptNeuron, sentenceIndex, sentenceConceptNodeList, subbranch, predictiveSequenceLength, dendriticBranchMaxW, branchIndex1+1, 0, expectFurtherSubbranches2)
 		else:
 			addPredictiveSequenceToNeuronSubsequenceGeneration(conceptNeuron, sentenceIndex, sentenceConceptNodeList, dendriticBranch, predictiveSequenceLength, dendriticBranchMaxW, branchIndex1, sequentialSegmentIndex+1, expectFurtherSubbranches)
 	else:

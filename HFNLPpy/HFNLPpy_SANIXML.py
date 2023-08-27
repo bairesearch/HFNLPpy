@@ -1,4 +1,4 @@
-"""HFNLPpy_SANIbiologicalSimulationXML.py
+"""HFNLPpy_SANIXML.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -20,8 +20,8 @@ HFNLP Biological Simulation XML - read/write graph XML file
 from yattag import Doc, indent	#pythonic xml api
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
-from HFNLPpy_SANIbiologicalSimulationGlobalDefs import *
-from HFNLPpy_SANIbiologicalSimulationNode import *
+from HFNLPpy_SANIGlobalDefs import *
+from HFNLPpy_SANINode import *
 
 def writeHopfieldGraphSentence(sentenceConceptNodeList, fileName, activationTime=None):
 	drawGraphNetwork = False
@@ -109,7 +109,7 @@ def writeHopfieldGraphConnection(doc, tag, text, line, connection, connectionInd
 	node1 = connection.nodeSource
 	node2 = connection.nodeTargetSequentialSegmentInput
 	nodeTargetSequentialSegmentInputText = node2.nodeName	#name attribute is added for axon connectivity lookup
-	if(drawGraphNetwork or (node2.conceptNode in sentenceConceptNodeList)):	#if HFNLPpy_SANIbiologicalSimulationDrawSentence: ensure target node is in sentence (such that connection can be drawn) - see drawHopfieldGraphNodeConnections
+	if(drawGraphNetwork or (node2.conceptNode in sentenceConceptNodeList)):	#if HFNLPpy_SANIDrawSentence: ensure target node is in sentence (such that connection can be drawn) - see drawHopfieldGraphNodeConnections
 		with tag('connection', connectionIndex=connectionIndex, nodeTargetSequentialSegmentInput=nodeTargetSequentialSegmentInputText, activationState=activationState):	
 			pass
 			#doc.stag('connection', nodeTargetSequentialSegmentInput=nodeTargetSequentialSegmentInputText, activationState=activationState) 	#inline tag

@@ -1,7 +1,7 @@
-"""HFNLPpy_SANIbiologicalSimulationGlobalDefs.py
+"""HFNLPpy_SANIGlobalDefs.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -22,6 +22,8 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 import numpy as np
+
+vectoriseComputation = True	#parallel processing for optimisation
 
 HFreadSavedConnectionsMatrix = False
 

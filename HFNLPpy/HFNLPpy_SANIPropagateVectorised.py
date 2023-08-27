@@ -1,4 +1,4 @@
-"""HFNLPpy_SANIbiologicalSimulationPropagateVectorised.py
+"""HFNLPpy_SANIPropagateVectorised.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -23,9 +23,9 @@ import numpy as np
 
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
-from HFNLPpy_SANIbiologicalSimulationGlobalDefs import *
-from HFNLPpy_SANIbiologicalSimulationNode import *
-import HFNLPpy_SANIbiologicalSimulationDraw
+from HFNLPpy_SANIGlobalDefs import *
+from HFNLPpy_SANINode import *
+import HFNLPpy_SANIDraw
 
 printVerbose = False
 printConnectionTargetActivations = False
@@ -299,6 +299,8 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 		
 		for sequentialSegmentIndex in sequentialSegmentSequence:
 
+			if(SANIbiologicalSimulationSimple):
+				print("sequentialSegmentIndex = ", sequentialSegmentIndex)
 			if(not reversePropagationOrder):
 				if(sequentialSegmentIndex < numberOfBranchSequentialSegments-1):
 					vectorisedBranchActivationLevelBatchSequentialSegmentPrevious = vectorisedBranchActivationLevelBatchList[branchIndex1][:, :, :, sequentialSegmentIndex+1]
@@ -310,7 +312,7 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 						vectorisedBranchActivationTimeBatchSequentialSegmentPrevious = vectorisedBranchActivationTimeBatchList[branchIndex1+1][:, :, :, sequentialSegmentIndexMostProximal]
 					else:
 						vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious = (None, None)
-					vectorisedBranchActivationStateBatchSequentialSegmentPrior, vectorisedBranchActivationTimeBatchSequentialSegmentPrior, vectorisedBranchActivationLevelBatchSequentialSegmentPriorSummed = calculateSequentialSegmentsInitialActivationFromHigherBranchParallel(branchIndex1, vectorisedBranchActivationLevelBatch.shape, vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious)
+				vectorisedBranchActivationStateBatchSequentialSegmentPrior, vectorisedBranchActivationTimeBatchSequentialSegmentPrior, vectorisedBranchActivationLevelBatchSequentialSegmentPriorSummed = calculateSequentialSegmentsInitialActivationFromHigherBranchParallel(branchIndex1, vectorisedBranchActivationLevelBatch.shape, vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious)
 						
 			if((branchIndex1 > 0) or expectFirstBranchSequentialSegmentConnection):
 				vectorisedBranchActivationLevelBatchSequentialSegment = vectorisedBranchActivationLevelBatch[:, :, :, sequentialSegmentIndex]
@@ -421,7 +423,7 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 				deactivatePreviousSequentialSegmentOrSubbranchVectorised(vectorisedBranchActivationStateBatchSequentialSegmentCurrent, branchIndex1, sequentialSegmentIndex, vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious)
 																
 			if(updateNeuronObjectActivationLevels):
-				calculateNeuronActivationParallelUpdateNeuronObjects(vectorisedBranchObjectBatch, sequentialSegmentIndex, batchNeuronsList, vectorisedBranchActivationStateBatchSequentialSegmentUpdated, vectorisedBranchActivationLevelBatchSequentialSegmentUpdated, vectorisedBranchActivationTimeBatchSequentialSegmentUpdated, vectorisedBranchActivationStateBatchSequentialSegmentCurrent)
+				calculateNeuronActivationParallelUpdateNeuronObjects(branchIndex1, vectorisedBranchObjectBatch, sequentialSegmentIndex, batchNeuronsList, vectorisedBranchActivationStateBatchSequentialSegmentUpdated, vectorisedBranchActivationLevelBatchSequentialSegmentUpdated, vectorisedBranchActivationTimeBatchSequentialSegmentUpdated, vectorisedBranchActivationStateBatchSequentialSegmentCurrent)
 					
 			if(reversePropagationOrder):
 				vectorisedBranchActivationLevelBatchSequentialSegmentPrevious = vectorisedBranchActivationLevelBatchSequentialSegmentUpdated
@@ -433,7 +435,7 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 					if(calculateNeuronActivationParallelSoma(vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious, vectorisedBranchActivationStateBatchSequentialSegmentFinalNew, vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationFlagBatchList, vectorisedBranchObjectBatchList, activationTime, wTarget, conceptNeuronTarget, conceptNeuronBatchIndex, batchNeuronsList, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)):
 						somaActivationFound = True		
 							
-			HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=wTarget)			
+			HFNLPpy_SANIDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=wTarget)			
 		
 		if(requireSubbranchOrSequentialSegmentForActivation):
 			#currently requires !reversePropagationOrder
@@ -448,11 +450,11 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 		
 	#print("somaActivationFound = ", somaActivationFound)
 	
-	HFNLPpy_SANIbiologicalSimulationDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
+	HFNLPpy_SANIDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
 						
 	return somaActivationFound
 
-def calculateNeuronActivationParallelUpdateNeuronObjects(vectorisedBranchObjectBatch, sequentialSegmentIndex, batchNeuronsList, vectorisedBranchActivationStateBatchSequentialSegmentUpdated, vectorisedBranchActivationLevelBatchSequentialSegmentUpdated, vectorisedBranchActivationTimeBatchSequentialSegmentUpdated, vectorisedBranchActivationStateBatchSequentialSegmentNew):
+def calculateNeuronActivationParallelUpdateNeuronObjects(branchIndex1, vectorisedBranchObjectBatch, sequentialSegmentIndex, batchNeuronsList, vectorisedBranchActivationStateBatchSequentialSegmentUpdated, vectorisedBranchActivationLevelBatchSequentialSegmentUpdated, vectorisedBranchActivationTimeBatchSequentialSegmentUpdated, vectorisedBranchActivationStateBatchSequentialSegmentNew):
 	vectorisedBranchObjectBatchSequentialSegment = vectorisedBranchObjectBatch[:, :, :, sequentialSegmentIndex]	#requires recordVectorisedBranchObjectList
 	for batchIndex in range(vectorisedBranchObjectBatchSequentialSegment.shape[0]):
 		batchNeuron = batchNeuronsList[batchIndex]
@@ -597,7 +599,7 @@ def calculateVectorisedBranchActivationNewBatchSequentialSegmentMask(vectorisedB
 			vectorisedBranchActivationStateBatchSequentialSegmentOverwriteFrozenTests = tf.logical_not(vectorisedBranchActivationFlagBatchSequentialSegmentOverwriteFrozen)
 			vectorisedBranchActivationStateBatchSequentialSegmentOverwriteFrozenTests = tf.logical_and(vectorisedBranchActivationStateBatchSequentialSegmentOverwriteFrozenTests, vectorisedBranchActivationStateBatchSequentialSegmentOverwrite)	#required because frozen flag tests is only valid for valid times (ie states=On)
 			vectorisedBranchActivationNewBatchSequentialSegmentMask = tf.logical_or(vectorisedBranchActivationStateBatchSequentialSegmentOverwriteFrozenTests, vectorisedBranchActivationStateBatchSequentialSegmentNonOverwrite)
-		if(verifyActivationTime):
+		if(verifyReactivationTime2):
 			vectorisedBranchActivationStateBatchSequentialSegmentOverwrite = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, vectorisedBranchActivationStateBatchSequentialSegment)
 			vectorisedBranchActivationStateBatchSequentialSegmentNonOverwrite = tf.logical_and(vectorisedBranchActivationNewBatchSequentialSegmentMask, tf.logical_not(vectorisedBranchActivationStateBatchSequentialSegment))
 			vectorisedBranchActivationTimeBatchSequentialSegmentOverwrite = tf.multiply(vectorisedBranchActivationTimeBatchSequentialSegment, tf.cast(vectorisedBranchActivationStateBatchSequentialSegmentOverwrite, tf.float32))
