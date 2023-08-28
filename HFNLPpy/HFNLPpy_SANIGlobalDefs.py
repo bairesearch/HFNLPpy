@@ -28,6 +28,8 @@ import numpy as np
 
 SANIbiologicalSimulationSimple = True	#single dendritic branch with multiple overloaded segments	#does not support resetConnectionTargetNeuronDendriteDuringActivation
 
+#### topk selection ####
+
 selectActivatedTop = True	#select activated top k target neurons during propagation test
 if(selectActivatedTop):
 	selectActivatedTopK = 3
@@ -108,7 +110,7 @@ if(drawBiologicalSimulation):
 
 #if(biologicalSimulationForward):	#required for drawBiologicalSimulationSentenceDynamic/drawBiologicalSimulationNetworkDynamic
 if(updateNeuronObjectActivationLevels or not vectoriseComputation):
-	drawBiologicalSimulationDynamic = True	#draw dynamic activation levels of biological simulation	#optional
+	drawBiologicalSimulationDynamic = False	#draw dynamic activation levels of biological simulation	#optional
 	if(drawBiologicalSimulationDynamic):
 		drawBiologicalSimulationDynamicPlot = True	#default: True
 		drawBiologicalSimulationDynamicSave = False	#default: False	#save to file
@@ -434,3 +436,6 @@ verifyPropagationTime = False	#default: False	#early activation of sequential se
 if(verifyPropagationTime):
 	activationPropagationTimeMax = 3	#max propagation time between sequential segments
 
+def printe(str):
+	print(str)
+	exit()

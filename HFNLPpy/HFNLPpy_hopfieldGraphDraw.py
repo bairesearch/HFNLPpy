@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 from math import cos, sin, radians
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
+from HFNLPpy_globalDefs import *
 
 highResolutionFigure = True
 if(highResolutionFigure):
@@ -29,14 +30,33 @@ if(highResolutionFigure):
 	saveFigSize = (16,9)	#(9,9)	#in inches
 	
 drawHopfieldGraphEdgeColoursWeights = True
-drawHopfieldGraphNodeColours = False	#node colours not yet coded (pos type of concept node will be different depending on connectivity/instance context)
+if(ScanBiologicalSimulation):
+	drawHopfieldGraphNodeColours = True	#colour activated nodes
+else:
+	drawHopfieldGraphNodeColours = False	#node colours not yet coded (pos type of concept node will be different depending on connectivity/instance context)
 graphTransparency = 0.5
 
 hopfieldGraph = nx.MultiDiGraph()	#Directed graphs with self loops and parallel edges	#https://networkx.org/documentation/stable/reference/classes/multidigraph.html
 hopfieldGraphNodeColorMap = []
 hopfieldGraphRadius = 100
 hopfieldGraphCentre = [0, 0]
+	
+def drawHopfieldGraphSentenceStatic(sentenceIndex, sentenceConceptNodeList, networkSize):
+	print("HFNLPpy_hopfieldGraphDraw.drawHopfieldGraphSentenceStatic()")
+	sentenceOrNetwork = True
+	clearHopfieldGraph()
+	fileName = generateHopfieldGraphFileName(True, sentenceIndex)
+	drawHopfieldGraphSentence(sentenceConceptNodeList, networkSize)
+	displayHopfieldGraph(drawHopfieldGraphPlot, drawHopfieldGraphSave, fileName)
 
+def drawHopfieldGraphNetworkStatic(sentenceIndex, networkConceptNodeDict):
+	print("HFNLPpy_hopfieldGraphDraw.drawHopfieldGraphNetworkStatic()")
+	sentenceOrNetwork = False
+	clearHopfieldGraph()
+	fileName = generateHopfieldGraphFileName(False, sentenceIndex)
+	drawHopfieldGraphNetwork(networkConceptNodeDict)
+	displayHopfieldGraph(drawHopfieldGraphPlot, drawHopfieldGraphSave, fileName)
+				
 def setColourHopfieldNodes(value):
     global drawHopfieldGraphNodeColours
     drawHopfieldGraphNodeColours = value
@@ -75,12 +95,21 @@ def drawHopfieldGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, senten
 #	drawHopfieldGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList)
 	
 def drawHopfieldGraphNode(node, networkSize):
-	colorHtml = "NA"	#node colours yet coded (pos type of node will be different depending on connectivity/instance context)
 	hopfieldGraphAngle = node.networkIndex/networkSize*360
 	#print("hopfieldGraphAngle = ", hopfieldGraphAngle)
 	posX, posY = pointOnCircle(hopfieldGraphRadius, hopfieldGraphAngle, hopfieldGraphCentre)	#generate circular graph
 	hopfieldGraph.add_node(node.nodeName, pos=(posX, posY))
 	if(drawHopfieldGraphNodeColours):
+		if(ScanBiologicalSimulation):
+			#~use SANI simulation colour scheme (FUTURE: vary colours based on node.activationLevel)
+			if(node.activationStateFiltered):
+				colorHtml = 'yellow'
+			elif(node.activationState):
+				colorHtml = 'orange'
+			else:
+				colorHtml = 'blue'
+		else:
+			printe("drawHopfieldGraphNodeColours currently requires ScanBiologicalSimulation")
 		hopfieldGraphNodeColorMap.append(colorHtml)
 
 def drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList=None):
@@ -140,4 +169,12 @@ def pointOnCircle(radius, angleDegrees, centre=[0,0]):
 	x = centre[0] + (radius * cos(angle))
 	y = centre[1] + (radius * sin(angle))
 	return x, y
-	
+
+def generateHopfieldGraphFileName(sentenceOrNetwork, sentenceIndex=None):
+	fileName = "hopfieldGraph"
+	if(sentenceOrNetwork):
+		fileName = fileName + "Sentence"
+	else:
+		fileName = fileName + "Network"
+		fileName = fileName + "sentenceIndex" + str(sentenceIndex)
+	return fileName

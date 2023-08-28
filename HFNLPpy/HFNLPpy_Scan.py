@@ -31,52 +31,217 @@ inference;
 
 
 import numpy as np
+import torch as pt
 
 from HFNLPpy_ScanGlobalDefs import *
 
-def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, neuronIDdict, HFconnectionMatrix, seedSentenceConceptNodeList, numberOfSentences):
-	for wSource, conceptNeuronSource in enumerate(seedSentenceConceptNodeList):
-		sourceNeuronID = neuronIDdict[conceptNeuronSource.nodeName]
-		#print("seedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName)
-		HFconnectionMatrix.activation_state[sourceNeuronID] = HFactivationStateOn
-		if(seedHFnetworkSubsequenceSimulateScan):
-			simulateBiologicalHFnetworkSequencePropagateForward(networkConceptNodeDict, sentenceIndex, HFconnectionMatrix, HFnumberOfScanIterations)	
-			
-def trainBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, neuronIDdict, HFconnectionMatrix, sentenceConceptNodeList, numberOfSentences):
-	simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceIndex, neuronIDdict, HFconnectionMatrix, sentenceConceptNodeList, numberOfSentences)	
+if(drawBiologicalSimulation):
+	import HFNLPpy_hopfieldGraphDraw
 
-def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceIndex, neuronIDdict, HFconnectionMatrix, sentenceConceptNodeList, numberOfSentences):
-	sentenceLength = len(sentenceConceptNodeList)
-	for wSource, conceptNeuronSource in enumerate(sentenceConceptNodeList):
+#based on HFNLPpy_SANI:seedBiologicalHFnetwork
+def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, neuronNamelist, neuronIDdict, HFconnectionGraph, seedSentenceConceptNodeList, numberOfSentences):
+	targetSentenceConceptNodeList = seedSentenceConceptNodeList
+	
+	connectionTargetNeuronSet = set()	#for posthoc network deactivation
+	connectionTargetNeuronIDsetFilteredPrevious = set()
+	if(not seedHFnetworkSubsequenceBasic):
+		conceptNeuronSourceList = []
+		
+	for wSource in range(len(targetSentenceConceptNodeList)-1):
+		wTarget = wSource+1
+		conceptNeuronSource = targetSentenceConceptNodeList[wSource]
+		conceptNeuronTarget = targetSentenceConceptNodeList[wTarget]
+		
+		#ensure source/target neuronIDs are in dictionary;
+		if(conceptNeuronSource.nodeName not in neuronIDdict):
+			printe("HFNLPpy_Scan:seedBiologicalHFnetwork error: (conceptNeuronSource.nodeName not in neuronIDdict)")
+		if(conceptNeuronTarget.nodeName not in neuronIDdict):
+			printe("HFNLPpy_Scan:seedBiologicalHFnetwork error: (conceptNeuronTarget.nodeName not in neuronIDdict)")
 		sourceNeuronID = neuronIDdict[conceptNeuronSource.nodeName]
-		HFconnectionMatrix.activation_state[sourceNeuronID] = HFactivationStateOn
-		#print("seedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName)
-		simulateBiologicalHFnetworkSequencePropagateForward(networkConceptNodeDict, sentenceIndex, HFconnectionMatrix, HFnumberOfScanIterations)
+		targetNeuronID = neuronIDdict[conceptNeuronTarget.nodeName]
 
-def simulateBiologicalHFnetworkSequencePropagateForward(networkConceptNodeDict, sentenceIndex, graph, num_time_steps):
+		print("seedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", sourceNeuronID = ", sourceNeuronID, ", targetNeuronID = ", targetNeuronID)
+
+		connectionTargetNeuronIDset = set()
+		connectionTargetNeuronIDsetFiltered = set()
+		if(wSource < seedHFnetworkSubsequenceLength):
+			HFconnectionGraph.activationState[sourceNeuronID] = HFactivationStateOn
+			HFconnectionGraph.activationLevel[sourceNeuronID] = HFactivationLevelOn
+			if(seedHFnetworkSubsequenceSimulateScan):
+				simulateBiologicalHFnetworkSequencePropagateForward(sentenceIndex, HFconnectionGraph, HFnumberOfScanIterations, connectionTargetNeuronIDset, connectionTargetNeuronIDsetFiltered)	
+		else:
+			simulateBiologicalHFnetworkSequencePropagateForward(sentenceIndex, HFconnectionGraph, HFnumberOfScanIterations, connectionTargetNeuronIDset, connectionTargetNeuronIDsetFiltered)	
+
+		#print("connectionTargetNeuronIDsetFiltered = ", connectionTargetNeuronIDsetFiltered)
+		conceptNeuronSourceList = connectionTargetNeuronIDsetFiltered
+		for neuronID in connectionTargetNeuronIDset:
+			conceptNode = getConceptNode(networkConceptNodeDict, neuronNamelist, neuronID)
+			connectionTargetNeuronSet.add(conceptNode)
+		somaActivationFound = resetConnectionTargetNeurons(True, HFconnectionGraph, connectionTargetNeuronIDset, connectionTargetNeuronIDsetFiltered, connectionTargetNeuronIDsetFilteredPrevious, sourceNeuronID, targetNeuronID)	
+
+		if(drawBiologicalSimulation):
+			updateNeuronObjectActivationStates(networkConceptNodeDict, neuronNamelist, neuronIDdict, HFconnectionGraph, connectionTargetNeuronSet, connectionTargetNeuronIDset, connectionTargetNeuronIDsetFiltered)
+			if(drawHopfieldGraphSentence):
+				HFNLPpy_hopfieldGraphDraw.drawHopfieldGraphSentenceStatic(sentenceIndex, sentenceConceptNodeList, networkSize)
+			if(drawHopfieldGraphNetwork):
+				HFNLPpy_hopfieldGraphDraw.drawHopfieldGraphNetworkStatic(sentenceIndex, networkConceptNodeDict)
+		
+		connectionTargetNeuronIDsetFilteredPrevious = connectionTargetNeuronIDsetFiltered.copy()
+		
+		expectPredictiveSequenceToBeFound = False
+		if(enforceMinimumEncodedSequenceLength):
+			if(wSource >= minimumEncodedSequenceLength-1):
+				expectPredictiveSequenceToBeFound = True
+		else:
+			expectPredictiveSequenceToBeFound = True
+		if(expectPredictiveSequenceToBeFound):
+			if(somaActivationFound):
+				#if(printVerbose):
+				print("somaActivationFound")
+			else:
+				#if(printVerbose):
+				print("!somaActivationFound: HFNLP algorithm error detected")
+		else:
+			print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
+				
+def simulateBiologicalHFnetworkSequencePropagateForward(sentenceIndex, HFconnectionGraph, num_time_steps, connectionTargetNeuronIDset, connectionTargetNeuronIDsetFiltered):
 	if(vectoriseComputation):
-		return simulateBiologicalHFnetworkSequencePropagateForwardParallel(networkConceptNodeDict, sentenceIndex, graph, num_time_steps)
+		return simulateBiologicalHFnetworkSequencePropagateForwardParallel(sentenceIndex, HFconnectionGraph, num_time_steps, connectionTargetNeuronIDset, connectionTargetNeuronIDsetFiltered)
 	else:
-		return simulateBiologicalHFnetworkSequencePropagateForwardStandard(networkConceptNodeDict, sentenceIndex, graph, num_time_steps)
+		return simulateBiologicalHFnetworkSequencePropagateForwardStandard(sentenceIndex, HFconnectionGraph, num_time_steps, connectionTargetNeuronIDset, connectionTargetNeuronIDsetFiltered)
 
-def simulateBiologicalHFnetworkSequencePropagateForwardParallel(networkConceptNodeDict, sentenceIndex, graph, num_time_steps):
+def simulateBiologicalHFnetworkSequencePropagateForwardParallel(sentenceIndex, HFconnectionGraph, num_time_steps, connectionTargetNeuronIDset, connectionTargetNeuronIDsetFiltered):
 	# Simulate the flow of information (activations) between adjacent neurons for each time step
+	#print("HFconnectionGraph.activationLevel = ", HFconnectionGraph.activationLevel)
 	for t in range(num_time_steps):
 		# Use a vectorized operation to update the activation state of each neuron at time t+1
-		source_neurons = graph.edge_index[0]
-		target_neurons = graph.edge_index[1]
-		activation_state_t1 = graph.activation_state.clone()
-		activation_state_t1[target_neurons] += graph.activation_state[source_neurons] * graph.edge_attr
-		graph.activation_state = activation_state_t1
-		#if(graph.activation_state > HFactivationThreshold):	#incomplete
-		
-def simulateBiologicalHFnetworkSequencePropagateForwardStandard(networkConceptNodeDict, sentenceIndex, graph, num_time_steps):
-	# Simulate the flow of information (activations) between adjacent neurons for each time step
-	for t in range(num_time_steps):
-		for i in range(graph.edge_index.shape[1]):	#for each edge
-			source_neuron, target_neuron = graph.edge_index[:, i]
-			activation_state_t1 = graph.activation_state.clone()
-			activation_state_t1[target_neuron] += graph.activation_state[source_neuron] * graph.edge_attr[i]
-			graph.activation_state = activation_state_t1
-			#if(graph.activation_state[source_neuron] > HFactivationThreshold):	#incomplete
+		sourceNeurons = HFconnectionGraph.edge_index[0]
+		targetNeurons = HFconnectionGraph.edge_index[1]
+		sourceActivationLevelThresholded = activationFunction(HFconnectionGraph.activationLevel[sourceNeurons])
+		HFconnectionGraph.activationLevel[targetNeurons] = sourceActivationLevelThresholded * HFconnectionGraph.edge_attr
+		HFconnectionGraph.activationLevel[targetNeurons] = activationThreshold(HFconnectionGraph.activationLevel[targetNeurons])
+		HFconnectionGraph.activationState[targetNeurons] = HFconnectionGraph.activationLevel[targetNeurons] >= HFactivationFunctionThreshold
+	
+	connectionTargetNeuronID = pt.nonzero(HFconnectionGraph.activationState).squeeze(1)
+	connectionTargetNeuronIDList = connectionTargetNeuronID.tolist()
+	connectionTargetNeuronIDset.update(set(connectionTargetNeuronIDList))
+	if(selectActivatedTop):
+		connectionTargetNeuronIDListFiltered = selectTopKactivatedNeuronsParallel(HFconnectionGraph, connectionTargetNeuronIDList)
+		connectionTargetNeuronIDsetFiltered.update(set(connectionTargetNeuronIDListFiltered))
+	else:
+		connectionTargetNeuronIDsetFiltered.update(connectionTargetNeuronIDset)	#no difference
 
+#this method currently does not work because it will keep propagating activations at each new i
+def simulateBiologicalHFnetworkSequencePropagateForwardStandard(sentenceIndex, HFconnectionGraph, num_time_steps, connectionTargetNeuronIDset, connectionTargetNeuronIDsetFiltered):
+	# Simulate the flow of information (activations) between adjacent neurons for each time step
+	print("HFconnectionGraph.activationLevel = ", HFconnectionGraph.activationLevel)
+	if(selectActivatedTop):
+		connectionTargetNeuronActivationLevelList = []
+		connectionTargetNeuronIDList = []
+	for t in range(num_time_steps):
+		for i in range(HFconnectionGraph.edge_index.shape[1]):	#for each edge
+			#print("i = ", i)
+			sourceNeuron, targetNeuron = HFconnectionGraph.edge_index[:, i]
+			sourceActivationLevelThresholded = activationFunction(HFconnectionGraph.activationLevel[sourceNeuron])
+			HFconnectionGraph.activationLevel[targetNeuron] = sourceActivationLevelThresholded * HFconnectionGraph.edge_attr[i]
+			HFconnectionGraph.activationLevel[targetNeuron] = activationThreshold(HFconnectionGraph.activationLevel[targetNeuron])
+			HFconnectionGraph.activationState[targetNeuron] = HFconnectionGraph.activationLevel[targetNeuron] >= HFactivationFunctionThreshold
+	for i in range(HFconnectionGraph.edge_index.shape[1]):	#for each edge
+		if(HFconnectionGraph.activationState[sourceNeuron]):
+			if(selectActivatedTop):
+				connectionTargetNeuronIDList.append(targetNeuron)
+				connectionTargetNeuronActivationLevelList.append(HFconnectionGraph.activationLevel[sourceNeuron])
+			connectionTargetNeuronIDset.add(targetNeuron)
+					
+	if(selectActivatedTop):
+		#connectionTargetNeuronIDset.update(set(connectionTargetNeuronIDList))	#already updated
+		connectionTargetNeuronIDListFiltered = selectTopKactivatedNeuronsStandard(connectionTargetNeuronIDList, connectionTargetNeuronActivationLevelList)
+		connectionTargetNeuronIDsetFiltered.update(set(connectionTargetNeuronIDListFiltered))
+	else:
+		connectionTargetNeuronIDsetFiltered.update(connectionTargetNeuronIDset)	#no difference
+
+'''
+def performTargetNeuronActivationDrain(connectionTargetNeuronIDset):
+	#performs neuron activation loss for a time step
+	for targetNeuronID in connectionTargetNeuronIDset:
+		HFactivationDrain
+'''
+
+def selectTopKactivatedNeuronsStandard(connectionTargetNeuronIDList, connectionTargetNeuronActivationLevelList):
+	selectActivatedTopKChecked = min([selectActivatedTopK, len(connectionTargetNeuronActivationLevelList)])
+	connectionTargetNeuronIDListFiltered = sortListByList(connectionTargetNeuronIDList, connectionTargetNeuronActivationLevelList)
+	connectionTargetNeuronIDListFiltered = connectionTargetNeuronIDListFiltered[0:selectActivatedTopKChecked]
+	return connectionTargetNeuronIDListFiltered
+	
+def selectTopKactivatedNeuronsParallel(HFconnectionGraph, connectionTargetNeuronIDList):
+	selectActivatedTopKChecked = min([selectActivatedTopK, len(connectionTargetNeuronIDList)])
+	connectionTargetNeuronIDListFiltered = pt.topk(HFconnectionGraph.activationLevel, selectActivatedTopKChecked).indices.tolist()
+	#print("connectionTargetNeuronIDListFiltered = ", connectionTargetNeuronIDListFiltered)
+	return connectionTargetNeuronIDListFiltered
+	
+def sortListByList(A, B):
+	#sorted_A = sorted(A, key=lambda x: B[A.index(x)])
+    sorted_A = []
+    for i in range(len(A)):
+        index = B.index(min(B))
+        sorted_A.append(A[index])
+        A.pop(index)
+        B.pop(index)
+    return sorted_A
+
+def resetConnectionTargetNeurons(duringSourcePropagation, HFconnectionGraph, connectionTargetNeuronIDset, connectionTargetNeuronIDsetFiltered, connectionTargetNeuronIDsetFilteredPrevious, sourceNeuronID, targetNeuronID):
+	#OLD: targetNeuron reset is not currently required with HFactivationFunctionThresholdApply applied before propagating source activations
+	
+	#neuron reset/repolarisation upon activation
+	connectionTargetNeuronIDsetReset = connectionTargetNeuronIDset.difference(connectionTargetNeuronIDsetFiltered)	#deactivate newly activated neurons that are below the threshold	#ie connectionTargetNeuronIDsetUnfiltered	
+	#print("connectionTargetNeuronIDsetFiltered = ", connectionTargetNeuronIDsetFiltered)
+	#print("connectionTargetNeuronIDsetFilteredPrevious = ", connectionTargetNeuronIDsetFilteredPrevious)
+	connectionTargetNeuronIDsetReset = connectionTargetNeuronIDsetReset.union(connectionTargetNeuronIDsetFilteredPrevious)	#deactivate previously activated neurons (that have already been propagated)	#& symbol does not work
+	connectionTargetNeuronIDsetReset = connectionTargetNeuronIDsetReset - set([sourceNeuronID])	#keep artifically activated source neuron on	#assume part of connectionTargetNeuronIDsetFiltered
+	targetNeurons = pt.tensor(list(connectionTargetNeuronIDsetReset), dtype=pt.int64)
+	HFconnectionGraph.activationState[targetNeurons] = HFactivationStateReset
+	HFconnectionGraph.activationLevel[targetNeurons] = HFactivationLevelReset	#performs topk selection (deactivates all neurons that do not meet threshold)
+	
+	#if(drawBiologicalSimulation):
+	#	connectionTargetNeuronIDsetFiltered.difference_update(connectionTargetNeuronIDsetReset)
+	
+	somaActivationFound = False
+	if(targetNeuronID in connectionTargetNeuronIDsetFiltered):
+		somaActivationFound = True
+		
+	return somaActivationFound
+
+def activationFunction(activationLevel):
+	if(HFactivationFunctionThresholdApply):
+		activationLevel = pt.where(activationLevel < HFactivationFunctionThreshold, pt.tensor(HFactivationLevelOff), pt.tensor(HFactivationLevelOn))
+	return activationLevel
+	
+def activationThreshold(activationLevel):
+	if(HFactivationThresholdApply):
+		activationLevel = pt.clamp(activationLevel, max=HFactivationThreshold)
+	return activationLevel
+
+def getConceptNode(networkConceptNodeDict, neuronNamelist, neuronID):
+	#neuronID = neuronIDdict[neuronName]
+	neuronName = neuronNamelist[neuronID]
+	#print("neuronName = ", neuronName)
+	#print("networkConceptNodeDict = ", networkConceptNodeDict)
+	conceptNode = networkConceptNodeDict[neuronName]
+	return conceptNode
+
+def updateNeuronObjectActivationStates(networkConceptNodeDict, neuronNamelist, neuronIDdict, HFconnectionGraph, connectionTargetNeuronSet, connectionTargetNeuronIDset, connectionTargetNeuronIDsetFiltered):
+	#reset all neuron object states to unactivated;
+	for conceptNode in connectionTargetNeuronSet:	#optimisation: only consider currently or previously activated neurons
+		#conceptNode.activationLevel = 0
+		conceptNode.activationState = False
+		conceptNode.activationStateFiltered = False
+	#set all activated neuron object states;
+	for connectionTargetNeuronID in connectionTargetNeuronIDsetFiltered:
+		conceptNode = getConceptNode(networkConceptNodeDict, neuronNamelist, connectionTargetNeuronID)
+		#conceptNode.activationLevel = 
+		conceptNode.activationStateFiltered = True
+	for connectionTargetNeuronID in connectionTargetNeuronIDset:
+		conceptNode = getConceptNode(networkConceptNodeDict, neuronNamelist, connectionTargetNeuronID)
+		#conceptNode.activationLevel = 
+		conceptNode.activationState = True
+		

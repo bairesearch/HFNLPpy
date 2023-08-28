@@ -23,6 +23,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import numpy as np
 
+from HFNLPpy_globalDefs import *
 from HFNLPpy_SANINode import biologicalSimulationNodePropertiesInitialisation
 
 	
@@ -36,7 +37,7 @@ graphNodeTypeStart = 5	#start of sequence - used by biologicalImplementationReus
 nodeNameStart = "SEQUENCESTARTNODE"
 
 class HopfieldNode:
-	def __init__(self, networkIndex, nodeName, wordVector, nodeGraphType, activationTime, SANIbiologicalSimulation, w, sentenceIndex):
+	def __init__(self, networkIndex, nodeName, wordVector, nodeGraphType, activationTime, w, sentenceIndex):
 		#primary vars;
 		self.networkIndex = networkIndex
 		self.nodeName = str(nodeName)
@@ -58,6 +59,10 @@ class HopfieldNode:
 
 		if(SANIbiologicalSimulation):
 			biologicalSimulationNodePropertiesInitialisation(self)
+		if(ScanBiologicalSimulation):
+			#self.activationLevel = 0
+			self.activationState = False
+			self.activationStateFiltered = False
 
 								
 #last access time	

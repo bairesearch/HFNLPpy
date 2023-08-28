@@ -84,12 +84,12 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 				somaActivationFound = simulateBiologicalHFnetworkSequenceNodesPropagateForward(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSourceList, connectionTargetNeuronSetLocal)
 			
 			if(selectActivatedTop):
-				connectionTargetNeuronSetFiltered = selectTopKactivatedNeurons(connectionTargetNeuronSetLocal)
+				connectionTargetNeuronSetLocalFiltered = selectTopKactivatedNeurons(connectionTargetNeuronSetLocal)
 			else:
-				connectionTargetNeuronSetFiltered = connectionTargetNeuronSetLocal
+				connectionTargetNeuronSetLocalFiltered = connectionTargetNeuronSetLocal
 				
 			conceptNeuronSourceList.clear()
-			for connectionTargetNeuron in connectionTargetNeuronSetFiltered:
+			for connectionTargetNeuron in connectionTargetNeuronSetLocalFiltered:
 				if(connectionTargetNeuron.activationLevel):
 					#print("conceptNeuronSourceList.append connectionTargetNeuron = ", connectionTargetNeuron.nodeName)
 					conceptNeuronSourceList.append(connectionTargetNeuron)

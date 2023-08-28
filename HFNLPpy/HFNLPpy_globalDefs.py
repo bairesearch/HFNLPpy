@@ -20,19 +20,18 @@ HFNLP - global defs
 printVerbose = True
 
 #select HFNLP algorithm;
-ScanBiologicalSimulation = False
-SANIbiologicalSimulation = True	#simulate sequential activation of dendritic input 
+ScanBiologicalSimulation = True
+SANIbiologicalSimulation = False	#simulate sequential activation of dendritic input 
 #useAlgorithmArtificial = False	#default
 
 SANIbiologicalPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
 
 useDependencyParseTree = False	#initialise (dependent var)
 if(ScanBiologicalSimulation):
-	import HFNLPpy_ScanGlobalDefs as HFNLPpy_BioGlobalDefs
 	useDependencyParseTree = False
 elif(SANIbiologicalSimulation):
-	import HFNLPpy_SANIGlobalDefs as HFNLPpy_BioGlobalDefs
-	if(HFNLPpy_BioGlobalDefs.biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
+	from HFNLPpy_SANIGlobalDefs import biologicalSimulationEncodeSyntaxInDendriticBranchStructure
+	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 		useDependencyParseTree = True
 	else:
 		useDependencyParseTree = False
@@ -43,7 +42,7 @@ if(useDependencyParseTree):
 	import SPNLPpy_globalDefs
 	if(not SPNLPpy_globalDefs.useSPNLPcustomSyntacticalParser):
 		SPNLPpy_syntacticalGraph.SPNLPpy_syntacticalGraphConstituencyParserFormal.initalise(spacyWordVectorGenerator)
-	if(HFNLPpy_BioGlobalDefs.biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
+	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 		identifySyntacticalDependencyRelations = True	#optional
 		#configuration notes:
 		#some constituency parse trees are binary trees eg useSPNLPcustomSyntacticalParser:SPNLPpy_syntacticalGraphConstituencyParserWordVectors (or Stanford constituency parser with binarize option etc), other constituency parsers are non-binary trees; eg !useSPNLPcustomSyntacticalParser:SPNLPpy_syntacticalGraphConstituencyParserFormal (Berkeley neural parser)
@@ -57,10 +56,11 @@ if(useDependencyParseTree):
 	else:
 		identifySyntacticalDependencyRelations = True	#mandatory 	#standard hopfield NLP graph requires words are connected (no intermediary constituency parse tree syntax nodes) 
 
+drawHopfieldGraph = False
 if(ScanBiologicalSimulation):
 	drawHopfieldGraph = True
 elif(SANIbiologicalSimulation):
-	drawHopfieldGraph = False	#typical use drawBiologicalSimulation
+	drawHopfieldGraph = False	#default: False - typically use drawBiologicalSimulation only
 else:
 	drawHopfieldGraph = True
 	
@@ -69,3 +69,7 @@ if(drawHopfieldGraph):
 	drawHopfieldGraphSave = False
 	drawHopfieldGraphSentence = False
 	drawHopfieldGraphNetwork = True	#default: True	#draw graph for entire network (not just sentence)
+
+def printe(str):
+	print(str)
+	exit()
