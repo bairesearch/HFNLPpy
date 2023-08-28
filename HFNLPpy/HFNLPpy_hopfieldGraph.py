@@ -201,15 +201,15 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 		if(ScanBiologicalSimulation):
 			HFconnectionGraph.activationLevel = pt.zeros(len(neuronNamelist), dtype=pt.float)	# Set the initial activation level for each neuron at time t
 			HFconnectionGraph.activationState = pt.zeros(len(neuronNamelist), dtype=pt.bool)	# Set the initial activation state for each neuron at time t
-			HFNLPpy_Scan.seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, neuronNamelist, neuronIDdict, HFconnectionGraph, seedSentenceConceptNodeList, numberOfSentences)
+			HFNLPpy_Scan.seedBiologicalHFnetwork(networkConceptNodeDict, networkSize, sentenceIndex, neuronNamelist, neuronIDdict, HFconnectionGraph, seedSentenceConceptNodeList, numberOfSentences)
 		else:
 			HFNLPpy_SANI.seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceConceptNodeList, numberOfSentences)			
 	
 	if(drawHopfieldGraph):
 		if(drawHopfieldGraphSentence):
-			ATNLPtf_hopfieldGraphDrawSentence.drawHopfieldGraphSentenceStatic(sentenceIndex, sentenceConceptNodeList, networkSize)
+			ATNLPtf_hopfieldGraphDrawSentence.drawHopfieldGraphSentenceStatic(sentenceIndex, sentenceConceptNodeList, networkSize, drawHopfieldGraphPlot, drawHopfieldGraphSave)
 		if(drawHopfieldGraphNetwork):
-			ATNLPtf_hopfieldGraphDrawNetwork.drawHopfieldGraphNetworkStatic(sentenceIndex, networkConceptNodeDict)
+			ATNLPtf_hopfieldGraphDrawNetwork.drawHopfieldGraphNetworkStatic(sentenceIndex, networkConceptNodeDict, drawHopfieldGraphPlot, drawHopfieldGraphSave)
 
 	result = True
 	return result

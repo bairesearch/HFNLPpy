@@ -20,7 +20,8 @@ HFNLP Biological Simulation Global Defs
 import numpy as np
 from HFNLPpy_globalDefs import *
 
-debugLowActivationThresholds = True
+debugLowActivationThresholds = True	#enable for debugging
+debugPyGactivationPropagationImplementationBug = False
 
 #### computation type ####
 
@@ -28,9 +29,12 @@ vectoriseComputation = True	#parallel processing for optimisation	#!vectoriseCom
 
 #### topk selection ####
 
-selectActivatedTop = True	#select activated top k target neurons during propagation test	#incomplete
+if(debugLowActivationThresholds):
+	selectActivatedTop = True	#optional
+else:
+	selectActivatedTop = True	#select activated top k target neurons during propagation test	#recommended (otherwise will overactivate network)
 if(selectActivatedTop):
-	selectActivatedTopK = 3
+	selectActivatedTopK = 10	#10	#3
 	
 HFreadSavedConnectionsMatrix = False
 
@@ -43,20 +47,24 @@ HFactivationLevelOn = 1.0
 HFactivationStateOff = False
 HFactivationLevelOff = 0.0
 
-HFactivationStateReset = False
-HFactivationLevelReset = 0.0	#CHECKTHIS
+HFresetActivations = True	#default: True (disable for debugging)
+if(HFresetActivations):
+	HFresetActivationsPrevious = True
+	HFactivationStateReset = False
+	HFactivationLevelReset = 0.0	#CHECKTHIS
 #HFactivationDrain = 0.05	#incomplete #activation level reduction per time step for all target neurons (prediction candidates)
 
 HFactivationFunctionThresholdApply = True
-HFactivationFunctionThreshold = 1.0	#0.5	#TODO: calibrate this
+HFactivationFunctionThreshold = 1.0	#0.99	#1.0	#0.5	#TODO: calibrate this
 HFactivationThresholdApply = True
-HFactivationThreshold = 10.0	#do not allow activation values to increase beyond this value
 
 if(debugLowActivationThresholds):
 	HFconnectionWeightObs = 1.0
+	HFactivationThreshold = 1.0	#do not allow activation values to increase beyond this value
 else:
 	HFconnectionWeightObs = 0.1	#connection weight to add for each observed instance of an adjacent source-target word pair/tuple in a sentence; ie (w, w+1)
-
+	HFactivationThreshold = 10.0
+	
 #### file i/o ####
 
 HFconnectionMatrixFileName = "HFconnectionGraph.csv"
@@ -68,14 +76,12 @@ HFNLPnonrandomSeed = False	#initialise (dependent var)
 
 #### draw ####
 
-drawBiologicalSimulation = False
-if(drawHopfieldGraph):
-	drawBiologicalSimulation = True	#optional
-	if(drawBiologicalSimulation):
-		drawBiologicalSimulationPlot = True	#default: True
-		drawBiologicalSimulationSave = False	#default: False	#save to file
-		drawBiologicalSimulationSentence = True	#default: True	#draw graph for sentence neurons and their dendritic tree
-		drawBiologicalSimulationNetwork = True	#default: False	#draw graph for entire network (not just sentence)
+drawBiologicalSimulation = True	#optional
+if(drawBiologicalSimulation):
+	drawBiologicalSimulationPlot = True	#default: True
+	drawBiologicalSimulationSave = False	#default: False	#save to file
+	drawBiologicalSimulationSentence = True	#default: True	#draw graph for sentence neurons and their dendritic tree
+	drawBiologicalSimulationNetwork = True	#default: False	#draw graph for entire network (not just sentence)
 		
 #### seed HF network with subsequence ####
 

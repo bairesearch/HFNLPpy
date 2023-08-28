@@ -58,7 +58,7 @@ if(useDependencyParseTree):
 
 drawHopfieldGraph = False
 if(ScanBiologicalSimulation):
-	drawHopfieldGraph = True
+	drawHopfieldGraph = False	#default: False - typically use drawBiologicalSimulation only
 elif(SANIbiologicalSimulation):
 	drawHopfieldGraph = False	#default: False - typically use drawBiologicalSimulation only
 else:

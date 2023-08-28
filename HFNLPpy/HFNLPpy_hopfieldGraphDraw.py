@@ -41,7 +41,7 @@ hopfieldGraphNodeColorMap = []
 hopfieldGraphRadius = 100
 hopfieldGraphCentre = [0, 0]
 	
-def drawHopfieldGraphSentenceStatic(sentenceIndex, sentenceConceptNodeList, networkSize):
+def drawHopfieldGraphSentenceStatic(sentenceIndex, sentenceConceptNodeList, networkSize, drawHopfieldGraphPlot, drawHopfieldGraphSave):
 	print("HFNLPpy_hopfieldGraphDraw.drawHopfieldGraphSentenceStatic()")
 	sentenceOrNetwork = True
 	clearHopfieldGraph()
@@ -49,7 +49,7 @@ def drawHopfieldGraphSentenceStatic(sentenceIndex, sentenceConceptNodeList, netw
 	drawHopfieldGraphSentence(sentenceConceptNodeList, networkSize)
 	displayHopfieldGraph(drawHopfieldGraphPlot, drawHopfieldGraphSave, fileName)
 
-def drawHopfieldGraphNetworkStatic(sentenceIndex, networkConceptNodeDict):
+def drawHopfieldGraphNetworkStatic(sentenceIndex, networkConceptNodeDict, drawHopfieldGraphPlot, drawHopfieldGraphSave):
 	print("HFNLPpy_hopfieldGraphDraw.drawHopfieldGraphNetworkStatic()")
 	sentenceOrNetwork = False
 	clearHopfieldGraph()
@@ -101,7 +101,7 @@ def drawHopfieldGraphNode(node, networkSize):
 	hopfieldGraph.add_node(node.nodeName, pos=(posX, posY))
 	if(drawHopfieldGraphNodeColours):
 		if(ScanBiologicalSimulation):
-			#~use SANI simulation colour scheme (FUTURE: vary colours based on node.activationLevel)
+			#~use SANIgenDemoVideo1 simulation colour scheme (FUTURE: vary colours based on node.activationLevel)
 			if(node.activationStateFiltered):
 				colorHtml = 'yellow'
 			elif(node.activationState):

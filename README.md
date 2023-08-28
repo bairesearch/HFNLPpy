@@ -23,6 +23,7 @@ python3 -m spacy download en_core_web_md
 conda install networkx [required for HFNLPpy_hopfieldGraphDraw/HFNLPpy_SANIDraw]
 pip install matplotlib==2.2.3 [required for HFNLPpy_hopfieldGraphDraw/HFNLPpy_SANIDraw]
 pip install yattag [required for HFNLPpy_SANIXML]
+pip install torch [required for HFNLPpy_Scan]
 pip install torch_geometric [required for HFNLPpy_Scan]
 ```
 
