@@ -30,7 +30,7 @@ if(highResolutionFigure):
 	saveFigSize = (16,9)	#(9,9)	#in inches
 	
 drawHopfieldGraphEdgeColoursWeights = True
-if(ScanBiologicalSimulation):
+if(useAlgorithmScanBiologicalSimulation):
 	drawHopfieldGraphNodeColours = True	#colour activated nodes
 else:
 	drawHopfieldGraphNodeColours = False	#node colours not yet coded (pos type of concept node will be different depending on connectivity/instance context)
@@ -85,9 +85,13 @@ def drawHopfieldGraphNetwork(networkConceptNodeDict):
 		drawHopfieldGraphNodeConnections(conceptNode, drawGraphNetwork)	
 			
 def drawHopfieldGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList=None):
-	for connectionKey, connectionList in hopfieldGraphNode.targetConnectionDict.items():
-		for connection in connectionList:
+	if(assignSingleConnectionBetweenUniqueConceptPair):
+		for connectionKey, connection in hopfieldGraphNode.HFtargetConnectionDict.items():
 			drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
+	else:
+		for connectionKey, connectionList in hopfieldGraphNode.HFtargetConnectionDict.items():
+			for connection in connectionList:
+				drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
 			
 #def drawHopfieldGraphNodeAndConnections(hopfieldGraphNode, networkSize, drawGraphNetwork, sentenceConceptNodeList=None):	
 #	#parse tree and generate nodes and connections
@@ -100,7 +104,7 @@ def drawHopfieldGraphNode(node, networkSize):
 	posX, posY = pointOnCircle(hopfieldGraphRadius, hopfieldGraphAngle, hopfieldGraphCentre)	#generate circular graph
 	hopfieldGraph.add_node(node.nodeName, pos=(posX, posY))
 	if(drawHopfieldGraphNodeColours):
-		if(ScanBiologicalSimulation):
+		if(useAlgorithmScanBiologicalSimulation):
 			#~use SANIgenDemoVideo1 simulation colour scheme (FUTURE: vary colours based on node.activationLevel)
 			if(node.activationStateFiltered):
 				colorHtml = 'yellow'
@@ -109,16 +113,17 @@ def drawHopfieldGraphNode(node, networkSize):
 			else:
 				colorHtml = 'blue'
 		else:
-			printe("drawHopfieldGraphNodeColours currently requires ScanBiologicalSimulation")
+			printe("drawHopfieldGraphNodeColours currently requires useAlgorithmScanBiologicalSimulation")
 		hopfieldGraphNodeColorMap.append(colorHtml)
 
 def drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList=None):
 	node1 = connection.nodeSource
 	node2 = connection.nodeTarget
-	spatioTemporalIndex = connection.spatioTemporalIndex
+	#print("drawHopfieldGraphConnection: node1 = ", node1.nodeName, ", node2 = ", node2.nodeName)
+	#spatioTemporalIndex = connection.spatioTemporalIndex
 	if(drawGraphNetwork or (node2 in sentenceConceptNodeList)):	#if HFNLPpy_hopfieldGraphDraw: ensure target node is in sentence (such that connection can be drawn) - see drawHopfieldGraphNodeConnections
 		if(drawHopfieldGraphEdgeColoursWeights):
-			if(connection.SANIbiologicalPrototype):
+			if(connection.useAlgorithmDendriticSANIbiologicalPrototype):
 				if(connection.contextConnection):
 					color = 'blue'
 				else:

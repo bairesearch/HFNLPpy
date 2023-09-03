@@ -1,4 +1,4 @@
-"""HFNLPpy_SANIPropagateVectorised.py
+"""HFNLPpy_DendriticSANIPropagateVectorised.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Biological Simulation Propagate Vectorised
+HFNLP Dendritic SANI Propagate Vectorised
 
 """
 
@@ -23,9 +23,9 @@ import numpy as np
 
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
-from HFNLPpy_SANIGlobalDefs import *
-from HFNLPpy_SANINode import *
-import HFNLPpy_SANIDraw
+from HFNLPpy_DendriticSANIGlobalDefs import *
+from HFNLPpy_DendriticSANINode import *
+import HFNLPpy_DendriticSANIDraw
 
 printVerbose = False
 printConnectionTargetActivations = False
@@ -76,7 +76,7 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 		if(updateNeuronObjectActivationLevels):
 			conceptNeuronSource.activationLevel = objectAreaActivationLevelOn
 
-		for targetConnectionConceptName, connectionList in conceptNeuronSource.targetConnectionDict.items():
+		for targetConnectionConceptName, connectionList in conceptNeuronSource.HFtargetConnectionDict.items():
 
 			#add target neuron to batch processing tensor
 			#if(vectoriseComputationIndependentBranches):	#only coded algorithm
@@ -112,7 +112,7 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 
 	batchNeuronsList2 = []
 	for conceptNeuronSource in conceptNeuronSourceList:
-		for targetConnectionConceptName, connectionList in conceptNeuronSource.targetConnectionDict.items():
+		for targetConnectionConceptName, connectionList in conceptNeuronSource.HFtargetConnectionDict.items():
 			conceptNeuronConnectionTarget = networkConceptNodeDict[targetConnectionConceptName] #or connectionList[ANY].nodeTarget
 			if(conceptNeuronConnectionTarget not in batchNeuronsList2):
 				batchNeuronsList2.append(conceptNeuronConnectionTarget)
@@ -299,7 +299,7 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 		
 		for sequentialSegmentIndex in sequentialSegmentSequence:
 
-			if(SANIbiologicalSimulationSimple):
+			if(DendriticSANIbiologicalSimulationSimple):
 				print("sequentialSegmentIndex = ", sequentialSegmentIndex)
 			if(not reversePropagationOrder):
 				if(sequentialSegmentIndex < numberOfBranchSequentialSegments-1):
@@ -435,7 +435,7 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 					if(calculateNeuronActivationParallelSoma(vectorisedBranchActivationLevelBatchSequentialSegmentPrevious, vectorisedBranchActivationTimeBatchSequentialSegmentPrevious, vectorisedBranchActivationStateBatchSequentialSegmentFinalNew, vectorisedBranchActivationLevelBatchList, vectorisedBranchActivationTimeBatchList, vectorisedBranchActivationFlagBatchList, vectorisedBranchObjectBatchList, activationTime, wTarget, conceptNeuronTarget, conceptNeuronBatchIndex, batchNeuronsList, wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList)):
 						somaActivationFound = True		
 							
-			HFNLPpy_SANIDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=wTarget)			
+			HFNLPpy_DendriticSANIDraw.drawBiologicalDendriticSANISequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1, sequentialSegmentIndex, activationTime, wTarget=wTarget)			
 		
 		if(requireSubbranchOrSequentialSegmentForActivation):
 			#currently requires !reversePropagationOrder
@@ -450,7 +450,7 @@ def calculateNeuronActivationParallel(vectorisedBranchActivationLevelBatchList, 
 		
 	#print("somaActivationFound = ", somaActivationFound)
 	
-	HFNLPpy_SANIDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
+	HFNLPpy_DendriticSANIDraw.drawDendriticSANIDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
 						
 	return somaActivationFound
 

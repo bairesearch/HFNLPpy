@@ -13,19 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Biological Simulation - simulate training/inference of biological hopfield graph/network based on textual input
-
-pseudo code;
-for every time step/concept neuron (word w):
-	calculate neuron activation...
-
-training;
-	activate concept neurons in order of sentence word order
-	strengthen those synapses which directly precede/contribute to firing
-		weaken those that do not
-	this will enable neuron to fire when specific contextual instances are experienced
-inference;
-	calculate neuron firing exclusively from prior/contextual subsequence detections
+HFNLP Scan - simulate training/inference of biological hopfield graph/network based on textual input
 
 """
 
@@ -38,7 +26,7 @@ from HFNLPpy_ScanGlobalDefs import *
 if(drawBiologicalSimulation):
 	import HFNLPpy_hopfieldGraphDraw
 
-#based on HFNLPpy_SANI:seedBiologicalHFnetwork
+#based on HFNLPpy_DendriticSANI:seedBiologicalHFnetwork
 def seedBiologicalHFnetwork(networkConceptNodeDict, networkSize, sentenceIndex, neuronNamelist, neuronIDdict, HFconnectionGraph, seedSentenceConceptNodeList, numberOfSentences):
 	targetSentenceConceptNodeList = seedSentenceConceptNodeList
 		

@@ -1,4 +1,4 @@
-"""HFNLPpy_SANINode.py
+"""HFNLPpy_DendriticSANINode.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Biological Simulation Node Classes
+HFNLP Dendritic SANI Node Classes
 
 """
 
@@ -24,15 +24,15 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 import random
 
-from HFNLPpy_SANIGlobalDefs import *
+from HFNLPpy_DendriticSANIGlobalDefs import *
 
-#currently used for HFNLPpy_SANIDraw:getActivationColor only;
+#currently used for HFNLPpy_DendriticSANIDraw:getActivationColor only;
 objectTypeConceptNeuron = 1
 objectTypeDendriticBranch = 2
 objectTypeSequentialSegment = 3
 objectTypeSequentialSegmentInput = 4
 		
-def biologicalSimulationNodePropertiesInitialisation(conceptNode):
+def dendriticSANINodePropertiesInitialisation(conceptNode):
 
 	conceptNode.objectType = objectTypeConceptNeuron
 	
@@ -296,7 +296,7 @@ def resetDendriticTreeActivationVectorised(conceptNeuron):
 
 def resetAxonsActivation(conceptNeuron):
 	conceptNeuron.activationLevel = objectAreaActivationLevelOff
-	for targetConnectionConceptName, connectionList in conceptNeuron.targetConnectionDict.items():
+	for targetConnectionConceptName, connectionList in conceptNeuron.HFtargetConnectionDict.items():
 		resetAxonsActivationConnectionList(connectionList)
 
 def resetAxonsActivationConnectionList(connectionList):
@@ -419,8 +419,8 @@ def sequentialSegmentActivationLevelAboveZero(activationLevel):
 	return result
 	
 	
-def generateBiologicalSimulationFileName(sentenceOrNetwork, sentenceIndex=None, write=False):
-	fileName = "SANIbiologicalSimulation"
+def generateDendriticSANIFileName(sentenceOrNetwork, sentenceIndex=None, write=False):
+	fileName = "useAlgorithmDendriticSANIbiologicalSimulation"
 	if(sentenceOrNetwork):
 		fileName = fileName + "Sentence"
 		fileName = fileName + "sentenceIndex" + convertIntToString(sentenceIndex)
@@ -435,7 +435,7 @@ def generateBiologicalSimulationFileName(sentenceOrNetwork, sentenceIndex=None, 
 			fileName = fileName + "StandardComputation"
 	return fileName
 	
-def generateBiologicalSimulationDynamicNeuronFileName(sentenceOrNetwork, wSource, sentenceIndex=None):
+def generateDendriticSANIDynamicNeuronFileName(sentenceOrNetwork, wSource, sentenceIndex=None):
 	fileName = "biologicalSimulationDynamic"
 	if(sentenceOrNetwork):
 		fileName = fileName + "Sentence"
@@ -451,7 +451,7 @@ def generateBiologicalSimulationDynamicNeuronFileName(sentenceOrNetwork, wSource
 			fileName = fileName + "StandardComputation"
 	return fileName
 
-def generateBiologicalSimulationDynamicSequentialSegmentFileName(sentenceOrNetwork, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex=None):
+def generateDendriticSANIDynamicSequentialSegmentFileName(sentenceOrNetwork, wSource, branchIndex1, sequentialSegmentIndex, sentenceIndex=None):
 	fileName = "biologicalSimulationDynamic"
 	if(sentenceOrNetwork):
 		fileName = fileName + "Sentence"

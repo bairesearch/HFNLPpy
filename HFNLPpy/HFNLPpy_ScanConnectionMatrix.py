@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Biological Simulation Connection Matrix
+HFNLP Scan Connection Matrix
 
 """
 

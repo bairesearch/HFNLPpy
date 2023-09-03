@@ -1,4 +1,4 @@
-"""HFNLPpy_SANIGenerate.py
+"""HFNLPpy_DendriticSANIGenerate.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Biological Simulation Generate
+HFNLP Dendritic SANI Generate
 
 """
 
@@ -23,8 +23,8 @@ import numpy as np
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 import HFNLPpy_hopfieldOperations
-from HFNLPpy_SANIGlobalDefs import *
-from HFNLPpy_SANINode import *
+from HFNLPpy_DendriticSANIGlobalDefs import *
+from HFNLPpy_DendriticSANINode import *
 
 printVerbose = False
 
@@ -55,7 +55,7 @@ def addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptN
 			else:
 				#print("newSequentialSegmentSegmentInputIndex = ", newSequentialSegmentSegmentInputIndex)
 				currentSequentialSegment.inputs[newSequentialSegmentSegmentInputIndex] = currentSequentialSegmentInput
-			addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, SANIbiologicalPrototype=False, weight=weight, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, SANIbiologicalSimulation=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
+			addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, useAlgorithmDendriticSANIbiologicalPrototype=False, weight=weight, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, useAlgorithmDendriticSANIbiologicalSimulation=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
 		else:
 			currentSequentialSegmentInput = existingSequentialSegmentInput
 		
@@ -115,8 +115,8 @@ def addPredictiveSequenceToNeuronSubsequenceGeneration(conceptNeuron, sentenceIn
 	addPredictiveSequenceToNeuron(conceptNeuron, sentenceIndex, sentenceConceptNodeList, dendriticBranch, predictiveSequenceLength, dendriticSubBranchMaxW, branchIndex1, sequentialSegmentIndex, expectFurtherSubbranches)
 
 #adds predictive synapse such that subsequences occur in order
-def addPredictiveSynapseToNeuron(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, SANIbiologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, SANIbiologicalSimulation=False, nodeTargetSequentialSegmentInput=None):
-	HFNLPpy_hopfieldOperations.addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, SANIbiologicalPrototype=SANIbiologicalPrototype, weight=weight, subsequenceConnection=subsequenceConnection, contextConnection=contextConnection, contextConnectionSANIindex=contextConnectionSANIindex, SANIbiologicalSimulation=SANIbiologicalSimulation, nodeTargetSequentialSegmentInput=nodeTargetSequentialSegmentInput)
+def addPredictiveSynapseToNeuron(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, useAlgorithmDendriticSANIbiologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, useAlgorithmDendriticSANIbiologicalSimulation=False, nodeTargetSequentialSegmentInput=None):
+	HFNLPpy_hopfieldOperations.addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, useAlgorithmDendriticSANIbiologicalPrototype=useAlgorithmDendriticSANIbiologicalPrototype, weight=weight, subsequenceConnection=subsequenceConnection, contextConnection=contextConnection, contextConnectionSANIindex=contextConnectionSANIindex, useAlgorithmDendriticSANIbiologicalSimulation=useAlgorithmDendriticSANIbiologicalSimulation, nodeTargetSequentialSegmentInput=nodeTargetSequentialSegmentInput)
 																							
 def calculateNewSequentialSegmentInputIndex(currentSequentialSegment):
 	newSequentialSegmentSegmentInputIndex = len(currentSequentialSegment.inputs)

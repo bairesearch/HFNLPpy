@@ -1,4 +1,4 @@
-"""HFNLPpy_SANIPropagateStandard.py
+"""HFNLPpy_DendriticSANIPropagateStandard.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Biological Simulation Propagate Standard
+HFNLP Dendritic SANI Propagate Standard
 
 """
 
@@ -22,9 +22,9 @@ import numpy as np
 
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
-from HFNLPpy_SANIGlobalDefs import *
-from HFNLPpy_SANINode import *
-import HFNLPpy_SANIDraw
+from HFNLPpy_DendriticSANIGlobalDefs import *
+from HFNLPpy_DendriticSANINode import *
+import HFNLPpy_DendriticSANIDraw
 
 printVerbose = False
 printConnectionTargetActivations = False
@@ -54,12 +54,12 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateStandardEmulateVectorisedCo
 				for conceptNeuronSource in conceptNeuronSourceList:
 					if(simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, branchIndex1Target, sequentialSegmentIndexTarget, connectionTargetActivationFoundSet)):
 						somaActivationFound = True
-				HFNLPpy_SANIDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)
+				HFNLPpy_DendriticSANIDraw.drawBiologicalDendriticSANISequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)
 
 		if(activateTargetConnectionSomas(conceptNeuronSourceList, networkConceptNodeDict, conceptNeuronTarget, connectionTargetActivationFoundSet)):
 			somaActivationFound = True
 		 
-		HFNLPpy_SANIDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
+		HFNLPpy_DendriticSANIDraw.drawDendriticSANIDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
 
 		for conceptNeuronSource in conceptNeuronSourceList:
 			resetSourceNeuronAfterActivation(conceptNeuronSource)
@@ -86,12 +86,12 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandardEmulateVectorisedCom
 			for sequentialSegmentIndexTarget in sequentialSegmentSequence:
 				if(simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, branchIndex1Target, sequentialSegmentIndexTarget, connectionTargetActivationFoundSet)):
 					somaActivationFound = True			
-				HFNLPpy_SANIDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)
+				HFNLPpy_DendriticSANIDraw.drawBiologicalDendriticSANISequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, branchIndex1Target, sequentialSegmentIndexTarget, activationTime, wTarget=wTarget)
 
 		if(activateTargetConnectionSomas([conceptNeuronSource], networkConceptNodeDict, conceptNeuronTarget, connectionTargetActivationFoundSet)):
 			somaActivationFound = True
 		
-		HFNLPpy_SANIDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
+		HFNLPpy_DendriticSANIDraw.drawDendriticSANIDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
 
 		resetSourceNeuronAfterActivation(conceptNeuronSource)
 	
@@ -101,8 +101,8 @@ def verifyFindTargetConnection(conceptNeuronSourceList):
 	targetConnectionFound = False
 	if(emulateVectorisedComputationOrderVerifyTargetConnectionFound):
 		for conceptNeuronSource in conceptNeuronSourceList:
-			if(conceptNeuronSource.targetConnectionDict):	#dict not empty
-			#for targetConnectionConceptName, connectionList in conceptNeuronSource.targetConnectionDict.items():
+			if(conceptNeuronSource.HFtargetConnectionDict):	#dict not empty
+			#for targetConnectionConceptName, connectionList in conceptNeuronSource.HFtargetConnectionDict.items():
 				targetConnectionFound = True
 	else:
 		targetConnectionFound = True
@@ -112,7 +112,7 @@ def activateTargetConnectionSomas(conceptNeuronSourceList, networkConceptNodeDic
 	somaActivationFound = False
 	if(emulateVectorisedComputationOrderActivateSomaAfterFinishingPropagation):
 		for conceptNeuronSource in conceptNeuronSourceList:
-			for targetConnectionConceptName in conceptNeuronSource.targetConnectionDict.keys():
+			for targetConnectionConceptName in conceptNeuronSource.HFtargetConnectionDict.keys():
 				conceptNeuronConnectionTarget = networkConceptNodeDict[targetConnectionConceptName]
 				firstBranchActivationState = conceptNeuronConnectionTarget.dendriticTree.activationLevel	#requires storeBranchActivationState
 				somaActivationFoundCurrent = firstBranchActivationState
@@ -146,7 +146,7 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 	somaActivationFound = False	#is conceptNeuronTarget activated by its prior context?
 	conceptNeuronSource.activationLevel = objectAreaActivationLevelOn
 	
-	for targetConnectionConceptName, connectionList in conceptNeuronSource.targetConnectionDict.items():
+	for targetConnectionConceptName, connectionList in conceptNeuronSource.HFtargetConnectionDict.items():
 		conceptNeuronConnectionTarget = networkConceptNodeDict[targetConnectionConceptName] #or connectionList[ANY].nodeTarget
 		connectionTargetNeuronSet.add(conceptNeuronConnectionTarget)
 		for connection in connectionList:
@@ -166,7 +166,7 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 					#somaActivationFound = True
 
 			if(not emulateVectorisedComputationOrder):
-				HFNLPpy_SANIDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
+				HFNLPpy_DendriticSANIDraw.drawDendriticSANIDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)
 	
 	if(not emulateVectorisedComputationOrder):
 		resetSourceNeuronAfterActivation(conceptNeuronSource)
@@ -203,9 +203,9 @@ def simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget(networkC
 	#if(printVerbose):
 	#print("simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget: wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName)
 
-	if(conceptNeuronTarget.nodeName in conceptNeuronSource.targetConnectionDict):
+	if(conceptNeuronTarget.nodeName in conceptNeuronSource.HFtargetConnectionDict):
 		conceptNeuronSource.activationLevel = objectAreaActivationLevelOn
-		connectionList = conceptNeuronSource.targetConnectionDict[conceptNeuronTarget.nodeName]	#only trace connections between source neuron and target neuron
+		connectionList = conceptNeuronSource.HFtargetConnectionDict[conceptNeuronTarget.nodeName]	#only trace connections between source neuron and target neuron
 		for connection in connectionList:
 			connection.activationLevel = objectAreaActivationLevelOn
 			conceptNeuronConnectionTarget = connection.nodeTarget	#conceptNeuronConnectionTarget will be the same for all connection in connectionList (if targetConnectionConceptName == conceptNeuronTarget)
@@ -219,7 +219,7 @@ def simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget(networkC
 				#if(printVerbose):
 				#print("somaActivationFound")
 
-			HFNLPpy_SANIDraw.drawBiologicalSimulationDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)	
+			HFNLPpy_DendriticSANIDraw.drawDendriticSANIDynamicNeuronActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget=wTarget)	
 
 		if(resetSourceNeuronAxonAfterActivation):
 			resetAxonsActivationConnectionList(connectionList)
@@ -461,7 +461,7 @@ def calculateNeuronActivationSequentialSegment(connection, currentBranchIndex1, 
 								previousSequentialSegment.frozen = False
 
 						if(not emulateVectorisedComputationOrder):
-							HFNLPpy_SANIDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
+							HFNLPpy_DendriticSANIDraw.drawBiologicalDendriticSANISequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
 
 				else:
 					if(deactivateSequentialSegmentsIfTimeTestsFail):
@@ -474,7 +474,7 @@ def calculateNeuronActivationSequentialSegment(connection, currentBranchIndex1, 
 						currentSequentialSegment.activationTime = sequentialSegmentActivationTime	
 
 						if(not emulateVectorisedComputationOrder):
-							HFNLPpy_SANIDraw.drawBiologicalSimulationDynamicSequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
+							HFNLPpy_DendriticSANIDraw.drawBiologicalDendriticSANISequentialSegmentActivation(wSource, networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, currentBranchIndex1, currentSequentialSegmentIndex, activationTime, wTarget=wTarget)
 	else:
 		sequentialSegmentActivationState = sequentialSegmentActivationStatePrior
 		sequentialSegmentActivationLevel = sequentialSegmentActivationLevelPrior

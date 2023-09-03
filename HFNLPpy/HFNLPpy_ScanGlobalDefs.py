@@ -1,4 +1,4 @@
-"""HFNLPpy_SANIGlobalDefs.py
+"""HFNLPpy_DendriticSANIGlobalDefs.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Biological Simulation Global Defs
+HFNLP Scan Global Defs
 
 """
 

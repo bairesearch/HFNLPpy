@@ -24,42 +24,48 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 
 from HFNLPpy_globalDefs import *
-from HFNLPpy_SANINode import biologicalSimulationNodePropertiesInitialisation
-
+if(useAlgorithmLayeredSANIbiologicalSimulation):
+	from SANIHFNLPpy_LayeredSANINode import layeredSANINodePropertiesInitialisation
+if(useAlgorithmDendriticSANIbiologicalSimulation):
+	from HFNLPpy_DendriticSANINode import dendriticSANINodePropertiesInitialisation
 	
 storeConceptNodesByLemma = True	#else store by word (morphology included)
 convertLemmasToLowercase = True #required to ensure that capitalised start of sentence words are always converted to the same lemmas (irrespective of inconsistent propernoun detection)
 
 graphNodeTypeConcept = 1	#base/input neuron (network neuron)
+if(useAlgorithmLayeredSANIbiologicalSimulation):
+	graphNodeTypeSANIhidden = 2
 
 #if(biologicalImplementationReuseSynapticSubstrateForIdenticalSubsequences):
 graphNodeTypeStart = 5	#start of sequence - used by biologicalImplementationReuseSynapticSubstrateForIdenticalSubsequences only
 nodeNameStart = "SEQUENCESTARTNODE"
 
 class HopfieldNode:
-	def __init__(self, networkIndex, nodeName, wordVector, nodeGraphType, activationTime, w, sentenceIndex):
+	def __init__(self, networkIndex, nodeName, nodeGraphType, wordVector=None, w=0, sentenceIndex=0):
+			
 		#primary vars;
 		self.networkIndex = networkIndex
 		self.nodeName = str(nodeName)
 		self.wordVector = wordVector	#numpy array
 		#self.posTag = posTag	#nlp in context prediction only (not certain)
 		self.graphNodeType = nodeGraphType
-		self.activationLevel = False	#currently only used by drawBiologicalSimulationDynamic
-		self.activationTime = activationTime	#last activation time (used to calculate recency)	#not currently used
 		
 		#sentence artificial vars (for sentence graph only, do not generalise to network graph);	
 		self.w = w
 		self.sentenceIndex = sentenceIndex
-		
-		#connection vars;
-		self.sourceConnectionDict = {}
-		self.targetConnectionDict = {}
-		#self.sourceConnectionList = []
-		#self.targetConnectionList = []
+		#self.activationTime = calculateActivationTime(sentenceIndex)	#not used
 
-		if(SANIbiologicalSimulation):
-			biologicalSimulationNodePropertiesInitialisation(self)
-		if(ScanBiologicalSimulation):
+		#connection vars;
+		self.HFsourceConnectionDict = {}
+		self.HFtargetConnectionDict = {}
+		#self.HFsourceConnectionList = []
+		#self.HFtargetConnectionList = []
+
+		if(useAlgorithmLayeredSANIbiologicalSimulation):
+			layeredSANINodePropertiesInitialisation(self)
+		if(useAlgorithmDendriticSANIbiologicalSimulation):
+			dendriticSANINodePropertiesInitialisation(self)
+		if(useAlgorithmScanBiologicalSimulation):
 			#self.activationLevel = 0
 			self.activationState = False
 			self.activationStateFiltered = False
@@ -72,7 +78,7 @@ def calculateActivationTime(sentenceIndex):
 	
 #creation time
 def calculateSpatioTemporalIndex(sentenceIndex):
-	#for SANIbiologicalPrototype: e.g. 1) interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause); or 2) store spatiotemporal index synapses on separate dendritic branch
+	#for useAlgorithmDendriticSANIbiologicalPrototype: e.g. 1) interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause); or 2) store spatiotemporal index synapses on separate dendritic branch
 	spatioTemporalIndex = sentenceIndex
 	return spatioTemporalIndex
 

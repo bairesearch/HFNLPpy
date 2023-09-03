@@ -20,27 +20,39 @@ Contains shared HFNLP operations on HFNLPpy_hopfieldNodeClass/HFNLPpy_hopfieldCo
 """
 
 import numpy as np
+from HFNLPpy_globalDefs import *
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 
 
-def addConnectionToNode(nodeSource, nodeTarget, activationTime, spatioTemporalIndex, SANIbiologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, SANIbiologicalSimulation=False, nodeTargetSequentialSegmentInput=None):
-	connection = HopfieldConnection(nodeSource, nodeTarget, spatioTemporalIndex, activationTime, SANIbiologicalPrototype, SANIbiologicalSimulation)
-	#nodeSource.targetConnectionList.append(connection)
-	#nodeTarget.sourceConnectionList.append(connection)
-	#print("addConnectionToNode: nodeTarget.nodeName = ", nodeTarget.nodeName)
-	#print("addConnectionToNode: nodeSource.nodeName = ", nodeSource.nodeName)
-	createConnectionKeyIfNonExistant(nodeSource.targetConnectionDict, nodeTarget.nodeName)
-	createConnectionKeyIfNonExistant(nodeTarget.sourceConnectionDict, nodeSource.nodeName)
-	nodeSource.targetConnectionDict[nodeTarget.nodeName].append(connection)
-	nodeTarget.sourceConnectionDict[nodeSource.nodeName].append(connection)
-	#connection.subsequenceConnection = subsequenceConnection
-	if(SANIbiologicalPrototype):
-		connection.SANIbiologicalPrototype = SANIbiologicalPrototype
+def addConnectionToNode(nodeSource, nodeTarget, activationTime=-1, spatioTemporalIndex=-1, useAlgorithmDendriticSANIbiologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, useAlgorithmDendriticSANIbiologicalSimulation=False, nodeTargetSequentialSegmentInput=None):
+	connection = HopfieldConnection(nodeSource, nodeTarget, spatioTemporalIndex, activationTime, useAlgorithmDendriticSANIbiologicalPrototype)
+	if(assignSingleConnectionBetweenUniqueConceptPair):
+		nodeSource.HFtargetConnectionDict[nodeTarget.SANIlayerNeuronID] = connection
+		nodeTarget.HFsourceConnectionDict[nodeSource.SANIlayerNeuronID] = connection
+	else:
+		createConnectionKeyIfNonExistant(nodeSource.HFtargetConnectionDict, nodeTarget.nodeName)
+		createConnectionKeyIfNonExistant(nodeTarget.HFsourceConnectionDict, nodeSource.nodeName)
+		nodeSource.HFtargetConnectionDict[nodeTarget.nodeName].append(connection)
+		nodeTarget.HFsourceConnectionDict[nodeSource.nodeName].append(connection)
+		#connection.subsequenceConnection = subsequenceConnection
+	if(useAlgorithmDendriticSANIbiologicalPrototype):
+		connection.useAlgorithmDendriticSANIbiologicalPrototype = useAlgorithmDendriticSANIbiologicalPrototype
 		connection.weight = weight
 		connection.contextConnection = contextConnection
 		connection.contextConnectionSANIindex = contextConnectionSANIindex
-	if(SANIbiologicalSimulation):
-		connection.SANIbiologicalSimulation = SANIbiologicalSimulation
+	if(useAlgorithmDendriticSANIbiologicalSimulation):
+		connection.useAlgorithmDendriticSANIbiologicalSimulation = useAlgorithmDendriticSANIbiologicalSimulation
 		connection.nodeTargetSequentialSegmentInput = nodeTargetSequentialSegmentInput
 		connection.weight = weight
+
+def connectionExists(nodeSource, nodeTarget):
+	result = False
+	if(assignSingleConnectionBetweenUniqueConceptPair):
+		if(nodeTarget.SANIlayerNeuronID in nodeSource.HFtargetConnectionDict):
+			result = True
+	else:
+		if(nodeTarget.nodeName in nodeSource.HFtargetConnectionDict):
+			result = True
+	return result
+		

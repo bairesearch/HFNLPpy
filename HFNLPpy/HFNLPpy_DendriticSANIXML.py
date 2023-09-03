@@ -1,4 +1,4 @@
-"""HFNLPpy_SANIXML.py
+"""HFNLPpy_DendriticSANIXML.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -13,17 +13,17 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Biological Simulation XML - read/write graph XML file
+HFNLP Dendritic SANI XML - read/write graph XML file
 
 """
 
 from yattag import Doc, indent	#pythonic xml api
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
-from HFNLPpy_SANIGlobalDefs import *
-from HFNLPpy_SANINode import *
+from HFNLPpy_DendriticSANIGlobalDefs import *
+from HFNLPpy_DendriticSANINode import *
 
-def writeHopfieldGraphSentence(sentenceConceptNodeList, fileName, activationTime=None):
+def writeDentriticSANIGraphSentence(sentenceConceptNodeList, fileName, activationTime=None):
 	drawGraphNetwork = False
 	doc, tag, text, line = Doc().ttl()
 	#doc, tag, text = Doc().tagtext()
@@ -38,7 +38,7 @@ def writeHopfieldGraphSentence(sentenceConceptNodeList, fileName, activationTime
 	fileName = fileName + '.xml'
 	writeStringToFile(fileName, string)
 			
-def writeHopfieldGraphNetwork(networkConceptNodeDict, fileName, activationTime=None):
+def writeDentriticSANIGraphNetwork(networkConceptNodeDict, fileName, activationTime=None):
 	drawGraphNetwork = True
 	doc, tag, text, line = Doc().ttl()
 	#doc, tag, text = Doc().tagtext()
@@ -99,7 +99,7 @@ def writeHopfieldGraphNodeSequentialSegmentInput(doc, tag, text, line, conceptNo
 	#NA
 
 def writeHopfieldGraphNodeConnections(doc, tag, text, line, hopfieldGraphNode, drawGraphNetwork, activationTime, sentenceConceptNodeList=None):
-	for connectionKey, connectionList in hopfieldGraphNode.targetConnectionDict.items():
+	for connectionKey, connectionList in hopfieldGraphNode.HFtargetConnectionDict.items():
 		with tag('connectionList', key=connectionKey):
 			for connectionIndex, connection in enumerate(connectionList):
 				writeHopfieldGraphConnection(doc, tag, text, line, connection, connectionIndex, drawGraphNetwork, activationTime, sentenceConceptNodeList)
@@ -109,7 +109,7 @@ def writeHopfieldGraphConnection(doc, tag, text, line, connection, connectionInd
 	node1 = connection.nodeSource
 	node2 = connection.nodeTargetSequentialSegmentInput
 	nodeTargetSequentialSegmentInputText = node2.nodeName	#name attribute is added for axon connectivity lookup
-	if(drawGraphNetwork or (node2.conceptNode in sentenceConceptNodeList)):	#if HFNLPpy_SANIDrawSentence: ensure target node is in sentence (such that connection can be drawn) - see drawHopfieldGraphNodeConnections
+	if(drawGraphNetwork or (node2.conceptNode in sentenceConceptNodeList)):	#if HFNLPpy_DendriticSANIDrawSentence: ensure target node is in sentence (such that connection can be drawn) - see drawHopfieldGraphNodeConnections
 		with tag('connection', connectionIndex=connectionIndex, nodeTargetSequentialSegmentInput=nodeTargetSequentialSegmentInputText, activationState=activationState):	
 			pass
 			#doc.stag('connection', nodeTargetSequentialSegmentInput=nodeTargetSequentialSegmentInputText, activationState=activationState) 	#inline tag

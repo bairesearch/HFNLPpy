@@ -20,28 +20,33 @@ HFNLP - global defs
 printVerbose = True
 
 #select HFNLP algorithm;
-ScanBiologicalSimulation = True
-SANIbiologicalSimulation = False	#simulate sequential activation of dendritic input 
-#useAlgorithmArtificial = False	#default
+useAlgorithmLayeredSANIbiologicalSimulation = False
+useAlgorithmScanBiologicalSimulation = True
+useAlgorithmDendriticSANIbiologicalSimulation = False	#simulate sequential activation of dendritic input 
+useAlgorithmArtificial = False	#default
+useAlgorithmDendriticSANIbiologicalPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
 
-SANIbiologicalPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
-
+if(useAlgorithmLayeredSANIbiologicalSimulation):
+	assignSingleConnectionBetweenUniqueConceptPair = True	#only 1 connection between each unique concept node; record connection strength
+else:
+	assignSingleConnectionBetweenUniqueConceptPair = False
+	
 useDependencyParseTree = False	#initialise (dependent var)
-if(ScanBiologicalSimulation):
+if(useAlgorithmLayeredSANIbiologicalSimulation):
 	useDependencyParseTree = False
-elif(SANIbiologicalSimulation):
-	from HFNLPpy_SANIGlobalDefs import biologicalSimulationEncodeSyntaxInDendriticBranchStructure
+elif(useAlgorithmScanBiologicalSimulation):
+	useDependencyParseTree = False
+elif(useAlgorithmDendriticSANIbiologicalSimulation):
+	from HFNLPpy_DendriticSANIGlobalDefs import biologicalSimulationEncodeSyntaxInDendriticBranchStructure
 	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 		useDependencyParseTree = True
 	else:
 		useDependencyParseTree = False
 else:
 	useDependencyParseTree = True
-		
+	biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False
+	
 if(useDependencyParseTree):
-	import SPNLPpy_globalDefs
-	if(not SPNLPpy_globalDefs.useSPNLPcustomSyntacticalParser):
-		SPNLPpy_syntacticalGraph.SPNLPpy_syntacticalGraphConstituencyParserFormal.initalise(spacyWordVectorGenerator)
 	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 		identifySyntacticalDependencyRelations = True	#optional
 		#configuration notes:
@@ -51,15 +56,17 @@ if(useDependencyParseTree):
 		#if supportForNonBinarySubbranchSize True, dendriticTree will support 2+ subbranches, with inputs adjusted by weight depending on number of subbranches expected to be activated
 		#if supportForNonBinarySubbranchSize False, constituency/dependency parser must produce a binary parse tree (or disable biologicalSimulationEncodeSyntaxInDendriticBranchStructureDirect)
 		if(not identifySyntacticalDependencyRelations):
-			print("SANIbiologicalSimulation constituency parse tree support has not yet been implemented: synapses are created in most distal branch segments only - requires dendritic tree propagation algorithm mod")
+			print("useAlgorithmDendriticSANIbiologicalSimulation constituency parse tree support has not yet been implemented: synapses are created in most distal branch segments only - requires dendritic tree propagation algorithm mod")
 			exit()
 	else:
 		identifySyntacticalDependencyRelations = True	#mandatory 	#standard hopfield NLP graph requires words are connected (no intermediary constituency parse tree syntax nodes) 
 
 drawHopfieldGraph = False
-if(ScanBiologicalSimulation):
+if(useAlgorithmLayeredSANIbiologicalSimulation):
+	drawHopfieldGraph = False
+elif(useAlgorithmScanBiologicalSimulation):
 	drawHopfieldGraph = False	#default: False - typically use drawBiologicalSimulation only
-elif(SANIbiologicalSimulation):
+elif(useAlgorithmDendriticSANIbiologicalSimulation):
 	drawHopfieldGraph = False	#default: False - typically use drawBiologicalSimulation only
 else:
 	drawHopfieldGraph = True
@@ -69,6 +76,10 @@ if(drawHopfieldGraph):
 	drawHopfieldGraphSave = False
 	drawHopfieldGraphSentence = False
 	drawHopfieldGraphNetwork = True	#default: True	#draw graph for entire network (not just sentence)
+
+#initialise (dependent var)
+seedHFnetworkSubsequence = False
+HFNLPnonrandomSeed = False
 
 def printe(str):
 	print(str)

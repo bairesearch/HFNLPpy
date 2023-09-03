@@ -1,4 +1,4 @@
-"""HFNLPpy_SANI.py
+"""HFNLPpy_DendriticSANI.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Biological Simulation - simulate training/inference of biological hopfield graph/network based on textual input
+HFNLP Dendritic SANI - simulate training/inference of biological hopfield graph/network based on textual input
 
 pseudo code;
 for every time step/concept neuron (word w):
@@ -40,14 +40,14 @@ import numpy as np
 
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
-from HFNLPpy_SANIGlobalDefs import *
-from HFNLPpy_SANINode import *
-import HFNLPpy_SANIGenerate
+from HFNLPpy_DendriticSANIGlobalDefs import *
+from HFNLPpy_DendriticSANINode import *
+import HFNLPpy_DendriticSANIGenerate
 if(vectoriseComputation):
-	import HFNLPpy_SANIPropagateVectorised
+	import HFNLPpy_DendriticSANIPropagateVectorised
 else:
-	import HFNLPpy_SANIPropagateStandard
-import HFNLPpy_SANIDraw
+	import HFNLPpy_DendriticSANIPropagateStandard
+import HFNLPpy_DendriticSANIDraw
 
 printVerbose = False
 
@@ -114,17 +114,17 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 			
 	resetConnectionTargetNeurons(connectionTargetNeuronSet, False)
 
-	HFNLPpy_SANIDraw.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, numberOfSentences)
+	HFNLPpy_DendriticSANIDraw.drawDendriticSANIStatic(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, numberOfSentences)
 
 def trainBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences):
 	simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences)	
 
 
-#if (!SANIbiologicalSimulation:useDependencyParseTree):
+#if (!useAlgorithmDendriticSANIbiologicalSimulation:useDependencyParseTree):
 
 def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences):
 
-	#cannot clear now as HFNLPpy_SANIDrawSentence/HFNLPpy_SANIDrawNetwork memory structure is not independent (diagnose reason for this);
+	#cannot clear now as HFNLPpy_DendriticSANIDrawSentence/HFNLPpy_DendriticSANIDrawNetwork memory structure is not independent (diagnose reason for this);
 	
 	sentenceLength = len(sentenceConceptNodeList)
 	
@@ -159,14 +159,14 @@ def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceInd
 				addPredictiveSequenceToNeuron = True
 			if(addPredictiveSequenceToNeuron):
 				print("addPredictiveSequenceToNeuron")
-				HFNLPpy_SANIGenerate.addPredictiveSequenceToNeuron(conceptNeuronTarget, sentenceIndex, sentenceConceptNodeList, conceptNeuronTarget.dendriticTree, predictiveSequenceLength, dendriticBranchMaxW, 0, 0, expectFurtherSubbranches)
+				HFNLPpy_DendriticSANIGenerate.addPredictiveSequenceToNeuron(conceptNeuronTarget, sentenceIndex, sentenceConceptNodeList, conceptNeuronTarget.dendriticTree, predictiveSequenceLength, dendriticBranchMaxW, 0, 0, expectFurtherSubbranches)
 			else:
 				print("")	#add new line
 				
 	#reset dendritic trees
 	resetConnectionTargetNeurons(connectionTargetNeuronSet, False)
 
-	HFNLPpy_SANIDraw.drawBiologicalSimulationStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences)
+	HFNLPpy_DendriticSANIDraw.drawDendriticSANIStatic(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences)
 
 			
 def simulateBiologicalHFnetworkSequenceNodePropagateWrapper(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, connectionTargetNeuronSet):
@@ -187,26 +187,26 @@ def simulateBiologicalHFnetworkSequenceNodePropagateWrapper(networkConceptNodeDi
 def simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet):
 	print("simulateBiologicalHFnetworkSequenceNodePropagateForward: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName)	
 	if(vectoriseComputationCurrentDendriticInput):
-		somaActivationFound = HFNLPpy_SANIPropagateVectorised.simulateBiologicalHFnetworkSequenceNodePropagateParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)
+		somaActivationFound = HFNLPpy_DendriticSANIPropagateVectorised.simulateBiologicalHFnetworkSequenceNodePropagateParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)
 	else:
 		if(emulateVectorisedComputationOrder):
-			somaActivationFound = HFNLPpy_SANIPropagateStandard.simulateBiologicalHFnetworkSequenceNodePropagateStandardEmulateVectorisedComputationOrder(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)					
+			somaActivationFound = HFNLPpy_DendriticSANIPropagateStandard.simulateBiologicalHFnetworkSequenceNodePropagateStandardEmulateVectorisedComputationOrder(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)					
 		else:
-			somaActivationFound = HFNLPpy_SANIPropagateStandard.simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)			
+			somaActivationFound = HFNLPpy_DendriticSANIPropagateStandard.simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)			
 	return somaActivationFound
 
 def simulateBiologicalHFnetworkSequenceNodesPropagateForward(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSourceList, connectionTargetNeuronSet):
 	if(vectoriseComputationCurrentDendriticInput):
-		somaActivationFound = HFNLPpy_SANIPropagateVectorised.simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)
+		somaActivationFound = HFNLPpy_DendriticSANIPropagateVectorised.simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)
 	else:
 		if(emulateVectorisedComputationOrder):
-			somaActivationFound = HFNLPpy_SANIPropagateStandard.simulateBiologicalHFnetworkSequenceNodesPropagateStandardEmulateVectorisedComputationOrder(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)				
+			somaActivationFound = HFNLPpy_DendriticSANIPropagateStandard.simulateBiologicalHFnetworkSequenceNodesPropagateStandardEmulateVectorisedComputationOrder(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)				
 		else:
-			somaActivationFound = HFNLPpy_SANIPropagateStandard.simulateBiologicalHFnetworkSequenceNodesPropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)			
+			somaActivationFound = HFNLPpy_DendriticSANIPropagateStandard.simulateBiologicalHFnetworkSequenceNodesPropagateStandard(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet)			
 	return somaActivationFound
 	
 def simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget):
-	somaActivationFound = HFNLPpy_SANIPropagateStandard.simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget)
+	somaActivationFound = HFNLPpy_DendriticSANIPropagateStandard.simulateBiologicalHFnetworkSequenceNodePropagateReverseLookup(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget)
 	return somaActivationFound
 	
 #independent method (does not need to be executed in order of wSource)
