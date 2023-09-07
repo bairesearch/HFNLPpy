@@ -101,8 +101,8 @@ def verifyFindTargetConnection(conceptNeuronSourceList):
 	targetConnectionFound = False
 	if(emulateVectorisedComputationOrderVerifyTargetConnectionFound):
 		for conceptNeuronSource in conceptNeuronSourceList:
-			if(conceptNeuronSource.HFtargetConnectionDict):	#dict not empty
-			#for targetConnectionConceptName, connectionList in conceptNeuronSource.HFtargetConnectionDict.items():
+			if(conceptNeuronSource.HFcontextTargetConnectionDict):	#dict not empty
+			#for targetConnectionConceptName, connectionList in conceptNeuronSource.HFcontextTargetConnectionDict.items():
 				targetConnectionFound = True
 	else:
 		targetConnectionFound = True
@@ -112,7 +112,7 @@ def activateTargetConnectionSomas(conceptNeuronSourceList, networkConceptNodeDic
 	somaActivationFound = False
 	if(emulateVectorisedComputationOrderActivateSomaAfterFinishingPropagation):
 		for conceptNeuronSource in conceptNeuronSourceList:
-			for targetConnectionConceptName in conceptNeuronSource.HFtargetConnectionDict.keys():
+			for targetConnectionConceptName in conceptNeuronSource.HFcontextTargetConnectionDict.keys():
 				conceptNeuronConnectionTarget = networkConceptNodeDict[targetConnectionConceptName]
 				firstBranchActivationState = conceptNeuronConnectionTarget.dendriticTree.activationLevel	#requires storeBranchActivationState
 				somaActivationFoundCurrent = firstBranchActivationState
@@ -146,7 +146,7 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 	somaActivationFound = False	#is conceptNeuronTarget activated by its prior context?
 	conceptNeuronSource.activationLevel = objectAreaActivationLevelOn
 	
-	for targetConnectionConceptName, connectionList in conceptNeuronSource.HFtargetConnectionDict.items():
+	for targetConnectionConceptName, connectionList in conceptNeuronSource.HFcontextTargetConnectionDict.items():
 		conceptNeuronConnectionTarget = networkConceptNodeDict[targetConnectionConceptName] #or connectionList[ANY].nodeTarget
 		connectionTargetNeuronSet.add(conceptNeuronConnectionTarget)
 		for connection in connectionList:
@@ -203,9 +203,9 @@ def simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget(networkC
 	#if(printVerbose):
 	#print("simulateBiologicalHFnetworkSequenceNodeTrainPropagateSpecificTarget: wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName)
 
-	if(conceptNeuronTarget.nodeName in conceptNeuronSource.HFtargetConnectionDict):
+	if(conceptNeuronTarget.nodeName in conceptNeuronSource.HFcontextTargetConnectionDict):
 		conceptNeuronSource.activationLevel = objectAreaActivationLevelOn
-		connectionList = conceptNeuronSource.HFtargetConnectionDict[conceptNeuronTarget.nodeName]	#only trace connections between source neuron and target neuron
+		connectionList = conceptNeuronSource.HFcontextTargetConnectionDict[conceptNeuronTarget.nodeName]	#only trace connections between source neuron and target neuron
 		for connection in connectionList:
 			connection.activationLevel = objectAreaActivationLevelOn
 			conceptNeuronConnectionTarget = connection.nodeTarget	#conceptNeuronConnectionTarget will be the same for all connection in connectionList (if targetConnectionConceptName == conceptNeuronTarget)

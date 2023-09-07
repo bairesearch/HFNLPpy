@@ -26,6 +26,7 @@ from HFNLPpy_ScanGlobalDefs import *
 from ANNtf2_loadDataset import datasetFolderRelative
 
 def updateOrAddConnectionToGraph(neuronNamelist, HFconnectionGraph, sourceNeuronID, targetNeuronID):
+	#contextConnection=False
 	if(edgeExists(HFconnectionGraph.edge_index, sourceNeuronID, targetNeuronID)):
 		edge_index = getEdgeIndex(HFconnectionGraph.edge_index, sourceNeuronID, targetNeuronID)
 		HFconnectionGraph.edge_attr[edge_index] += HFconnectionWeightObs

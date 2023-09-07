@@ -27,10 +27,12 @@ class HopfieldConnection:
 		#primary vars;
 		self.nodeSource = nodeSource
 		self.nodeTarget = nodeTarget	#for useAlgorithmDendriticSANIbiologicalPrototype: interpret as axon synapse
+		self.contextConnection = False	#else causalConnection (next word prediction)
+		self.weight = 1.0	
 		
 		if(useAlgorithmLayeredSANIbiologicalSimulation):
 			self.SANIactivationState = False
-			self.SANIassociationStrength = 0
+			self.weight = 0	#SANIassociationStrength
 			self.SANInodeAssigned = False
 			self.SANInode = None
 			self.activationStatePartial = False	#always false
@@ -39,12 +41,10 @@ class HopfieldConnection:
 			#for useAlgorithmDendriticSANIbiologicalPrototype: interpret connection as unique synapse
 			self.useAlgorithmDendriticSANIbiologicalPrototype = True
 			self.spatioTemporalIndex = spatioTemporalIndex	#creation time (not used by biological implementation)		#for useAlgorithmDendriticSANIbiologicalPrototype: e.g. 1) interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause); or 2) store spatiotemporal index synapses on separate dendritic branch
-			self.weight = 1.0	
-			self.contextConnection = False
 			self.contextConnectionSANIindex = 0
 		if(useAlgorithmDendriticSANIbiologicalSimulation):
 			#for useAlgorithmDendriticSANIbiologicalSimulation: interpret connection as unique synapse
 			self.activationLevel = False	#currently only used by drawBiologicalSimulationDynamic
 			self.nodeTargetSequentialSegmentInput = None
-			self.weight = 1.0	#for weightedSequentialSegmentInputs only
+			#weight for weightedSequentialSegmentInputs only
 			self.objectType = objectTypeConnection

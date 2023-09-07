@@ -29,7 +29,10 @@ if(highResolutionFigure):
 	saveFigDPI = 300	#approx HD	#depth per inch
 	saveFigSize = (16,9)	#(9,9)	#in inches
 	
-drawHopfieldGraphEdgeColoursWeights = True
+drawHopfieldGraphEdgeColours = True
+drawHopfieldGraphEdgeWeights = False
+if(drawHopfieldGraphEdgeColours or drawHopfieldGraphEdgeWeights):
+	drawHopfieldGraphEdgeColoursWeights = True
 if(useAlgorithmScanBiologicalSimulation):
 	drawHopfieldGraphNodeColours = True	#colour activated nodes
 else:
@@ -86,13 +89,18 @@ def drawHopfieldGraphNetwork(networkConceptNodeDict):
 			
 def drawHopfieldGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList=None):
 	if(assignSingleConnectionBetweenUniqueConceptPair):
-		for connectionKey, connection in hopfieldGraphNode.HFtargetConnectionDict.items():
+		for connectionKey, connection in hopfieldGraphNode.HFcontextTargetConnectionDict.items():
+			drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
+		for connectionKey, connection in hopfieldGraphNode.HFcausalTargetConnectionDict.items():
 			drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
 	else:
-		for connectionKey, connectionList in hopfieldGraphNode.HFtargetConnectionDict.items():
+		for connectionKey, connectionList in hopfieldGraphNode.HFcontextTargetConnectionDict.items():
 			for connection in connectionList:
 				drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
-			
+		for connectionKey, connectionList in hopfieldGraphNode.HFcausalTargetConnectionDict.items():
+			for connection in connectionList:
+				drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
+				
 #def drawHopfieldGraphNodeAndConnections(hopfieldGraphNode, networkSize, drawGraphNetwork, sentenceConceptNodeList=None):	
 #	#parse tree and generate nodes and connections
 #	drawHopfieldGraphNode(hopfieldGraphNode, networkSize)
@@ -122,16 +130,18 @@ def drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNod
 	#print("drawHopfieldGraphConnection: node1 = ", node1.nodeName, ", node2 = ", node2.nodeName)
 	#spatioTemporalIndex = connection.spatioTemporalIndex
 	if(drawGraphNetwork or (node2 in sentenceConceptNodeList)):	#if HFNLPpy_hopfieldGraphDraw: ensure target node is in sentence (such that connection can be drawn) - see drawHopfieldGraphNodeConnections
-		if(drawHopfieldGraphEdgeColoursWeights):
-			if(connection.useAlgorithmDendriticSANIbiologicalPrototype):
-				if(connection.contextConnection):
-					color = 'blue'
-				else:
-					color = 'red'
-				weight = connection.weight
+		if(drawHopfieldGraphEdgeColours):
+			if(connection.contextConnection):
+				color = 'blue'
 			else:
 				color = 'red'
-				weight = 1.0
+		else:
+			color = 'black'
+		if(drawHopfieldGraphEdgeWeights):
+			weight = connection.weight
+		else:
+			weight = 1.0
+		if(drawHopfieldGraphEdgeColoursWeights):
 			hopfieldGraph.add_edge(node1.nodeName, node2.nodeName, color=color, weight=weight)	#FUTURE: consider setting color based on spatioTemporalIndex
 		else:
 			hopfieldGraph.add_edge(node1.nodeName, node2.nodeName)

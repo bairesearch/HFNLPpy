@@ -99,7 +99,7 @@ def writeHopfieldGraphNodeSequentialSegmentInput(doc, tag, text, line, conceptNo
 	#NA
 
 def writeHopfieldGraphNodeConnections(doc, tag, text, line, hopfieldGraphNode, drawGraphNetwork, activationTime, sentenceConceptNodeList=None):
-	for connectionKey, connectionList in hopfieldGraphNode.HFtargetConnectionDict.items():
+	for connectionKey, connectionList in hopfieldGraphNode.HFcontextTargetConnectionDict.items():
 		with tag('connectionList', key=connectionKey):
 			for connectionIndex, connection in enumerate(connectionList):
 				writeHopfieldGraphConnection(doc, tag, text, line, connection, connectionIndex, drawGraphNetwork, activationTime, sentenceConceptNodeList)

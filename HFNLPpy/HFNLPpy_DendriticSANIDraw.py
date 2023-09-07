@@ -39,7 +39,7 @@ if(highResolutionFigure):
 debugOnlyDrawTargetNeuron = False
 debugOnlyDrawActiveBranches = False
 
-drawDendriticSANIGraphEdgeColoursWeights = True
+drawDendriticSANIGraphEdgeColoursWeights = True	#mandatory
 drawDendriticSANIGraphNodeColours = True	#node colours not yet coded (pos type of concept node will be different depending on connectivity/instance context)
 graphTransparency = 0.5
 
@@ -178,7 +178,7 @@ def drawDendriticSANIGraphNetwork(networkConceptNodeDict, activationTime=None, w
 			drawDendriticSANIGraphNodeConnections(conceptNode, drawGraphNetwork, activationTime)
 
 def drawDendriticSANIGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, activationTime, sentenceConceptNodeList=None):
-	for connectionKey, connectionList in hopfieldGraphNode.HFtargetConnectionDict.items():
+	for connectionKey, connectionList in hopfieldGraphNode.HFcontextTargetConnectionDict.items():
 		for connection in connectionList:
 			drawDendriticSANIGraphConnection(connection, drawGraphNetwork, activationTime, sentenceConceptNodeList)
 			

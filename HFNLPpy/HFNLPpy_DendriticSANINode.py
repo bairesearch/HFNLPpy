@@ -296,7 +296,7 @@ def resetDendriticTreeActivationVectorised(conceptNeuron):
 
 def resetAxonsActivation(conceptNeuron):
 	conceptNeuron.activationLevel = objectAreaActivationLevelOff
-	for targetConnectionConceptName, connectionList in conceptNeuron.HFtargetConnectionDict.items():
+	for targetConnectionConceptName, connectionList in conceptNeuron.HFcontextTargetConnectionDict.items():
 		resetAxonsActivationConnectionList(connectionList)
 
 def resetAxonsActivationConnectionList(connectionList):
@@ -304,7 +304,7 @@ def resetAxonsActivationConnectionList(connectionList):
 		connection.activationLevel = objectAreaActivationLevelOff
 
 def resetBranchActivationRecurse(currentBranch):
-	resetBranchActivation(currentBranch)									
+	resetBranchActivation(currentBranch)
 	for subbranch in currentBranch.subbranches:	
 		resetBranchActivationRecurse(subbranch)
 

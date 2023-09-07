@@ -56,8 +56,10 @@ class HopfieldNode:
 		#self.activationTime = calculateActivationTime(sentenceIndex)	#not used
 
 		#connection vars;
-		self.HFsourceConnectionDict = {}
-		self.HFtargetConnectionDict = {}
+		self.HFcontextSourceConnectionDict = {}
+		self.HFcontextTargetConnectionDict = {}
+		self.HFcausalSourceConnectionDict = {}
+		self.HFcausalTargetConnectionDict = {}
 		#self.HFsourceConnectionList = []
 		#self.HFtargetConnectionList = []
 
