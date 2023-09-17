@@ -25,6 +25,10 @@ useAlgorithmDendriticSANIbiologicalSimulation = True	#simulate sequential activa
 useAlgorithmScanBiologicalSimulation = False
 useAlgorithmArtificial = False	#default
 useAlgorithmDendriticSANIbiologicalPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
+
+tokenWordnetSynonyms = True	#requires spacy nltk:wordnet
+if(tokenWordnetSynonyms):
+	tokenWordnetSynonymsFromLemma = False
 	
 useDependencyParseTree = False	#initialise (dependent var)
 if(useAlgorithmLayeredSANIbiologicalSimulation):

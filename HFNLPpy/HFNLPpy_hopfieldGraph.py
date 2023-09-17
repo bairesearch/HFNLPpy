@@ -98,7 +98,10 @@ def generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentenc
 
 def regenerateGraphNodes(neuronNamelist):
 	#regenerates graph nodes from a saved list
+	sentence = ' '.join(neuronNamelist)
+	tokenisedSentence = tokeniseSentence(sentence)
 	for neuronID, nodeName in enumerate(neuronNamelist):	
+		token = tokenisedSentence[neuronID]
 		networkIndex = getNetworkIndex()
 		nodeGraphType = graphNodeTypeConcept
 		wordVector = None	#getTokenWordVector(token)	#numpy word vector	#not used by useAlgorithmScanBiologicalSimulation
@@ -107,6 +110,7 @@ def regenerateGraphNodes(neuronNamelist):
 		sentenceIndex = 0	#sentence artificial var (not used)
 		
 		conceptNode = HopfieldNode(networkIndex, nodeName, nodeGraphType, wordVector, w, sentenceIndex)
+		getTokenSynonyms(conceptNode, token)
 		'''
 		if(useAlgorithmLayeredSANIbiologicalSimulation):
 			print("not supported")
@@ -139,6 +143,8 @@ def generateHopfieldGraphSentenceNodes(tokenisedSentence, sentenceIndex, sentenc
 			#posTag = getTokenPOStag(token)	#not used
 			
 			conceptNode = HopfieldNode(networkIndex, nodeName, nodeGraphType, wordVector, w, sentenceIndex)
+			getTokenSynonyms(conceptNode, token)
+
 			addNodeToGraph(conceptNode)
 			if(printVerbose):
 				print("create new conceptNode; ", conceptNode.nodeName)
@@ -303,6 +309,11 @@ def getTokenPOStag(token):
 	posTag = token.pos_
 	return posTag
 
+def getTokenSynonyms(conceptNode, token=None):
+	if(tokenWordnetSynonyms):
+		if(tokenWordnetSynonymsFromLemma):
+			token = spacyWordVectorGenerator(conceptNode.nodeName)
+		conceptNode.synonymsList = HFNLPpy_hopfieldOperations.getTokenSynonyms(token)
 
 #creation/access time:
 

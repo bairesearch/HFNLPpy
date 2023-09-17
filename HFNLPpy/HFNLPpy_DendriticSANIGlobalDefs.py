@@ -24,6 +24,10 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 
 
+#### concept connections ####
+
+linkSimilarConceptNodes = True	#requires HFNLPpy_globalDefs:tokenWordnetSynonyms
+
 #### dendritic structure type ####
 
 DendriticSANIbiologicalSimulationSimple = True	#single dendritic branch with multiple overloaded segments	#does not support resetConnectionTargetNeuronDendriteDuringActivation
@@ -33,6 +37,7 @@ DendriticSANIbiologicalSimulationSimple = True	#single dendritic branch with mul
 selectActivatedTop = True	#select activated top k target neurons during propagation test
 if(selectActivatedTop):
 	selectActivatedTopK = 3
+	selectActivatedTopAccumulateActivationsAcrossSubbranches = True
 	
 #### computation type ####
 

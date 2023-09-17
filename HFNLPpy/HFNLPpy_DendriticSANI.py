@@ -48,6 +48,7 @@ if(vectoriseComputation):
 else:
 	import HFNLPpy_DendriticSANIPropagateStandard
 import HFNLPpy_DendriticSANIDraw
+import HFNLPpy_hopfieldOperations
 
 printVerbose = False
 
@@ -83,10 +84,7 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 			else:
 				somaActivationFound = simulateBiologicalHFnetworkSequenceNodesPropagateForward(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSourceList, connectionTargetNeuronSetLocal)
 			
-			if(selectActivatedTop):
-				connectionTargetNeuronSetLocalFiltered = selectTopKactivatedNeurons(connectionTargetNeuronSetLocal)
-			else:
-				connectionTargetNeuronSetLocalFiltered = connectionTargetNeuronSetLocal
+			connectionTargetNeuronSetLocalFiltered = selectActivatedNeurons(networkConceptNodeDict, connectionTargetNeuronSetLocal)
 				
 			conceptNeuronSourceList.clear()
 			for connectionTargetNeuron in connectionTargetNeuronSetLocalFiltered:
@@ -233,6 +231,15 @@ def simulateBiologicalHFnetworkSequenceNodePropagateForwardFull(networkConceptNo
 		
 	return somaActivationFound
 
+def selectActivatedNeurons(networkConceptNodeDict, connectionTargetNeuronSet):
+	connectionTargetNeuronSetLocalFiltered = connectionTargetNeuronSet
+	if(linkSimilarConceptNodes):
+		connectionTargetNeuronSetLocalFiltered = HFNLPpy_hopfieldOperations.retrieveSimilarConcepts(networkConceptNodeDict, connectionTargetNeuronSetLocalFiltered)
+	if(selectActivatedTop):
+		connectionTargetNeuronSetLocalFiltered = selectTopKactivatedNeurons(connectionTargetNeuronSetLocalFiltered)
+	return connectionTargetNeuronSetLocalFiltered
+	
+
 def selectTopKactivatedNeurons(connectionTargetNeuronSetLocal):
 	selectActivatedTopKChecked = max([selectActivatedTopK, len(connectionTargetNeuronSetLocal)])
 	connectionTargetNeuronList = list(connectionTargetNeuronSetLocal)
@@ -240,8 +247,8 @@ def selectTopKactivatedNeurons(connectionTargetNeuronSetLocal):
 	for targetNeuron in connectionTargetNeuronList:
 		activationStrength = calculateNeuronActivationStrength(targetNeuron)
 		connectionTargetNeuronActivationStrengthList.append(activationStrength)
-	print("connectionTargetNeuronActivationStrengthList = ", connectionTargetNeuronActivationStrengthList)
-	print("len(connectionTargetNeuronList) = ", len(connectionTargetNeuronList))
+	#print("connectionTargetNeuronActivationStrengthList = ", connectionTargetNeuronActivationStrengthList)
+	#print("len(connectionTargetNeuronList) = ", len(connectionTargetNeuronList))
 	connectionTargetNeuronListFiltered = sortListByList(connectionTargetNeuronList, connectionTargetNeuronActivationStrengthList)
 	connectionTargetNeuronListFiltered = connectionTargetNeuronListFiltered[0:selectActivatedTopKChecked]
 	connectionTargetNeuronSetLocalFiltered = set(connectionTargetNeuronListFiltered)

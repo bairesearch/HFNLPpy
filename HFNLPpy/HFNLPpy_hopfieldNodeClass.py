@@ -62,18 +62,19 @@ class HopfieldNode:
 		self.HFcausalSourceConnectionDict = {}
 		self.HFcausalTargetConnectionDict = {}
 		if(useAlgorithmLayeredSANIbiologicalSimulation):
+			#only 1 connection between each unique concept node; record connection strength [for a particular SANI layer]
 			self.HFcontextSourceConnectionLayeredDict = {}
 			self.HFcontextTargetConnectionLayeredDict = {}
 			self.HFcausalSourceConnectionLayeredDict = {}
 			self.HFcausalTargetConnectionLayeredDict = {}
 		if(useAlgorithmDendriticSANIbiologicalSimulation):
-			#assign multiple connections between each unique concept node
+			#multiple connections between each unique concept node [targeting different dendritic input synapses]
 			self.HFcontextSourceConnectionMultiDict = {}
 			self.HFcontextTargetConnectionMultiDict = {}
 			self.HFcausalSourceConnectionMultiDict = {}
 			self.HFcausalTargetConnectionMultiDict = {}
-		#self.HFsourceConnectionList = []
-		#self.HFtargetConnectionList = []
+		#self.HFsourceConnectionList = []	#legacy (no fast access)
+		#self.HFtargetConnectionList = []	#legacy (no fast access)
 
 		if(useAlgorithmLayeredSANIbiologicalSimulation):
 			layeredSANINodePropertiesInitialisation(self)
@@ -83,6 +84,9 @@ class HopfieldNode:
 			#self.activationLevel = 0
 			self.activationState = False
 			self.activationStateFiltered = False
+			
+		if(tokenWordnetSynonyms):
+			self.synonymsList = []
 
 								
 #last access time	
