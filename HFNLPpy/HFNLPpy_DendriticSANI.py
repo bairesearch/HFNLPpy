@@ -265,3 +265,15 @@ def sortListByList(A, B):
         B.pop(index)
     return sorted_A
 		
+
+def connectionExists(nodeSource, nodeTarget, contextConnection):
+	result = False
+	if(contextConnection):
+		if(nodeTarget.nodeName in nodeSource.HFcontextTargetConnectionDict):
+			result = True
+	else:
+		if(nodeTarget.nodeName in nodeSource.HFcausalTargetConnectionDict):
+			result = True
+	return result
+	
+	

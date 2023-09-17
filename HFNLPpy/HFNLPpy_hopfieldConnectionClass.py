@@ -36,6 +36,7 @@ class HopfieldConnection:
 			self.SANInodeAssigned = False
 			self.SANInode = None
 			self.activationStatePartial = False	#always false
+			self.SANIoptionalCausalConnection = False
 		self.useAlgorithmDendriticSANIbiologicalPrototype = False
 		if(useAlgorithmDendriticSANIbiologicalPrototype):
 			#for useAlgorithmDendriticSANIbiologicalPrototype: interpret connection as unique synapse

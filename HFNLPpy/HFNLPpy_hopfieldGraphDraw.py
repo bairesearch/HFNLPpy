@@ -88,18 +88,10 @@ def drawHopfieldGraphNetwork(networkConceptNodeDict):
 		drawHopfieldGraphNodeConnections(conceptNode, drawGraphNetwork)	
 			
 def drawHopfieldGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, sentenceConceptNodeList=None):
-	if(assignSingleConnectionBetweenUniqueConceptPair):
-		for connectionKey, connection in hopfieldGraphNode.HFcontextTargetConnectionDict.items():
-			drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
-		for connectionKey, connection in hopfieldGraphNode.HFcausalTargetConnectionDict.items():
-			drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
-	else:
-		for connectionKey, connectionList in hopfieldGraphNode.HFcontextTargetConnectionDict.items():
-			for connection in connectionList:
-				drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
-		for connectionKey, connectionList in hopfieldGraphNode.HFcausalTargetConnectionDict.items():
-			for connection in connectionList:
-				drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
+	for connectionKey, connection in hopfieldGraphNode.HFcontextTargetConnectionDict.items():
+		drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
+	for connectionKey, connection in hopfieldGraphNode.HFcausalTargetConnectionDict.items():
+		drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList)
 				
 #def drawHopfieldGraphNodeAndConnections(hopfieldGraphNode, networkSize, drawGraphNetwork, sentenceConceptNodeList=None):	
 #	#parse tree and generate nodes and connections

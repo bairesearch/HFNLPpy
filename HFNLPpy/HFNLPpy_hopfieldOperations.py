@@ -30,24 +30,28 @@ def addConnectionToNode(nodeSource, nodeTarget, activationTime=-1, spatioTempora
 	connection.contextConnection = contextConnection
 	
 	if(contextConnection):
-		if(assignSingleConnectionBetweenUniqueConceptPair):
-			nodeSource.HFcontextTargetConnectionDict[nodeTarget.SANIlayerNeuronID] = connection
-			nodeTarget.HFcontextSourceConnectionDict[nodeSource.SANIlayerNeuronID] = connection
-		else:
-			createConnectionKeyIfNonExistant(nodeSource.HFcontextTargetConnectionDict, nodeTarget.nodeName)
-			createConnectionKeyIfNonExistant(nodeTarget.HFcontextSourceConnectionDict, nodeSource.nodeName)
-			nodeSource.HFcontextTargetConnectionDict[nodeTarget.nodeName].append(connection)
-			nodeTarget.HFcontextSourceConnectionDict[nodeSource.nodeName].append(connection)
+		nodeSource.HFcontextTargetConnectionDict[nodeTarget.nodeName] = connection
+		nodeTarget.HFcontextSourceConnectionDict[nodeSource.nodeName] = connection
+		if(useAlgorithmLayeredSANIbiologicalSimulation):
+			nodeSource.HFcontextTargetConnectionLayeredDict[nodeTarget.SANIlayerNeuronID] = connection
+			nodeTarget.HFcontextSourceConnectionLayeredDict[nodeSource.SANIlayerNeuronID] = connection
+		if(useAlgorithmDendriticSANIbiologicalSimulation):
+			createConnectionKeyIfNonExistant(nodeSource.HFcontextTargetConnectionMultiDict, nodeTarget.nodeName)
+			createConnectionKeyIfNonExistant(nodeTarget.HFcontextSourceConnectionMultiDict, nodeSource.nodeName)
+			nodeSource.HFcontextTargetConnectionMultiDict[nodeTarget.nodeName].append(connection)
+			nodeTarget.HFcontextSourceConnectionMultiDict[nodeSource.nodeName].append(connection)
 			#connection.subsequenceConnection = subsequenceConnection
 	else:
-		if(assignSingleConnectionBetweenUniqueConceptPair):
-			nodeSource.HFcausalTargetConnectionDict[nodeTarget.SANIlayerNeuronID] = connection
-			nodeTarget.HFcausalSourceConnectionDict[nodeSource.SANIlayerNeuronID] = connection
-		else:
-			createConnectionKeyIfNonExistant(nodeSource.HFcausalTargetConnectionDict, nodeTarget.nodeName)
-			createConnectionKeyIfNonExistant(nodeTarget.HFcausalSourceConnectionDict, nodeSource.nodeName)
-			nodeSource.HFcausalTargetConnectionDict[nodeTarget.nodeName].append(connection)
-			nodeTarget.HFcausalSourceConnectionDict[nodeSource.nodeName].append(connection)
+		nodeSource.HFcausalTargetConnectionDict[nodeTarget.nodeName] = connection
+		nodeTarget.HFcausalSourceConnectionDict[nodeSource.nodeName] = connection
+		if(useAlgorithmLayeredSANIbiologicalSimulation):
+			nodeSource.HFcausalTargetConnectionLayeredDict[nodeTarget.SANIlayerNeuronID] = connection
+			nodeTarget.HFcausalSourceConnectionLayeredDict[nodeSource.SANIlayerNeuronID] = connection
+		if(useAlgorithmDendriticSANIbiologicalSimulation):
+			createConnectionKeyIfNonExistant(nodeSource.HFcausalTargetConnectionMultiDict, nodeTarget.nodeName)
+			createConnectionKeyIfNonExistant(nodeTarget.HFcausalSourceConnectionMultiDict, nodeSource.nodeName)
+			nodeSource.HFcausalTargetConnectionMultiDict[nodeTarget.nodeName].append(connection)
+			nodeTarget.HFcausalSourceConnectionMultiDict[nodeSource.nodeName].append(connection)
 			#connection.subsequenceConnection = subsequenceConnection
 		
 	if(useAlgorithmDendriticSANIbiologicalPrototype):
@@ -59,22 +63,3 @@ def addConnectionToNode(nodeSource, nodeTarget, activationTime=-1, spatioTempora
 		connection.nodeTargetSequentialSegmentInput = nodeTargetSequentialSegmentInput
 		connection.weight = weight
 	return connection
-
-def connectionExists(nodeSource, nodeTarget, contextConnection):
-	result = False
-	if(contextConnection):
-		if(assignSingleConnectionBetweenUniqueConceptPair):
-			if(nodeTarget.SANIlayerNeuronID in nodeSource.HFcontextTargetConnectionDict):
-				result = True
-		else:
-			if(nodeTarget.nodeName in nodeSource.HFcontextTargetConnectionDict):
-				result = True
-	else:
-		if(assignSingleConnectionBetweenUniqueConceptPair):
-			if(nodeTarget.SANIlayerNeuronID in nodeSource.HFcausalTargetConnectionDict):
-				result = True
-		else:
-			if(nodeTarget.nodeName in nodeSource.HFcausalTargetConnectionDict):
-				result = True
-	return result
-		

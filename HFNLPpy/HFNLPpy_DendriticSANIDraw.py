@@ -178,7 +178,7 @@ def drawDendriticSANIGraphNetwork(networkConceptNodeDict, activationTime=None, w
 			drawDendriticSANIGraphNodeConnections(conceptNode, drawGraphNetwork, activationTime)
 
 def drawDendriticSANIGraphNodeConnections(hopfieldGraphNode, drawGraphNetwork, activationTime, sentenceConceptNodeList=None):
-	for connectionKey, connectionList in hopfieldGraphNode.HFcontextTargetConnectionDict.items():
+	for connectionKey, connectionList in hopfieldGraphNode.HFcontextTargetConnectionMultiDict.items():
 		for connection in connectionList:
 			drawDendriticSANIGraphConnection(connection, drawGraphNetwork, activationTime, sentenceConceptNodeList)
 			

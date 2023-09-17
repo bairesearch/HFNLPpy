@@ -56,10 +56,22 @@ class HopfieldNode:
 		#self.activationTime = calculateActivationTime(sentenceIndex)	#not used
 
 		#connection vars;
+		#only 1 connection between each unique concept node; record connection strength
 		self.HFcontextSourceConnectionDict = {}
 		self.HFcontextTargetConnectionDict = {}
 		self.HFcausalSourceConnectionDict = {}
 		self.HFcausalTargetConnectionDict = {}
+		if(useAlgorithmLayeredSANIbiologicalSimulation):
+			self.HFcontextSourceConnectionLayeredDict = {}
+			self.HFcontextTargetConnectionLayeredDict = {}
+			self.HFcausalSourceConnectionLayeredDict = {}
+			self.HFcausalTargetConnectionLayeredDict = {}
+		if(useAlgorithmDendriticSANIbiologicalSimulation):
+			#assign multiple connections between each unique concept node
+			self.HFcontextSourceConnectionMultiDict = {}
+			self.HFcontextTargetConnectionMultiDict = {}
+			self.HFcausalSourceConnectionMultiDict = {}
+			self.HFcausalTargetConnectionMultiDict = {}
 		#self.HFsourceConnectionList = []
 		#self.HFtargetConnectionList = []
 

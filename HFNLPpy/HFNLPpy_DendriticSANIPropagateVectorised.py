@@ -76,7 +76,7 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 		if(updateNeuronObjectActivationLevels):
 			conceptNeuronSource.activationLevel = objectAreaActivationLevelOn
 
-		for targetConnectionConceptName, connectionList in conceptNeuronSource.HFcontextTargetConnectionDict.items():
+		for targetConnectionConceptName, connectionList in conceptNeuronSource.HFcontextTargetConnectionMultiDict.items():
 
 			#add target neuron to batch processing tensor
 			#if(vectoriseComputationIndependentBranches):	#only coded algorithm
@@ -112,7 +112,7 @@ def simulateBiologicalHFnetworkSequenceNodesPropagateParallel(networkConceptNode
 
 	batchNeuronsList2 = []
 	for conceptNeuronSource in conceptNeuronSourceList:
-		for targetConnectionConceptName, connectionList in conceptNeuronSource.HFcontextTargetConnectionDict.items():
+		for targetConnectionConceptName, connectionList in conceptNeuronSource.HFcontextTargetConnectionMultiDict.items():
 			conceptNeuronConnectionTarget = networkConceptNodeDict[targetConnectionConceptName] #or connectionList[ANY].nodeTarget
 			if(conceptNeuronConnectionTarget not in batchNeuronsList2):
 				batchNeuronsList2.append(conceptNeuronConnectionTarget)
