@@ -79,8 +79,8 @@ if(useHFconnectionMatrix):
 	class HFconnectionGraphClass:
 		def __init__(self):
 			if(useAlgorithmMatrix):
-				self.HFconnectionGraphMatrix = [None]*HFconnectionMatrixBasicMaxConcepts
-				self.HFconnectionGraphMatrixNormalised = [None]*HFconnectionMatrixBasicMaxConcepts
+				self.HFconnectionGraphMatrix = [None]*contextSizeMax
+				self.HFconnectionGraphMatrixNormalised = [None]*contextSizeMax
 			if(linkSimilarConceptNodesBagOfWords):
 				self.HFconnectionGraphBasic = None
 			if(useAlgorithmScan):
@@ -413,23 +413,26 @@ def addContextWordsToConnectionGraphLinkConcepts(tokenisedSentence, sentenceConc
 	for w1, token1 in enumerate(tokenisedSentence):
 		conceptNode = sentenceConceptNodeList[w1]
 		neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
-		HFconnectionGraphObject.HFconnectionGraphBasic, HFconnectionGraphObject.HFconnectionGraphBasicNormalised = addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphBasic, linkSimilarConceptNodesBagOfWordsDistanceMax, linkSimilarConceptNodesBagOfWordsWeightStore)
+		HFconnectionGraphObject.HFconnectionGraphBasic, HFconnectionGraphObject.HFconnectionGraphBasicNormalised = addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphBasic, linkSimilarConceptNodesBagOfWordsDistanceMax, linkSimilarConceptNodesBagOfWordsWeightStore, linkSimilarConceptNodesBagOfWordsBidirectional)
 
 def addContextWordsToConnectionGraphMatrix(tokenisedSentence, sentenceConceptNodeList):
 	for w1, token1 in enumerate(tokenisedSentence):
+		#print("w1 = ", w1)
 		conceptNode = sentenceConceptNodeList[w1]
 		#print("addContextWordsToConnectionGraphMatrix: conceptNode.nodeName = ", conceptNode.nodeName) 
 		neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
 		contextSizeMax2 = min(contextSizeMax, len(tokenisedSentence))
 		for contextSize in range(contextSizeMax2):
-			HFconnectionGraphObject.HFconnectionGraphMatrix[contextSize], HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSize] = addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[contextSize], contextSize, contextMatrixWeightStore)
+			#print("contextSize = ", contextSize)
+			HFconnectionGraphObject.HFconnectionGraphMatrix[contextSize], HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSize] = addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[contextSize], contextSize, contextMatrixWeightStore, False)
 
-def addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraph, contextSize, weightStore):
-	contextConnectionVector = HFNLPpy_hopfieldOperations.createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, len(HFconnectionGraphObject.neuronNamelist), contextSize, weightStore)
+def addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraph, contextSize, weightStore, bidirectionalContext):
+	contextConnectionVector = HFNLPpy_hopfieldOperations.createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, len(HFconnectionGraphObject.neuronNamelist), contextSize, weightStore, bidirectionalContext)
 	HFNLPpy_ConnectionMatrix.addContextConnectionsToGraph(HFconnectionGraph, neuronID, contextConnectionVector)
 	HFconnectionGraphFloat = (HFconnectionGraph).float()
 	HFconnectionGraphNormalised = normaliseBatchedTensor(HFconnectionGraphFloat)
 	#print("contextConnectionVector = ", contextConnectionVector)
+	#print("HFconnectionGraph[neuronID] = ", HFconnectionGraph[neuronID])
 	#print("HFconnectionGraphNormalised[neuronID] = ", HFconnectionGraphNormalised[neuronID])
 	return HFconnectionGraph, HFconnectionGraphNormalised
 
@@ -443,5 +446,6 @@ def normaliseBatchedTensor(HFconnectionGraphFloat):
 		else:
 			min_vals, _ = pt.min(HFconnectionGraphFloat, dim=1, keepdim=True)
 			max_vals, _ = pt.max(HFconnectionGraphFloat, dim=1, keepdim=True)
-			HFconnectionGraphNormalised = (HFconnectionGraphFloat - min_vals) / (max_vals - min_vals)
+			epsilon = 1e-8  # Small epsilon value
+			HFconnectionGraphNormalised = (HFconnectionGraphFloat - min_vals) / (max_vals - min_vals + epsilon)
 	return HFconnectionGraphNormalised

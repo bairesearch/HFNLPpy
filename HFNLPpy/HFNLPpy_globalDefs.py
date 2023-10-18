@@ -27,7 +27,8 @@ useAlgorithmDendriticSANI = True	#simulate sequential activation of dendritic in
 useAlgorithmScan = False
 useAlgorithmArtificial = False	#default
 useAlgorithmDendriticPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
-
+	
+	
 #### concept connections/connectionMatrix ####
 
 #initialise dependent vars;
@@ -55,6 +56,7 @@ if(linkSimilarConceptNodes):
 		linkSimilarConceptNodesBagOfWordsWeightStore = False	#optional		#recommended - weight matrix storage calculation by distance of current sentence context word
 		linkSimilarConceptNodesBagOfWordsWeightRetrieval = False	#optional	#recommended - weight matrix lookup calculation by distance of current sentence context word
 		linkSimilarConceptNodesBagOfWordsContextual = True	#optional #uses incontext knowledge of previous words to find synonyms
+		linkSimilarConceptNodesBagOfWordsBidirectional = False	#mandatory - !bidirectional lookup is required for next word prediction (causal) 
 		if(not linkSimilarConceptNodesBagOfWordsContextual):
 			linkSimilarConceptNodesBagOfWordsWeightStore = True	#required for next word prediction with !linkSimilarConceptNodesBagOfWordsContextual
 			linkSimilarConceptNodesBagOfWordsWeightRetrieval = True
@@ -88,19 +90,29 @@ else:
 	useDependencyParseTree = True
 	biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False
 
+usePytorch = False
 if(useHFconnectionMatrix):
 	HFreadSavedConnectionsMatrixPyG = False	#currently requires useAlgorithmScan
 	HFreadSavedConnectionsMatrixBasic = False	#not available
 	HFwriteSavedConnectionsMatrixPyG = False	#currently requires useAlgorithmScan
 	HFwriteSavedConnectionsMatrixBasic = False	#not available
-	HFconnectionMatrixBasicMaxConcepts = 1000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
+	HFconnectionMatrixBasicMaxConcepts = 100	#1000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
 	useHFconnectionMatrixNormaliseSoftmax = False	#use softmax function to normalise connections matrix
+	usePytorch = True
+
+if(usePytorch):
 	import torch as pt
 	if(useHFconnectionMatrixBasicBool):
 		HFconnectionsMatrixType = pt.bool
 	else:
 		HFconnectionsMatrixType = pt.long
 		#print("HFconnectionsMatrixType = ", HFconnectionsMatrixType)
+	useLovelyTensors = False
+	if(useLovelyTensors):
+		import lovely_tensors as lt
+		lt.monkey_patch()
+	else:
+		pt.set_printoptions(profile="full")
 
 if(useDependencyParseTree):
 	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
