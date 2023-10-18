@@ -29,14 +29,18 @@ from HFNLPpy_hopfieldConnectionClass import *
 import HFNLPpy_hopfieldOperations
 from HFNLPpy_globalDefs import *
 
-if(useAlgorithmScanBiologicalSimulation):
+if(useHFconnectionMatrix):
 	import torch as pt
+	if(useHFconnectionMatrixPyG):
+		import HFNLPpy_ConnectionMatrixPyG as HFNLPpy_ConnectionMatrix
+	if(useHFconnectionMatrixBasic):
+		import HFNLPpy_ConnectionMatrixBasic as HFNLPpy_ConnectionMatrix
+if(useAlgorithmScanBiologicalSimulation):
 	from HFNLPpy_ScanGlobalDefs import seedHFnetworkSubsequence
 	if(seedHFnetworkSubsequence):
 		from HFNLPpy_ScanGlobalDefs import seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant
 	from HFNLPpy_ScanGlobalDefs import HFNLPnonrandomSeed
 	import HFNLPpy_Scan
-	import HFNLPpy_ScanConnectionMatrix
 if(useAlgorithmDendriticSANIbiologicalSimulation):
 	from HFNLPpy_DendriticSANIGlobalDefs import biologicalSimulationEncodeSyntaxInDendriticBranchStructure
 	from HFNLPpy_DendriticSANIGlobalDefs import seedHFnetworkSubsequence
@@ -61,21 +65,30 @@ if(drawHopfieldGraph):
 
 
 
-HFconnectionGraph = None
 networkConceptNodeDict = {}
 networkSize = 0
-if(useAlgorithmScanBiologicalSimulation):
-	HFconnectionGraph = None
-	neuronNamelist = None
-	neuronIDdict = {}
+if(useHFconnectionMatrix):
+	class HFconnectionGraphClass:
+		def __init__(self):
+			self.HFconnectionGraph = None
+			self.neuronNamelist = None
+			self.neuronIDdict = {}
+	HFconnectionGraphObject = HFconnectionGraphClass()
+else:
+	HFconnectionGraphObject = None
 	
+def readHFconnectionMatrix():
+	HFconnectionGraphObject.neuronNamelist, HFconnectionGraphObject.HFconnectionGraph = HFNLPpy_ConnectionMatrix.readHFconnectionMatrix()
+	regenerateGraphNodes()
+	
+def writeHFconnectionMatrix():
+	HFNLPpy_ConnectionMatrix.writeHFconnectionMatrix(HFconnectionGraphObject.neuronNamelist, HFconnectionGraphObject.HFconnectionGraph)
+			
 def generateHopfieldGraphNetwork(articles):
 	numberOfSentences = len(articles)
 
-	if(useAlgorithmScanBiologicalSimulation):
-		global HFconnectionGraph, neuronNamelist
-		neuronNamelist, HFconnectionGraph = HFNLPpy_ScanConnectionMatrix.readHFconnectionMatrix()
-		regenerateGraphNodes(neuronNamelist)
+	if(useHFconnectionMatrix):
+		readHFconnectionMatrix()
 
 	if(seedHFnetworkSubsequence):
 		verifySeedSentenceIsReplicant(articles, numberOfSentences)
@@ -83,8 +96,8 @@ def generateHopfieldGraphNetwork(articles):
 	for sentenceIndex, sentence in enumerate(articles):
 		generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences)	
 		
-	if(useAlgorithmScanBiologicalSimulation):
-		HFNLPpy_ScanConnectionMatrix.writeHFconnectionMatrix(neuronNamelist, HFconnectionGraph)
+	if(useHFconnectionMatrix):
+		writeHFconnectionMatrix()
 
 def generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences):
 	print("\n\ngenerateHopfieldGraphSentenceString: sentenceIndex = ", sentenceIndex, "; ", sentence)
@@ -96,15 +109,15 @@ def generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentenc
 	if(sentenceLength > 1):
 		return generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSentences)
 
-def regenerateGraphNodes(neuronNamelist):
+def regenerateGraphNodes():
 	#regenerates graph nodes from a saved list
-	sentence = ' '.join(neuronNamelist)
+	sentence = ' '.join(HFconnectionGraphObject.neuronNamelist)
 	tokenisedSentence = tokeniseSentence(sentence)
-	for neuronID, nodeName in enumerate(neuronNamelist):	
+	for neuronID, nodeName in enumerate(HFconnectionGraphObject.neuronNamelist):	
 		token = tokenisedSentence[neuronID]
 		networkIndex = getNetworkIndex()
 		nodeGraphType = graphNodeTypeConcept
-		wordVector = None	#getTokenWordVector(token)	#numpy word vector	#not used by useAlgorithmScanBiologicalSimulation
+		wordVector = None	#getTokenWordVector(token)	#numpy word vector	#not used by useHFconnectionMatrix
 		#posTag = getTokenPOStag(token)	#not used
 		w = 0	#sentence artificial var (not used)
 		sentenceIndex = 0	#sentence artificial var (not used)
@@ -117,8 +130,8 @@ def regenerateGraphNodes(neuronNamelist):
 			conceptNode.SANIlayerNeuronID = 
 			conceptNode.SANIlayerIndex = 0
 		'''
-		if(useAlgorithmScanBiologicalSimulation):
-			neuronIDdict[nodeName] = neuronID
+		if(useHFconnectionMatrix):
+			HFconnectionGraphObject.neuronIDdict[nodeName] = neuronID
 		addNodeToGraph(conceptNode)
 		if(printVerbose):
 			print("create new conceptNode; ", conceptNode.nodeName)
@@ -165,11 +178,11 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 	#declare Hopfield graph nodes;	
 	generateHopfieldGraphSentenceNodes(tokenisedSentence, sentenceIndex, sentenceConceptNodeList)
 
-	if(useAlgorithmScanBiologicalSimulation):
+	if(useHFconnectionMatrix):
 		for conceptNode in sentenceConceptNodeList:	
-			neuronNamelist.append(conceptNode.nodeName)
+			HFconnectionGraphObject.neuronNamelist.append(conceptNode.nodeName)
 			neuronID = conceptNode.networkIndex
-			neuronIDdict[conceptNode.nodeName] = neuronID
+			HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName] = neuronID
 		
 	trainSentence = True
 	if(sentenceIndex == numberOfSentences-1):
@@ -177,6 +190,9 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 			trainSentence = False
 			
 	if(trainSentence):
+		if(linkSimilarConceptNodesBagOfWords):
+			addContextWordsToConnectionGraph(tokenisedSentence, sentenceConceptNodeList)
+			
 		#create Hopfield graph connections (non-useAlgorithmDendriticSANIbiologicalSimulation);
 		if(useAlgorithmDendriticSANIbiologicalSimulation):
 			#useAlgorithmDendriticSANIbiologicalSimulation:HFNLPpy_DendriticSANIGenerate:addPredictiveSequenceToNeuron:addPredictiveSynapseToNeuron:addConnectionToNode creates connections between hopfield objects (with currentSequentialSegmentInput object)
@@ -202,21 +218,21 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 								previousContextConceptNodesList.append(sentenceConceptNodeList[w2]) 
 						createConnection(conceptNode, previousConceptNode, previousContextConceptNodesList, spatioTemporalIndex, activationTime)
 					if(useAlgorithmScanBiologicalSimulation):
-						neuronID = neuronIDdict[conceptNode.nodeName]
+						neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
 						if(w > 0):
 							sourceNeuronID = neuronIDprevious
 							targetNeuronID = neuronID
-							HFNLPpy_ScanConnectionMatrix.updateOrAddConnectionToGraph(neuronNamelist, HFconnectionGraph, sourceNeuronID, targetNeuronID)
+							HFNLPpy_ConnectionMatrix.updateOrAddConnectionToGraph(HFconnectionGraphObject, sourceNeuronID, targetNeuronID)
 						neuronIDprevious = neuronID
 	else:
 		#predict Hopfield graph flow;
 		seedSentenceConceptNodeList = sentenceConceptNodeList
 		if(useAlgorithmScanBiologicalSimulation):
-			HFconnectionGraph.activationLevel = pt.zeros(len(neuronNamelist), dtype=pt.float)	# Set the initial activation level for each neuron at time t
-			HFconnectionGraph.activationState = pt.zeros(len(neuronNamelist), dtype=pt.bool)	# Set the initial activation state for each neuron at time t
-			HFNLPpy_Scan.seedBiologicalHFnetwork(networkConceptNodeDict, networkSize, sentenceIndex, neuronNamelist, neuronIDdict, HFconnectionGraph, seedSentenceConceptNodeList, numberOfSentences)
+			HFconnectionGraphObject.HFconnectionGraph.activationLevel = pt.zeros(len(HFconnectionGraphObject.neuronNamelist), dtype=pt.float)	# Set the initial activation level for each neuron at time t
+			HFconnectionGraphObject.HFconnectionGraph.activationState = pt.zeros(len(HFconnectionGraphObject.neuronNamelist), dtype=pt.bool)	# Set the initial activation state for each neuron at time t
+			HFNLPpy_Scan.seedBiologicalHFnetwork(networkConceptNodeDict, networkSize, sentenceIndex, HFconnectionGraphObject, seedSentenceConceptNodeList, numberOfSentences)
 		elif(useAlgorithmDendriticSANIbiologicalSimulation):
-			HFNLPpy_DendriticSANI.seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceConceptNodeList, numberOfSentences)			
+			HFNLPpy_DendriticSANI.seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceConceptNodeList, numberOfSentences, HFconnectionGraphObject)			
 		else:
 			printe("HFNLPpy_hopfieldGraph:generateHopfieldGraphSentence error: !trainSentence requires useAlgorithmScanBiologicalSimulation or useAlgorithmDendriticSANIbiologicalSimulation")
 			
@@ -359,4 +375,27 @@ def recalculateHopfieldGraphNetworkSize():
 	global networkSize
 	networkSize = len(networkConceptNodeDict)
 
-
+def addContextWordsToConnectionGraph(tokenisedSentence, sentenceConceptNodeList):
+	for w1, token1 in enumerate(tokenisedSentence):
+		conceptNode = sentenceConceptNodeList[w1]
+		neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
+		contextConnectionVector = pt.zeros(len(HFconnectionGraphObject.neuronNamelist), dtype=pt.bool)
+		for w2, token2 in enumerate(tokenisedSentence):
+			if(w1 != w2):
+				if(abs(w1-w2) < linkSimilarConceptNodesBagOfWordsDistanceMax):
+					conceptNodeContext = sentenceConceptNodeList[w2]
+					neuronIDcontext = HFconnectionGraphObject.neuronIDdict[conceptNodeContext.nodeName]
+					if(linkSimilarConceptNodesBagOfWordsWeightStore):
+						weight = 1.0/(abs(w1 - w2))
+						contextConnectionVector[neuronIDcontext] = weight
+					else:
+						if(useHFconnectionMatrixBasicBool):
+							contextConnectionVector[neuronIDcontext] = True
+						else:
+							contextConnectionVector[neuronIDcontext] = 1.0
+		HFNLPpy_ConnectionMatrix.addContextConnectionsToGraph(HFconnectionGraphObject.HFconnectionGraph, neuronID, contextConnectionVector)
+	HFconnectionGraphFloat = (HFconnectionGraphObject.HFconnectionGraph).float()
+	if(linkSimilarConceptNodesBagOfWordsWeightStore):
+		HFconnectionGraphObject.HFconnectionGraphNormalised = pt.nn.functional.softmax(HFconnectionGraphFloat, dim=1)	#calculate a temporary normalised version of the HFconnectionGraph
+	else:
+		HFconnectionGraphObject.HFconnectionGraphNormalised = HFconnectionGraphFloat

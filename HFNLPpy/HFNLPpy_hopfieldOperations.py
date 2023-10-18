@@ -24,7 +24,9 @@ from HFNLPpy_globalDefs import *
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 from nltk.corpus import wordnet
-
+if(linkSimilarConceptNodesBagOfWords):
+	import torch as pt
+	
 def addConnectionToNode(nodeSource, nodeTarget, activationTime=-1, spatioTemporalIndex=-1, useAlgorithmDendriticSANIbiologicalPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, useAlgorithmDendriticSANIbiologicalSimulation=False, nodeTargetSequentialSegmentInput=None):
 	connection = HopfieldConnection(nodeSource, nodeTarget, spatioTemporalIndex, activationTime, useAlgorithmDendriticSANIbiologicalPrototype)
 	connection.contextConnection = contextConnection
@@ -64,15 +66,60 @@ def addConnectionToNode(nodeSource, nodeTarget, activationTime=-1, spatioTempora
 		connection.weight = weight
 	return connection
 
-def retrieveSimilarConcepts(networkConceptNodeDict, connectionTargetNeuronSet):
+def retrieveSimilarConcepts(networkConceptNodeDict, connectionTargetNeuronSet, HFconnectionGraphObject=None):
 	connectionTargetNeuronSetExtended = []
-	for conceptNeuron in connectionTargetNeuronSet:
-		connectionTargetNeuronSetExtended.append(conceptNeuron)
-		for synonym in conceptNeuron.synonymsList:
-			synonymConcept, conceptInDict = convertLemmaToConcept(networkConceptNodeDict, synonym)
-			if(conceptInDict):
-				#print("conceptInDict: ", synonymConcept.nodeName)
-				connectionTargetNeuronSetExtended.append(synonymConcept)
+	if(linkSimilarConceptNodesWordnet):
+		for conceptNeuron in connectionTargetNeuronSet:
+			connectionTargetNeuronSetExtended.append(conceptNeuron)
+			for synonym in conceptNeuron.synonymsList:
+				synonymConcept, conceptInDict = convertLemmaToConcept(networkConceptNodeDict, synonym)
+				if(conceptInDict):
+					#print("conceptInDict: ", synonymConcept.nodeName)
+					connectionTargetNeuronSetExtended.append(synonymConcept)
+	elif(linkSimilarConceptNodesBagOfWords):
+		for conceptNeuron in connectionTargetNeuronSet:
+			if(linkSimilarConceptNodesBagOfWordsFullContextAvailableUponRetrieval):
+				#connectionTargetNeuronSetExtended.append(conceptNeuron)
+				printe("HFNLPpy_hopfieldOperations:retrieveSimilarConcepts:linkSimilarConceptNodesBagOfWordsFullContextAvailableUponRetrieval has not yet been coded (requires sentenceConceptNodeList and w)")
+				exit()
+				conceptNeuronContextVector = pt.zeros(HFconnectionMatrixBasicMaxConcepts, dtype=pt.float)		#len(HFconnectionGraphObject.neuronNamelist)
+				for conceptNeuronContext, wContext in enumerate(sentenceConceptNodeList):
+					if(abs(w - wContext) < linkSimilarConceptNodesBagOfWordsDistanceMax):
+						if(w != wContext):
+							conceptNeuronContextID = HFconnectionGraphObject.neuronIDdict[conceptNeuronContext.nodeName]
+							if(linkSimilarConceptNodesBagOfWordsWeightRetrieval):
+								weight = 1.0/(abs(w - wContext))
+							else:
+								weight = 1.0
+							conceptNeuronContextVector[conceptNeuronContextID] = weight
+				conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVector, dim=1)
+				conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(1, HFconnectionMatrixBasicMaxConcepts)	#len(HFconnectionGraphObject.neuronNamelist)
+				mask = HFconnectionGraphObject.HFconnectionGraphNormalised * conceptNeuronContextVectorExtended
+				
+				maskSummed = pt.sum(mask, dim=1)
+				maskSummedTopK = pt.topk(maskSummed, linkSimilarConceptNodesBagOfWordsTopK, dim=0)
+				for i in maskSummedTopK.indices:
+					synonym = HFconnectionGraphObject.neuronNamelist[i]
+					synonymConcept, conceptInDict = convertLemmaToConcept(networkConceptNodeDict, synonym)
+					if(conceptInDict):
+						#print("conceptInDict: ", synonymConcept.nodeName)
+						connectionTargetNeuronSetExtended.append(synonymConcept)
+			else:
+				conceptNeuronID = HFconnectionGraphObject.neuronIDdict[conceptNeuron.nodeName]
+				conceptNeuronContextVector = HFconnectionGraphObject.HFconnectionGraphNormalised[conceptNeuronID]
+				conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVector, dim=1)
+				conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(1, HFconnectionMatrixBasicMaxConcepts)	#len(HFconnectionGraphObject.neuronNamelist)
+				mask = HFconnectionGraphObject.HFconnectionGraphNormalised * conceptNeuronContextVectorExtended
+				
+				maskSummed = pt.sum(mask, dim=1)
+				maskSummedTopK = pt.topk(maskSummed, linkSimilarConceptNodesBagOfWordsTopK, dim=0)
+				for i in maskSummedTopK.indices:
+					synonym = HFconnectionGraphObject.neuronNamelist[i]
+					synonymConcept, conceptInDict = convertLemmaToConcept(networkConceptNodeDict, synonym)
+					if(conceptInDict):
+						#print("conceptInDict: ", synonymConcept.nodeName)
+						connectionTargetNeuronSetExtended.append(synonymConcept)
+			HFconnectionGraphObject
 	return connectionTargetNeuronSetExtended
 		
 def convertLemmaToConcept(networkConceptNodeDict, synonym):

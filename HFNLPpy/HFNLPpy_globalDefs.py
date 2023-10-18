@@ -20,21 +20,52 @@ HFNLP - global defs
 printVerbose = True
 
 #select HFNLP algorithm;
-useAlgorithmLayeredSANIbiologicalSimulation = False
+useAlgorithmLayeredSANIbiologicalSimulation = True
 useAlgorithmDendriticSANIbiologicalSimulation = True	#simulate sequential activation of dendritic input 
 useAlgorithmScanBiologicalSimulation = False
 useAlgorithmArtificial = False	#default
 useAlgorithmDendriticSANIbiologicalPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
 
-tokenWordnetSynonyms = True	#requires spacy nltk:wordnet
-if(tokenWordnetSynonyms):
-	tokenWordnetSynonymsFromLemma = False
+#### concept connections ####
+linkSimilarConceptNodes = False #initialise (dependent var)
+linkSimilarConceptNodesWordnet = False #initialise (dependent var)
+linkSimilarConceptNodesBagOfWords = False #initialise (dependent var)
+useHFconnectionMatrix = False
+useHFconnectionMatrixPyG = False	#initialise (dependent var)
+useHFconnectionMatrixBasic = False 	#initialise (dependent var)
+tokenWordnetSynonyms = False 	#initialise (dependent var)
+if(useAlgorithmDendriticSANIbiologicalSimulation):
+	linkSimilarConceptNodes = False
+	if(linkSimilarConceptNodes):
+		linkSimilarConceptNodesWordnet = False
+		linkSimilarConceptNodesBagOfWords = True
+		if(linkSimilarConceptNodesWordnet):
+			tokenWordnetSynonyms = True	#requires spacy nltk:wordnet
+			if(tokenWordnetSynonyms):
+				tokenWordnetSynonymsFromLemma = False
+		elif(linkSimilarConceptNodesBagOfWords):
+			linkSimilarConceptNodesBagOfWordsWeightStore = True	#optional	#required for next word prediction (ie !linkSimilarConceptNodesBagOfWordsFullContextAvailableUponRetrieval)
+			linkSimilarConceptNodesBagOfWordsWeightRetrieval = True	#optional	#recommended - weight matrix lookup calculation by distance of current sentence context word
+			linkSimilarConceptNodesBagOfWordsFullContextAvailableUponRetrieval = False	#has not yet been coded #retrieveSimilarConcepts:linkSimilarConceptNodesBagOfWordsFullContextAvailableUponRetrieval requires sentenceConceptNodeList and w	#requires requires incontext knowledge of previous and next words to find synonyms
+			useHFconnectionMatrix = True
+			useHFconnectionMatrixBasic = True
+			useHFconnectionMatrixBasicBool = False #initialise (dependent var)
+			if(not linkSimilarConceptNodesBagOfWordsWeightStore and not linkSimilarConceptNodesBagOfWordsWeightRetrieval):
+				useHFconnectionMatrixBasicBool = True
+			linkSimilarConceptNodesBagOfWordsDistanceMax = 5 #max distance of context word
+			linkSimilarConceptNodesBagOfWordsTopK = 3	#CHECKTHIS
+if(useHFconnectionMatrix):
+	HFreadSavedConnectionsMatrixPyG = False
+	HFreadSavedConnectionsMatrixBasic = False
+	HFconnectionMatrixBasicMaxConcepts = 1000	#size of HFconnectionMatrix [^2]	#maximum number of concepts to store
 	
 useDependencyParseTree = False	#initialise (dependent var)
 if(useAlgorithmLayeredSANIbiologicalSimulation):
 	useDependencyParseTree = False
 elif(useAlgorithmScanBiologicalSimulation):
 	useDependencyParseTree = False
+	useHFconnectionMatrix = True
+	useHFconnectionMatrixPyG = True
 elif(useAlgorithmDendriticSANIbiologicalSimulation):
 	from HFNLPpy_DendriticSANIGlobalDefs import biologicalSimulationEncodeSyntaxInDendriticBranchStructure
 	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):

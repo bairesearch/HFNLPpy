@@ -24,10 +24,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 
 
-#### concept connections ####
-
-linkSimilarConceptNodes = True	#requires HFNLPpy_globalDefs:tokenWordnetSynonyms
-
 #### dendritic structure type ####
 
 DendriticSANIbiologicalSimulationSimple = True	#single dendritic branch with multiple overloaded segments	#does not support resetConnectionTargetNeuronDendriteDuringActivation

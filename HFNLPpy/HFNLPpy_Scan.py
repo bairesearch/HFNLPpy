@@ -27,7 +27,9 @@ if(drawBiologicalSimulation):
 	import HFNLPpy_hopfieldGraphDraw
 
 #based on HFNLPpy_DendriticSANI:seedBiologicalHFnetwork
-def seedBiologicalHFnetwork(networkConceptNodeDict, networkSize, sentenceIndex, neuronNamelist, neuronIDdict, HFconnectionGraph, seedSentenceConceptNodeList, numberOfSentences):
+def seedBiologicalHFnetwork(networkConceptNodeDict, networkSize, sentenceIndex, HFconnectionGraphObject, seedSentenceConceptNodeList, numberOfSentences):
+	neuronNamelist, neuronIDdict, HFconnectionGraph = (HFconnectionGraphObject.neuronNamelist, HFconnectionGraphObject.neuronIDdict, HFconnectionGraphObject.HFconnectionGraph)
+	
 	targetSentenceConceptNodeList = seedSentenceConceptNodeList
 		
 	connectionTargetNeuronSet = set()	#for posthoc network deactivation

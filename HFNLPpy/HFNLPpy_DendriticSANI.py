@@ -59,7 +59,7 @@ printVerbose = False
 
 
 
-def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceConceptNodeList, numberOfSentences):
+def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceConceptNodeList, numberOfSentences, HFconnectionGraphObject=None):
 	
 	targetSentenceConceptNodeList = seedSentenceConceptNodeList
 	
@@ -84,7 +84,7 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 			else:
 				somaActivationFound = simulateBiologicalHFnetworkSequenceNodesPropagateForward(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSourceList, connectionTargetNeuronSetLocal)
 			
-			connectionTargetNeuronSetLocalFiltered = selectActivatedNeurons(networkConceptNodeDict, connectionTargetNeuronSetLocal)
+			connectionTargetNeuronSetLocalFiltered = selectActivatedNeurons(networkConceptNodeDict, connectionTargetNeuronSetLocal, HFconnectionGraphObject)
 				
 			conceptNeuronSourceList.clear()
 			for connectionTargetNeuron in connectionTargetNeuronSetLocalFiltered:
@@ -231,10 +231,10 @@ def simulateBiologicalHFnetworkSequenceNodePropagateForwardFull(networkConceptNo
 		
 	return somaActivationFound
 
-def selectActivatedNeurons(networkConceptNodeDict, connectionTargetNeuronSet):
+def selectActivatedNeurons(networkConceptNodeDict, connectionTargetNeuronSet, HFconnectionGraphObject=None):
 	connectionTargetNeuronSetLocalFiltered = connectionTargetNeuronSet
 	if(linkSimilarConceptNodes):
-		connectionTargetNeuronSetLocalFiltered = HFNLPpy_hopfieldOperations.retrieveSimilarConcepts(networkConceptNodeDict, connectionTargetNeuronSetLocalFiltered)
+		connectionTargetNeuronSetLocalFiltered = HFNLPpy_hopfieldOperations.retrieveSimilarConcepts(networkConceptNodeDict, connectionTargetNeuronSetLocalFiltered, HFconnectionGraphObject)
 	if(selectActivatedTop):
 		connectionTargetNeuronSetLocalFiltered = selectTopKactivatedNeurons(connectionTargetNeuronSetLocalFiltered)
 	return connectionTargetNeuronSetLocalFiltered

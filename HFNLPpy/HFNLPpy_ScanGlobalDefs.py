@@ -36,8 +36,6 @@ else:
 if(selectActivatedTop):
 	selectActivatedTopK = 10	#10	#3
 	
-HFreadSavedConnectionsMatrix = False
-
 HFnumberOfScanIterations = 1	#3	#1	#number of timesteps for scan (per iteration)
 
 #### thresholds ####

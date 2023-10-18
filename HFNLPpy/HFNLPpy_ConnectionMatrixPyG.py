@@ -24,8 +24,9 @@ from torch_geometric.data import Data
 
 from HFNLPpy_ScanGlobalDefs import *
 from ANNtf2_loadDataset import datasetFolderRelative
-
-def updateOrAddConnectionToGraph(neuronNamelist, HFconnectionGraph, sourceNeuronID, targetNeuronID):
+	
+def updateOrAddConnectionToGraph(HFconnectionGraphObject, sourceNeuronID, targetNeuronID):
+	HFconnectionGraph = HFconnectionGraphObject.HFconnectionGraph
 	#contextConnection=False
 	if(edgeExists(HFconnectionGraph.edge_index, sourceNeuronID, targetNeuronID)):
 		edge_index = getEdgeIndex(HFconnectionGraph.edge_index, sourceNeuronID, targetNeuronID)
@@ -44,7 +45,7 @@ def updateOrAddConnectionToGraph(neuronNamelist, HFconnectionGraph, sourceNeuron
 			HFconnectionGraph.edge_attr = edge_attrAdd
 
 def readHFconnectionMatrix():
-	if(HFreadSavedConnectionsMatrix):
+	if(HFreadSavedConnectionsMatrixPyG):
 		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName
 		HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsFileName
 		neuronNamelist = readConceptNeuronList(HFconceptNeuronListPathName)
