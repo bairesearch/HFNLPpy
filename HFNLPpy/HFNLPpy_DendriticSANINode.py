@@ -420,7 +420,7 @@ def sequentialSegmentActivationLevelAboveZero(activationLevel):
 	
 	
 def generateDendriticSANIFileName(sentenceOrNetwork, sentenceIndex=None, write=False):
-	fileName = "useAlgorithmDendriticSANIbiologicalSimulation"
+	fileName = "useAlgorithmDendriticSANI"
 	if(sentenceOrNetwork):
 		fileName = fileName + "Sentence"
 		fileName = fileName + "sentenceIndex" + convertIntToString(sentenceIndex)

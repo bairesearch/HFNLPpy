@@ -33,7 +33,7 @@ drawHopfieldGraphEdgeColours = True
 drawHopfieldGraphEdgeWeights = False
 if(drawHopfieldGraphEdgeColours or drawHopfieldGraphEdgeWeights):
 	drawHopfieldGraphEdgeColoursWeights = True
-if(useAlgorithmScanBiologicalSimulation):
+if(useAlgorithmScan):
 	drawHopfieldGraphNodeColours = True	#colour activated nodes
 else:
 	drawHopfieldGraphNodeColours = False	#node colours not yet coded (pos type of concept node will be different depending on connectivity/instance context)
@@ -104,7 +104,7 @@ def drawHopfieldGraphNode(node, networkSize):
 	posX, posY = pointOnCircle(hopfieldGraphRadius, hopfieldGraphAngle, hopfieldGraphCentre)	#generate circular graph
 	hopfieldGraph.add_node(node.nodeName, pos=(posX, posY))
 	if(drawHopfieldGraphNodeColours):
-		if(useAlgorithmScanBiologicalSimulation):
+		if(useAlgorithmScan):
 			#~use SANIgenDemoVideo1 simulation colour scheme (FUTURE: vary colours based on node.activationLevel)
 			if(node.activationStateFiltered):
 				colorHtml = 'yellow'
@@ -113,7 +113,7 @@ def drawHopfieldGraphNode(node, networkSize):
 			else:
 				colorHtml = 'blue'
 		else:
-			printe("drawHopfieldGraphNodeColours currently requires useAlgorithmScanBiologicalSimulation")
+			printe("drawHopfieldGraphNodeColours currently requires useAlgorithmScan")
 		hopfieldGraphNodeColorMap.append(colorHtml)
 
 def drawHopfieldGraphConnection(connection, drawGraphNetwork, sentenceConceptNodeList=None):

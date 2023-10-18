@@ -213,12 +213,12 @@ def drawDendriticSANIGraphNode(conceptNode, drawGraphNetwork, activationTime):
 			dendriticSANIGraphNodeSizeMap.append(conceptNodeSizeDrawSentence)
 	dendriticSANIGraphConceptNodesList.append(conceptNode.nodeName)
 
-	#if(useAlgorithmDendriticSANIbiologicalSimulation) exclusive code:
+	#if(useAlgorithmDendriticSANI) exclusive code:
 	posYdendriticTreeBranchHead = posY+branchIndex1Separation	#position of first branching within dendritic tree
 	currentBranchIndex1 = 0
 	drawDendriticSANIGraphNodeDendriticBranch(conceptNode, posX, posYdendriticTreeBranchHead, conceptNode.dendriticTree, currentBranchIndex1, conceptNode, posX, posY, activationTime, drawOrthogonalBranchNode=False)
 
-#if(useAlgorithmDendriticSANIbiologicalSimulation) exclusive code:
+#if(useAlgorithmDendriticSANI) exclusive code:
 	
 def drawDendriticSANIGraphNodeDendriticBranch(conceptNode, posX, posY, dendriticBranch, currentBranchIndex1, previousBranch, previousConceptNodePosX, previousConceptNodePosY, activationTime, drawOrthogonalBranchNode=True):
 	#print("drawDendriticSANIGraphNodeDendriticBranch: , dendriticBranch.nodeName = ", dendriticBranch.nodeName, ", currentBranchIndex1 = ", currentBranchIndex1, ", posX = ", posX, ", posY = ", posY)
@@ -364,7 +364,7 @@ def displayDendriticSANIGraph(plot=True, save=False, fileName=None):
 		else:
 			nx.draw(dendriticSANIGraph, pos, with_labels=False, alpha=graphTransparency, node_size=nodeSizeDraw)
 
-	#if(useAlgorithmDendriticSANIbiologicalSimulation) exclusive code:
+	#if(useAlgorithmDendriticSANI) exclusive code:
 	#only assign labels to conceptNeurons
 	labels = {}    
 	for node in dendriticSANIGraph.nodes():

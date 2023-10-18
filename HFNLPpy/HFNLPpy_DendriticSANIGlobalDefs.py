@@ -37,7 +37,7 @@ if(selectActivatedTop):
 	
 #### computation type ####
 
-vectoriseComputation = True	#parallel processing for optimisation
+vectoriseComputation = False	#parallel processing for optimisation
 if(vectoriseComputation):
 	updateNeuronObjectActivationLevels = True	#default: False #optional	#only required for drawBiologicalSimulationDynamic (slows down processing)	#activation levels are required to be stored in denditicTree object structure (HopfieldNode/DendriticBranch/SequentialSegment/SequentialSegmentInput) for drawBiologicalSimulationDynamic
 else:
@@ -146,6 +146,9 @@ if(seedHFnetworkSubsequence):
 	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
 	seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant = True
 
+enforceMinimumEncodedSequenceLength = True	#do not execute addPredictiveSequenceToNeuron if predictive sequence is short (ie does not use up the majority of numberOfBranches1)
+if(enforceMinimumEncodedSequenceLength):
+	minimumEncodedSequenceLength = 4	#should be high enough to fill a significant proportion of dendrite vertical branch length (numberOfBranches1)	#~seedHFnetworkSubsequenceLength
 
 #### dendritic encoding calibration ####
 
@@ -171,11 +174,7 @@ if(reduceCompletenessOfEncodingCalibration):
 	subsequenceLengthCalibration = subsequenceLengthCalibration/averageSentenceLength	
 
 #probabilityOfSubsequenceThreshold = 0.01	#FUTURE: calibrate depending on number of branches/sequentialSegments etc
-	
-enforceMinimumEncodedSequenceLength = True	#do not execute addPredictiveSequenceToNeuron if predictive sequence is short (ie does not use up the majority of numberOfBranches1)
-if(enforceMinimumEncodedSequenceLength):
-	minimumEncodedSequenceLength = 4	#should be high enough to fill a significant proportion of dendrite vertical branch length (numberOfBranches1)	#~seedHFnetworkSubsequenceLength
-	
+		
 preventGenerationOfDuplicateConnections = True	#note sequentialSegment inputs will be stored as a dictionary indexed by source node name (else indexed by sequentialSegmentInputIndex)
 	
 
@@ -436,6 +435,9 @@ if(verifyRepolarisationTime):
 verifyPropagationTime = False	#default: False	#early activation of sequential segments (from out of context connections) may prevent verifyPropagationTime time requirements from being met
 if(verifyPropagationTime):
 	activationPropagationTimeMax = 3	#max propagation time between sequential segments
+
+
+#### error ####
 
 def printe(str):
 	print(str)

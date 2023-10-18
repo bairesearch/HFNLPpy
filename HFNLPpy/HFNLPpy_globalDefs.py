@@ -19,54 +19,66 @@ HFNLP - global defs
 
 printVerbose = True
 
+#select SANIHFNLP algorithm;
+useAlgorithmLayeredSANI = False
 #select HFNLP algorithm;
-useAlgorithmLayeredSANIbiologicalSimulation = True
-useAlgorithmDendriticSANIbiologicalSimulation = True	#simulate sequential activation of dendritic input 
-useAlgorithmScanBiologicalSimulation = False
+useAlgorithmMatrix = False
+useAlgorithmDendriticSANI = True	#simulate sequential activation of dendritic input 
+useAlgorithmScan = False
 useAlgorithmArtificial = False	#default
-useAlgorithmDendriticSANIbiologicalPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
+useAlgorithmDendriticPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
 
-#### concept connections ####
-linkSimilarConceptNodes = False #initialise (dependent var)
-linkSimilarConceptNodesWordnet = False #initialise (dependent var)
-linkSimilarConceptNodesBagOfWords = False #initialise (dependent var)
+#### concept connections/connectionMatrix ####
+
+#initialise dependent vars;
+linkSimilarConceptNodes = False
+linkSimilarConceptNodesWordnet = False
+linkSimilarConceptNodesBagOfWords = False
 useHFconnectionMatrix = False
-useHFconnectionMatrixPyG = False	#initialise (dependent var)
-useHFconnectionMatrixBasic = False 	#initialise (dependent var)
-tokenWordnetSynonyms = False 	#initialise (dependent var)
-if(useAlgorithmDendriticSANIbiologicalSimulation):
-	linkSimilarConceptNodes = False
-	if(linkSimilarConceptNodes):
-		linkSimilarConceptNodesWordnet = False
-		linkSimilarConceptNodesBagOfWords = True
-		if(linkSimilarConceptNodesWordnet):
-			tokenWordnetSynonyms = True	#requires spacy nltk:wordnet
-			if(tokenWordnetSynonyms):
-				tokenWordnetSynonymsFromLemma = False
-		elif(linkSimilarConceptNodesBagOfWords):
-			linkSimilarConceptNodesBagOfWordsWeightStore = True	#optional	#required for next word prediction (ie !linkSimilarConceptNodesBagOfWordsFullContextAvailableUponRetrieval)
-			linkSimilarConceptNodesBagOfWordsWeightRetrieval = True	#optional	#recommended - weight matrix lookup calculation by distance of current sentence context word
-			linkSimilarConceptNodesBagOfWordsFullContextAvailableUponRetrieval = False	#has not yet been coded #retrieveSimilarConcepts:linkSimilarConceptNodesBagOfWordsFullContextAvailableUponRetrieval requires sentenceConceptNodeList and w	#requires requires incontext knowledge of previous and next words to find synonyms
-			useHFconnectionMatrix = True
-			useHFconnectionMatrixBasic = True
-			useHFconnectionMatrixBasicBool = False #initialise (dependent var)
-			if(not linkSimilarConceptNodesBagOfWordsWeightStore and not linkSimilarConceptNodesBagOfWordsWeightRetrieval):
-				useHFconnectionMatrixBasicBool = True
-			linkSimilarConceptNodesBagOfWordsDistanceMax = 5 #max distance of context word
-			linkSimilarConceptNodesBagOfWordsTopK = 3	#CHECKTHIS
-if(useHFconnectionMatrix):
-	HFreadSavedConnectionsMatrixPyG = False
-	HFreadSavedConnectionsMatrixBasic = False
-	HFconnectionMatrixBasicMaxConcepts = 1000	#size of HFconnectionMatrix [^2]	#maximum number of concepts to store
-	
+useHFconnectionMatrixPyG = False
+useHFconnectionMatrixBasic = False 
+tokenWordnetSynonyms = False
+
+if(useAlgorithmDendriticSANI):
+	linkSimilarConceptNodes = False	#optional
+elif(useAlgorithmMatrix):
+	linkSimilarConceptNodes = False	#optional
+
+if(linkSimilarConceptNodes):
+	linkSimilarConceptNodesWordnet = False
+	linkSimilarConceptNodesBagOfWords = True
+	if(linkSimilarConceptNodesWordnet):
+		tokenWordnetSynonyms = True	#requires spacy nltk:wordnet
+		if(tokenWordnetSynonyms):
+			tokenWordnetSynonymsFromLemma = False
+	elif(linkSimilarConceptNodesBagOfWords):
+		linkSimilarConceptNodesBagOfWordsWeightStore = False	#optional		#recommended - weight matrix storage calculation by distance of current sentence context word
+		linkSimilarConceptNodesBagOfWordsWeightRetrieval = False	#optional	#recommended - weight matrix lookup calculation by distance of current sentence context word
+		linkSimilarConceptNodesBagOfWordsContextual = True	#optional #uses incontext knowledge of previous words to find synonyms
+		if(not linkSimilarConceptNodesBagOfWordsContextual):
+			linkSimilarConceptNodesBagOfWordsWeightStore = True	#required for next word prediction with !linkSimilarConceptNodesBagOfWordsContextual
+			linkSimilarConceptNodesBagOfWordsWeightRetrieval = True
+		linkSimilarConceptNodesBagOfWordsDistanceMax = 5 #max distance of context word
+		linkSimilarConceptNodesBagOfWordsTopK = 3	#CHECKTHIS
+		useHFconnectionMatrix = True
+		useHFconnectionMatrixBasic = True
+		useHFconnectionMatrixBasicBool = False #initialise (dependent var)
+		if(not bagOfWordsWeightStore and not linkSimilarConceptNodesBagOfWordsWeightRetrieval):
+			assert (not useAlgorithmMatrix)	#useHFconnectionMatrixBasicBool is not supported by useAlgorithmMatrix
+			useHFconnectionMatrixBasicBool = True	
+			
 useDependencyParseTree = False	#initialise (dependent var)
-if(useAlgorithmLayeredSANIbiologicalSimulation):
+if(useAlgorithmLayeredSANI):
 	useDependencyParseTree = False
-elif(useAlgorithmScanBiologicalSimulation):
+elif(useAlgorithmMatrix):
+	useHFconnectionMatrix = True
+	useHFconnectionMatrixBasic = True
+	useHFconnectionMatrixBasicBool = False
+elif(useAlgorithmScan):
 	useDependencyParseTree = False
 	useHFconnectionMatrix = True
 	useHFconnectionMatrixPyG = True
-elif(useAlgorithmDendriticSANIbiologicalSimulation):
+elif(useAlgorithmDendriticSANI):
 	from HFNLPpy_DendriticSANIGlobalDefs import biologicalSimulationEncodeSyntaxInDendriticBranchStructure
 	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 		useDependencyParseTree = True
@@ -75,7 +87,21 @@ elif(useAlgorithmDendriticSANIbiologicalSimulation):
 else:
 	useDependencyParseTree = True
 	biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False
-	
+
+if(useHFconnectionMatrix):
+	HFreadSavedConnectionsMatrixPyG = False	#currently requires useAlgorithmScan
+	HFreadSavedConnectionsMatrixBasic = False	#not available
+	HFwriteSavedConnectionsMatrixPyG = False	#currently requires useAlgorithmScan
+	HFwriteSavedConnectionsMatrixBasic = False	#not available
+	HFconnectionMatrixBasicMaxConcepts = 1000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
+	useHFconnectionMatrixNormaliseSoftmax = False	#use softmax function to normalise connections matrix
+	import torch as pt
+	if(useHFconnectionMatrixBasicBool):
+		HFconnectionsMatrixType = pt.bool
+	else:
+		HFconnectionsMatrixType = pt.long
+		#print("HFconnectionsMatrixType = ", HFconnectionsMatrixType)
+
 if(useDependencyParseTree):
 	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 		identifySyntacticalDependencyRelations = True	#optional
@@ -86,20 +112,22 @@ if(useDependencyParseTree):
 		#if supportForNonBinarySubbranchSize True, dendriticTree will support 2+ subbranches, with inputs adjusted by weight depending on number of subbranches expected to be activated
 		#if supportForNonBinarySubbranchSize False, constituency/dependency parser must produce a binary parse tree (or disable biologicalSimulationEncodeSyntaxInDendriticBranchStructureDirect)
 		if(not identifySyntacticalDependencyRelations):
-			print("useAlgorithmDendriticSANIbiologicalSimulation constituency parse tree support has not yet been implemented: synapses are created in most distal branch segments only - requires dendritic tree propagation algorithm mod")
+			print("useAlgorithmDendriticSANI constituency parse tree support has not yet been implemented: synapses are created in most distal branch segments only - requires dendritic tree propagation algorithm mod")
 			exit()
 	else:
 		identifySyntacticalDependencyRelations = True	#mandatory 	#standard hopfield NLP graph requires words are connected (no intermediary constituency parse tree syntax nodes) 
 
-drawHopfieldGraph = False
-if(useAlgorithmLayeredSANIbiologicalSimulation):
-	drawHopfieldGraph = False
-elif(useAlgorithmScanBiologicalSimulation):
-	drawHopfieldGraph = False	#default: False - typically use drawBiologicalSimulation only
-elif(useAlgorithmDendriticSANIbiologicalSimulation):
-	drawHopfieldGraph = False	#default: False - typically use drawBiologicalSimulation only
+drawHopfieldGraph = True
+if(useAlgorithmLayeredSANI):
+	drawHopfieldGraph = False	#default: False
+elif(useAlgorithmMatrix):
+	drawHopfieldGraph = False	#default: False
+elif(useAlgorithmScan):
+	drawHopfieldGraph = False	#default: False
+elif(useAlgorithmDendriticSANI):
+	drawHopfieldGraph = False	#default: False
 else:
-	drawHopfieldGraph = True
+	drawHopfieldGraph = True	#default: True
 	
 if(drawHopfieldGraph):
 	drawHopfieldGraphPlot = True

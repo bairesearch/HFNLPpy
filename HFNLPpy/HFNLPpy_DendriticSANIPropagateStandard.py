@@ -240,8 +240,8 @@ def calculateNeuronActivationStandardWrapper(connection, currentBranchIndex1, cu
 		currentBranchIndex1 = currentBranch.branchIndex1
 	
 		if(currentSequentialSegmentIndex < numberOfBranchSequentialSegments-1):
-			print("currentSequentialSegmentIndex = ", currentSequentialSegmentIndex)
-			print("numberOfBranchSequentialSegments = ", numberOfBranchSequentialSegments)
+			#print("currentSequentialSegmentIndex = ", currentSequentialSegmentIndex)
+			#print("numberOfBranchSequentialSegments = ", numberOfBranchSequentialSegments)
 			previousSequentialSegment = currentBranch.sequentialSegments[currentSequentialSegmentIndex+1]
 			sequentialSegmentActivationStatePrior = calculateSequentialSegmentActivationState(previousSequentialSegment.activationLevel)
 			sequentialSegmentActivationLevelPrior = previousSequentialSegment.activationLevel

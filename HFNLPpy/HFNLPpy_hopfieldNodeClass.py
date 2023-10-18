@@ -24,16 +24,16 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 
 from HFNLPpy_globalDefs import *
-if(useAlgorithmLayeredSANIbiologicalSimulation):
+if(useAlgorithmLayeredSANI):
 	from SANIHFNLPpy_LayeredSANINode import layeredSANINodePropertiesInitialisation
-if(useAlgorithmDendriticSANIbiologicalSimulation):
+if(useAlgorithmDendriticSANI):
 	from HFNLPpy_DendriticSANINode import dendriticSANINodePropertiesInitialisation
 	
 storeConceptNodesByLemma = True	#else store by word (morphology included)
 convertLemmasToLowercase = True #required to ensure that capitalised start of sentence words are always converted to the same lemmas (irrespective of inconsistent propernoun detection)
 
 graphNodeTypeConcept = 1	#base/input neuron (network neuron)
-if(useAlgorithmLayeredSANIbiologicalSimulation):
+if(useAlgorithmLayeredSANI):
 	graphNodeTypeSANIhidden = 2
 
 #if(biologicalImplementationReuseSynapticSubstrateForIdenticalSubsequences):
@@ -61,13 +61,13 @@ class HopfieldNode:
 		self.HFcontextTargetConnectionDict = {}
 		self.HFcausalSourceConnectionDict = {}
 		self.HFcausalTargetConnectionDict = {}
-		if(useAlgorithmLayeredSANIbiologicalSimulation):
+		if(useAlgorithmLayeredSANI):
 			#only 1 connection between each unique concept node; record connection strength [for a particular SANI layer]
 			self.HFcontextSourceConnectionLayeredDict = {}
 			self.HFcontextTargetConnectionLayeredDict = {}
 			self.HFcausalSourceConnectionLayeredDict = {}
 			self.HFcausalTargetConnectionLayeredDict = {}
-		if(useAlgorithmDendriticSANIbiologicalSimulation):
+		if(useAlgorithmDendriticSANI):
 			#multiple connections between each unique concept node [targeting different dendritic input synapses]
 			self.HFcontextSourceConnectionMultiDict = {}
 			self.HFcontextTargetConnectionMultiDict = {}
@@ -76,11 +76,11 @@ class HopfieldNode:
 		#self.HFsourceConnectionList = []	#legacy (no fast access)
 		#self.HFtargetConnectionList = []	#legacy (no fast access)
 
-		if(useAlgorithmLayeredSANIbiologicalSimulation):
+		if(useAlgorithmLayeredSANI):
 			layeredSANINodePropertiesInitialisation(self)
-		if(useAlgorithmDendriticSANIbiologicalSimulation):
+		if(useAlgorithmDendriticSANI):
 			dendriticSANINodePropertiesInitialisation(self)
-		if(useAlgorithmScanBiologicalSimulation):
+		if(useAlgorithmScan):
 			#self.activationLevel = 0
 			self.activationState = False
 			self.activationStateFiltered = False
@@ -96,7 +96,7 @@ def calculateActivationTime(sentenceIndex):
 	
 #creation time
 def calculateSpatioTemporalIndex(sentenceIndex):
-	#for useAlgorithmDendriticSANIbiologicalPrototype: e.g. 1) interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause); or 2) store spatiotemporal index synapses on separate dendritic branch
+	#for useAlgorithmDendriticPrototype: e.g. 1) interpret as dendriticDistance - generate a unique dendritic distance for the synapse (to ensure the spikes from previousConceptNodes refer to this particular spatioTemporalIndex/clause); or 2) store spatiotemporal index synapses on separate dendritic branch
 	spatioTemporalIndex = sentenceIndex
 	return spatioTemporalIndex
 

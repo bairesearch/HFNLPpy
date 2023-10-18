@@ -1,4 +1,4 @@
-"""HFNLPpy_ScanConnectionMatrix.py
+"""HFNLPpy_ConnectionMatrixPyG.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Scan Connection Matrix
+HFNLP Connection Matrix PyG
 
 """
 
@@ -56,10 +56,11 @@ def readHFconnectionMatrix():
 	return neuronNamelist, HFconnectionGraph
 
 def writeHFconnectionMatrix(neuronNamelist, HFconnectionGraph):
-	HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName
-	HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsFileName
-	writeConceptNeuronList(neuronNamelist, HFconceptNeuronListPathName)
-	writeGraphToCsv(HFconnectionGraph, HFconnectionMatrixPathName)
+	if(HFwriteSavedConnectionsMatrixPyG):
+		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName
+		HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsFileName
+		writeConceptNeuronList(neuronNamelist, HFconceptNeuronListPathName)
+		writeGraphToCsv(HFconnectionGraph, HFconnectionMatrixPathName)
 
 def readGraphFromCsv(filePath):
 	"""

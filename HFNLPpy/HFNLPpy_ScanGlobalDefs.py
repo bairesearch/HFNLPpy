@@ -65,8 +65,10 @@ else:
 	
 #### file i/o ####
 
-HFconnectionMatrixFileName = "HFconnectionGraph.csv"
-HFconceptNeuronsFileName = "HFconceptNeurons.csv"
+HFconnectionMatrixFileName = "HFconnectionGraph"
+HFconceptNeuronsFileName = "HFconceptNeurons"
+HFconnectionMatrixExtensionName = ".csv"
+HFconceptNeuronsExtensionName = ".csv"
 
 #### test harness ####
 

@@ -50,7 +50,7 @@ def simulateBiologicalHFnetworkSequenceTrainSP(networkConceptNodeDict, sentenceI
 	if(identifySyntacticalDependencyRelations):
 		simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchDP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode, activationTime, connectionTargetNeuronSet, contextConceptNodesList)		
 	else:
-		print("useAlgorithmDendriticSANIbiologicalSimulation:identifySyntacticalDependencyRelations current implementation requires identifySyntacticalDependencyRelations")
+		print("useAlgorithmDendriticSANI:identifySyntacticalDependencyRelations current implementation requires identifySyntacticalDependencyRelations")
 		exit()
 		#simulateBiologicalHFnetworkSequenceTrainSyntacticalBranchCP(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, SPgraphHeadNode, activationTime, connectionTargetNeuronSet)
 
@@ -167,7 +167,7 @@ def addPredictiveSequenceToNeuronSyntacticalBranchDP(conceptNeuron, sentenceInde
 			dendriticBranchSub = dendriticBranch.subbranches[DPdependentNodeIndex]
 
 			previousContextConceptNode = sentenceConceptNodeList[DPdependentNode.w]
-			currentSequentialSegmentIndex = 0	#SyntacticalBranchDP/SyntacticalBranchSP useAlgorithmDendriticSANIbiologicalSimulation implementation does not use local sequential segments (encode sequentiality in branch structure only)
+			currentSequentialSegmentIndex = 0	#SyntacticalBranchDP/SyntacticalBranchSP useAlgorithmDendriticSANI implementation does not use local sequential segments (encode sequentiality in branch structure only)
 			currentSequentialSegment = dendriticBranchSub.sequentialSegments[currentSequentialSegmentIndex]
 			createNewConnection, existingSequentialSegmentInput = HFNLPpy_DendriticSANIGenerate.verifyCreateNewConnection(currentSequentialSegment, previousContextConceptNode)
 			if(createNewConnection):
@@ -183,7 +183,7 @@ def addPredictiveSequenceToNeuronSyntacticalBranchDP(conceptNeuron, sentenceInde
 					currentSequentialSegment.inputs[previousContextConceptNode.nodeName] = currentSequentialSegmentInput			
 				else:
 					currentSequentialSegment.inputs[newSequentialSegmentSegmentInputIndex] = currentSequentialSegmentInput
-				HFNLPpy_DendriticSANIGenerate.addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, useAlgorithmDendriticSANIbiologicalPrototype=False, weight=weight, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, useAlgorithmDendriticSANIbiologicalSimulation=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
+				HFNLPpy_DendriticSANIGenerate.addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, useAlgorithmDendriticPrototype=False, weight=weight, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, useAlgorithmDendriticSANI=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
 			else:
 				currentSequentialSegmentInput = existingSequentialSegmentInput
 
@@ -314,7 +314,7 @@ def addPredictiveSequenceToNeuronSyntacticalBranchCP(conceptNeuron, sentenceInde
 			dendriticBranchSub = dendriticBranch.subbranches[CPsourceNodeIndex]
 
 			previousContextConceptNode = sentenceConceptNodeList[CPsourceNode.w]
-			currentSequentialSegmentIndex = 0	#SyntacticalBranchDP/SyntacticalBranchSP useAlgorithmDendriticSANIbiologicalSimulation implementation does not use local sequential segments (encode sequentiality in branch structure only)
+			currentSequentialSegmentIndex = 0	#SyntacticalBranchDP/SyntacticalBranchSP useAlgorithmDendriticSANI implementation does not use local sequential segments (encode sequentiality in branch structure only)
 			currentSequentialSegment = dendriticBranchSub.sequentialSegments[currentSequentialSegmentIndex]
 			createNewConnection, existingSequentialSegmentInput = HFNLPpy_DendriticSANIGenerate.verifyCreateNewConnection(currentSequentialSegment, previousContextConceptNode)
 			if(createNewConnection):
@@ -330,7 +330,7 @@ def addPredictiveSequenceToNeuronSyntacticalBranchCP(conceptNeuron, sentenceInde
 					currentSequentialSegment.inputs[previousContextConceptNode.nodeName] = currentSequentialSegmentInput			
 				else:
 					currentSequentialSegment.inputs[newSequentialSegmentSegmentInputIndex] = currentSequentialSegmentInput
-				HFNLPpy_DendriticSANIGenerate.addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, useAlgorithmDendriticSANIbiologicalPrototype=False, weight=weight, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, useAlgorithmDendriticSANIbiologicalSimulation=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
+				HFNLPpy_DendriticSANIGenerate.addPredictiveSynapseToNeuron(previousContextConceptNode, conceptNeuron, activationTime, spatioTemporalIndex, useAlgorithmDendriticPrototype=False, weight=weight, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, useAlgorithmDendriticSANI=True, nodeTargetSequentialSegmentInput=currentSequentialSegmentInput)
 			else:
 				currentSequentialSegmentInput = existingSequentialSegmentInput
 

@@ -1,4 +1,4 @@
-"""HFNLPpy_ScanConnectionMatrix.py
+"""HFNLPpy_ConnectionMatrixBasic.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Scan Connection Matrix
+HFNLP Connection Matrix Basic
 
 """
 
@@ -25,11 +25,6 @@ from torch_geometric.data import Data
 
 from HFNLPpy_ScanGlobalDefs import *
 from ANNtf2_loadDataset import datasetFolderRelative
-
-if(useHFconnectionMatrixBasicBool):
-	HFconnectionsMatrixType = pt.bool
-else:
-	HFconnectionsMatrixType = pt.long
 	
 def addContextConnectionsToGraph(HFconnectionGraph, neuronID, contextConnectionVector):
 	conceptsSize = contextConnectionVector.shape[0]
@@ -40,11 +35,12 @@ def addContextConnectionsToGraph(HFconnectionGraph, neuronID, contextConnectionV
 		pt.logical_and(HFconnectionGraph[neuronID], contextConnectionVectorPadded)
 	else:
 		HFconnectionGraph[neuronID] += contextConnectionVectorPadded
+	#print("HFconnectionGraph[neuronID] = ", HFconnectionGraph[neuronID])
 
-def readHFconnectionMatrix():
+def readHFconnectionMatrix(sequenceIndex=""):
 	if(HFreadSavedConnectionsMatrixBasic):
-		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName
-		HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsFileName
+		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName + sequenceIndex + HFconnectionMatrixExtensionName
+		HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsFileName + sequenceIndex + HFconceptNeuronsExtensionName
 		neuronNamelist = readConceptNeuronList(HFconceptNeuronListPathName)
 		HFconnectionGraph = readGraphFromCsv(HFconnectionMatrixPathName)
 		conceptsSize = HFconnectionGraph.shape[0]
@@ -57,11 +53,12 @@ def readHFconnectionMatrix():
 		HFconnectionGraph = pt.zeros([HFconnectionMatrixBasicMaxConcepts, HFconnectionMatrixBasicMaxConcepts], dtype=HFconnectionsMatrixType)
 	return neuronNamelist, HFconnectionGraph
 
-def writeHFconnectionMatrix(neuronNamelist, HFconnectionGraph):
-	HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName
-	HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsFileName
-	writeConceptNeuronList(neuronNamelist, HFconceptNeuronListPathName)
-	writeGraphToCsv(HFconnectionGraph, HFconnectionMatrixPathName)
+def writeHFconnectionMatrix(neuronNamelist, HFconnectionGraph, sequenceIndex=""):
+	if(HFwriteSavedConnectionsMatrixBasic):
+		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName + sequenceIndex + HFconnectionMatrixExtensionName
+		HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsFileName + sequenceIndex + HFconceptNeuronsExtensionName
+		writeConceptNeuronList(neuronNamelist, HFconceptNeuronListPathName)
+		writeGraphToCsv(HFconnectionGraph, HFconnectionMatrixPathName)
 
 def readGraphFromCsv(filePath):
 	connections = []

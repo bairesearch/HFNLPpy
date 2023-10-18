@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Dendritic SANI - simulate training/inference of biological hopfield graph/network based on textual input
+HFNLP Dendritic SANI - simulate training/inference of dendritic SANI hopfield graph/network based on textual input
 
 pseudo code;
 for every time step/concept neuron (word w):
@@ -84,7 +84,7 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 			else:
 				somaActivationFound = simulateBiologicalHFnetworkSequenceNodesPropagateForward(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSourceList, connectionTargetNeuronSetLocal)
 			
-			connectionTargetNeuronSetLocalFiltered = selectActivatedNeurons(networkConceptNodeDict, connectionTargetNeuronSetLocal, HFconnectionGraphObject)
+			connectionTargetNeuronSetLocalFiltered = selectActivatedNeurons(wSource, targetSentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSetLocal, HFconnectionGraphObject)
 				
 			conceptNeuronSourceList.clear()
 			for connectionTargetNeuron in connectionTargetNeuronSetLocalFiltered:
@@ -118,7 +118,7 @@ def trainBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, sentenceConc
 	simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences)	
 
 
-#if (!useAlgorithmDendriticSANIbiologicalSimulation:useDependencyParseTree):
+#if (!useAlgorithmDendriticSANI:useDependencyParseTree):
 
 def simulateBiologicalHFnetworkSequenceTrain(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, numberOfSentences):
 
@@ -231,10 +231,10 @@ def simulateBiologicalHFnetworkSequenceNodePropagateForwardFull(networkConceptNo
 		
 	return somaActivationFound
 
-def selectActivatedNeurons(networkConceptNodeDict, connectionTargetNeuronSet, HFconnectionGraphObject=None):
+def selectActivatedNeurons(wSource, sentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSet, HFconnectionGraphObject=None):
 	connectionTargetNeuronSetLocalFiltered = connectionTargetNeuronSet
 	if(linkSimilarConceptNodes):
-		connectionTargetNeuronSetLocalFiltered = HFNLPpy_hopfieldOperations.retrieveSimilarConcepts(networkConceptNodeDict, connectionTargetNeuronSetLocalFiltered, HFconnectionGraphObject)
+		connectionTargetNeuronSetLocalFiltered = HFNLPpy_hopfieldOperations.retrieveSimilarConcepts(wSource, sentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSetLocalFiltered, HFconnectionGraphObject)
 	if(selectActivatedTop):
 		connectionTargetNeuronSetLocalFiltered = selectTopKactivatedNeurons(connectionTargetNeuronSetLocalFiltered)
 	return connectionTargetNeuronSetLocalFiltered
