@@ -93,16 +93,16 @@ else:
 	
 def readHFconnectionMatrix():
 	if(useAlgorithmMatrix):
-		for contextSize in range(contextSizeMax):
-			HFconnectionGraphObject.neuronNamelist, HFconnectionGraphObject.HFconnectionGraphMatrix[contextSize] = HFNLPpy_ConnectionMatrix.readHFconnectionMatrix(str(contextSize))
+		for contextSizeIndex in range(contextSizeMax):
+			HFconnectionGraphObject.neuronNamelist, HFconnectionGraphObject.HFconnectionGraphMatrix[contextSizeIndex] = HFNLPpy_ConnectionMatrix.readHFconnectionMatrix(str(contextSizeIndex))
 	else:
 		HFconnectionGraphObject.neuronNamelist, HFconnectionGraphObject.HFconnectionGraphBasic = HFNLPpy_ConnectionMatrix.readHFconnectionMatrix()
 	regenerateGraphNodes()
 	
 def writeHFconnectionMatrix():
 	if(useAlgorithmMatrix):
-		for contextSize in range(contextSizeMax):
-			HFNLPpy_ConnectionMatrix.writeHFconnectionMatrix(HFconnectionGraphObject.HFconnectionGraphMatrix[contextSize], HFconnectionGraphObject.neuronNamelist, str(contextSize))
+		for contextSizeIndex in range(contextSizeMax):
+			HFNLPpy_ConnectionMatrix.writeHFconnectionMatrix(HFconnectionGraphObject.HFconnectionGraphMatrix[contextSizeIndex], HFconnectionGraphObject.neuronNamelist, str(contextSizeIndex))
 	else:
 		HFNLPpy_ConnectionMatrix.writeHFconnectionMatrix(HFconnectionGraphObject.HFconnectionGraphBasic, HFconnectionGraphObject.neuronNamelist)
 			
@@ -169,6 +169,8 @@ def generateHopfieldGraphSentenceNodes(tokenisedSentence, sentenceIndex, sentenc
 			#set sentence artificial vars (for sentence graph only, do not generalise to network graph);
 			conceptNode.w = w
 			conceptNode.sentenceIndex = sentenceIndex
+			if(printVerbose):
+				print("graphNodeExists; ", conceptNode.nodeName)
 		else:
 			#primary vars;
 			nodeGraphType = graphNodeTypeConcept
@@ -422,12 +424,12 @@ def addContextWordsToConnectionGraphMatrix(tokenisedSentence, sentenceConceptNod
 		#print("addContextWordsToConnectionGraphMatrix: conceptNode.nodeName = ", conceptNode.nodeName) 
 		neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
 		contextSizeMax2 = min(contextSizeMax, len(tokenisedSentence))
-		for contextSize in range(contextSizeMax2):
-			#print("contextSize = ", contextSize)
-			HFconnectionGraphObject.HFconnectionGraphMatrix[contextSize], HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSize] = addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[contextSize], contextSize, contextMatrixWeightStore, False)
+		for contextSizeIndex in range(contextSizeMax2):
+			#print("contextSizeIndex = ", contextSizeIndex)
+			HFconnectionGraphObject.HFconnectionGraphMatrix[contextSizeIndex], HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSizeIndex] = addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[contextSizeIndex], contextSizeIndex, contextMatrixWeightStore, False)
 
-def addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraph, contextSize, weightStore, bidirectionalContext):
-	contextConnectionVector = HFNLPpy_hopfieldOperations.createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, len(HFconnectionGraphObject.neuronNamelist), contextSize, weightStore, bidirectionalContext)
+def addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraph, contextSizeIndex, weightStore, bidirectionalContext):
+	contextConnectionVector = HFNLPpy_hopfieldOperations.createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, len(HFconnectionGraphObject.neuronNamelist), contextSizeIndex, weightStore, bidirectionalContext)
 	HFNLPpy_ConnectionMatrix.addContextConnectionsToGraph(HFconnectionGraph, neuronID, contextConnectionVector)
 	HFconnectionGraphFloat = (HFconnectionGraph).float()
 	HFconnectionGraphNormalised = normaliseBatchedTensor(HFconnectionGraphFloat)

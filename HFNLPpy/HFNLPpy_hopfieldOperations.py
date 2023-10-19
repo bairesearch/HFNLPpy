@@ -98,6 +98,8 @@ def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphNormalised, ne
 
 	maskSummed = pt.sum(mask, dim=1)
 	maskSummedTopK = pt.topk(maskSummed, k, dim=0)
+	#print("maskSummed = ", maskSummed)
+	#print("maskSummedTopK = ", maskSummedTopK)
 	for i in maskSummedTopK.indices:
 		conceptName = neuronNamelist[i]
 		conceptNeuron, conceptInDict = convertLemmaToConcept(networkConceptNodeDict, conceptName)
@@ -107,12 +109,12 @@ def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphNormalised, ne
 	connectionTargetNeuronSet = set(connectionTargetNeuronList)		
 	return connectionTargetNeuronSet
 
-def createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextVectorLength, contextSize, weightStore, bidirectionalContext):
+def createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextVectorLength, contextSizeIndex, weightStore, bidirectionalContext):
 	contextConnectionVector = pt.zeros(contextVectorLength, dtype=HFconnectionsMatrixType)
 	for w2, conceptNeuron2 in enumerate(sentenceConceptNodeList):
 		if(w1 != w2):
 			if(bidirectionalContext or (w2 < w1)):
-				if(w1-w2 <= contextSize+1):	#+1: interpret contextSize as contextSizeIndex (as min context size = 1 not 0)
+				if(w1-w2 <= getContextSize(contextSizeIndex)):
 					conceptNodeContext = sentenceConceptNodeList[w2]
 					neuronIDcontext = HFconnectionGraphObject.neuronIDdict[conceptNodeContext.nodeName]
 					if(weightStore):
@@ -125,6 +127,10 @@ def createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, co
 							contextConnectionVector[neuronIDcontext] = 1.0
 							#print("contextConnectionVector[neuronIDcontext] = 1.0")
 	return contextConnectionVector
+
+def getContextSize(contextSizeIndex):
+	contextSize = contextSizeIndex+1	#min contextSize = 1
+	return contextSize
 
 def convertLemmaToConcept(networkConceptNodeDict, synonym):
 	synonymConcept = None

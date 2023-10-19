@@ -24,6 +24,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import numpy as np
 
 
+debugAlgorithmMatrix = False
+
 #### topk selection ####
 
 selectActivatedTop = True	#mandatory (implied) select activated top k target neurons during propagation test

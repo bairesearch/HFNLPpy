@@ -40,17 +40,22 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 	print("simulateBiologicalHFnetworkSequenceNodePropagateStandard: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName)
 	
 	connectionTargetNeuronList = []
-	contextSizeMax2 = min(contextSizeMax, len(sentenceConceptNodeList))
-	for contextSize in range(contextSizeMax2):
+	contextSizeMax2 = min(contextSizeMax, wSource+1)	#len(sentenceConceptNodeList)
+	for contextSizeIndex in range(contextSizeMax2):
 		#calculate top k prediction
 		conceptNeuronID = HFconnectionGraphObject.neuronIDdict[conceptNeuronSource.nodeName]
-		conceptNeuronContextVector = HFNLPpy_hopfieldOperations.createContextVector(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionMatrixBasicMaxConcepts, contextSize, contextMatrixWeightStore, False)	#HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSize][conceptNeuronID]
-		connectionTargetNeuronSetC = HFNLPpy_hopfieldOperations.connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSize], HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, matrixPropagateTopK1)
-		connectionTargetNeuronList.extend(list(connectionTargetNeuronSetC))
-	
+		conceptNeuronContextVector = HFNLPpy_hopfieldOperations.createContextVector(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionMatrixBasicMaxConcepts, contextSizeIndex, contextMatrixWeightStore, False)	#HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSizeIndex][conceptNeuronID]
+		connectionTargetNeuronSetC = HFNLPpy_hopfieldOperations.connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSizeIndex], HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, matrixPropagateTopK1)
+		connectionTargetNeuronListC = list(connectionTargetNeuronSetC)
+		connectionTargetNeuronList.extend(connectionTargetNeuronListC)
+		if(debugAlgorithmMatrix):
+			print("connectionTargetNeuronListC[0] = ", connectionTargetNeuronListC[0].nodeName)
+
 	connectionTargetNeuronListTopK = Counter(connectionTargetNeuronList).most_common(matrixPropagateTopK2)
 	connectionTargetNeuronListTopKkeys = [i[0] for i in connectionTargetNeuronListTopK]
 	connectionTargetNeuronSet.update(set(connectionTargetNeuronListTopKkeys))
+	if(debugAlgorithmMatrix):
+		print("connectionTargetNeuronListTopKkeys[0] = ", connectionTargetNeuronListTopKkeys[0].nodeName)
 	
 	somaActivationFound = False
 	if(conceptNeuronTarget in connectionTargetNeuronSet):
