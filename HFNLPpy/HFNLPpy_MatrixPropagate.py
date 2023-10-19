@@ -45,7 +45,6 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 		#calculate top k prediction
 		conceptNeuronID = HFconnectionGraphObject.neuronIDdict[conceptNeuronSource.nodeName]
 		conceptNeuronContextVector = HFNLPpy_hopfieldOperations.createContextVector(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionMatrixBasicMaxConcepts, contextSize, contextMatrixWeightStore, False)	#HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSize][conceptNeuronID]
-		#print("conceptNeuronContextVector = ", conceptNeuronContextVector)
 		connectionTargetNeuronSetC = HFNLPpy_hopfieldOperations.connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSize], HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, matrixPropagateTopK1)
 		connectionTargetNeuronList.extend(list(connectionTargetNeuronSetC))
 	
@@ -53,10 +52,6 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 	connectionTargetNeuronListTopKkeys = [i[0] for i in connectionTargetNeuronListTopK]
 	connectionTargetNeuronSet.update(set(connectionTargetNeuronListTopKkeys))
 	
-	#print("connectionTargetNeuronList = ", connectionTargetNeuronList)
-	#print("connectionTargetNeuronListTopKkeys = ", connectionTargetNeuronListTopKkeys)
-	print("connectionTargetNeuronListTop = ", connectionTargetNeuronListTopKkeys[0].nodeName)
-
 	somaActivationFound = False
 	if(conceptNeuronTarget in connectionTargetNeuronSet):
 		somaActivationFound = True

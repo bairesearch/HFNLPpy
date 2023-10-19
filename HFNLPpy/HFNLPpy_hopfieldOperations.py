@@ -92,23 +92,16 @@ def retrieveSimilarConcepts(wSource, sentenceConceptNodeList, networkConceptNode
 def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphNormalised, neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, k):
 	connectionTargetNeuronList = []
 	
-	conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVector, dim=1)
-	conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(1, HFconnectionMatrixBasicMaxConcepts)	#len(HFconnectionGraphObject.neuronNamelist)
+	conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVector, dim=0)
+	conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(HFconnectionMatrixBasicMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)
 	mask = HFconnectionGraphNormalised * conceptNeuronContextVectorExtended
-	
-	#print("\n\nconnectionMatrixCalculateConnectionTargetSet:")
-	#print("conceptNeuronContextVector = ", conceptNeuronContextVector)
-	#print("HFconnectionGraphNormalised = ", HFconnectionGraphNormalised)
-	#print("mask = ", mask)
 
 	maskSummed = pt.sum(mask, dim=1)
 	maskSummedTopK = pt.topk(maskSummed, k, dim=0)
 	for i in maskSummedTopK.indices:
-		print("i = ", i)
 		conceptName = neuronNamelist[i]
 		conceptNeuron, conceptInDict = convertLemmaToConcept(networkConceptNodeDict, conceptName)
 		if(conceptInDict):
-			#print("conceptInDict: conceptNeuron.nodeName ", conceptNeuron.nodeName)
 			connectionTargetNeuronList.append(conceptNeuron)
 	
 	connectionTargetNeuronSet = set(connectionTargetNeuronList)		

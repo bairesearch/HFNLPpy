@@ -96,7 +96,7 @@ if(useHFconnectionMatrix):
 	HFreadSavedConnectionsMatrixBasic = False	#not available
 	HFwriteSavedConnectionsMatrixPyG = False	#currently requires useAlgorithmScan
 	HFwriteSavedConnectionsMatrixBasic = False	#not available
-	HFconnectionMatrixBasicMaxConcepts = 100	#1000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
+	HFconnectionMatrixBasicMaxConcepts = 1000	#debug: 100 [Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
 	useHFconnectionMatrixNormaliseSoftmax = False	#use softmax function to normalise connections matrix
 	usePytorch = True
 
