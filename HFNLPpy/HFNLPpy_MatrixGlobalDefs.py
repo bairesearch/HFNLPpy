@@ -25,17 +25,38 @@ import numpy as np
 
 
 debugAlgorithmMatrix = False
+debugHFconnectionMatrix = False
+
+#### memory constraints ####
+algorithmMatrixSingleTensor = False	#store context size array (and simulated dendritic branches) in pytorch tensor rather than python list	#requires high ram
+useHFconnectionMatrixBasicSparse = False		#reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)
+if(debugHFconnectionMatrix):
+	HFconnectionMatrixBasicMaxConcepts = 20	 #[Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]
+else:
+	HFconnectionMatrixBasicMaxConcepts = 1000	#200	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
+
+#### simulated dendritic branches ####
+
+simulatedDendriticBranches = False	#independent dendritic branches
+if(simulatedDendriticBranches):
+	numberOfDendriticBranches = 10
+else: 
+	numberOfDendriticBranches = 1
 
 #### topk selection ####
 
 selectActivatedTop = True	#mandatory (implied) select activated top k target neurons during propagation test
 if(selectActivatedTop):
-	matrixPropagateTopK1 = 1	#number of top k elements to save (1)
-	matrixPropagateTopK2 = 1	#number of top k elements to save (2)
-
+	matrixPropagateTopKconceptNodes = 1	#number of top k elements to save
+	matrixPropagateTopKcontextSize = 1	#number of top k elements to save
+	matrixPropagateTopKdendriticBranches = 1 	#number of top k elements to save
+	
 #### context connections matrix ####
 
-contextSizeMax = 1000 #max sequential context width use for next word prediction
+if(debugHFconnectionMatrix):
+	contextSizeMax = 20 #[Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]
+else:
+	contextSizeMax = 100 #max sequential context width use for next word prediction
 contextMatrixWeightStore = False	#optional	#CHECKTHIS
 
 #### test harness (compare standard/vectorised computation) ####

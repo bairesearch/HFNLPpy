@@ -22,8 +22,8 @@ printVerbose = True
 #select SANIHFNLP algorithm;
 useAlgorithmLayeredSANI = False
 #select HFNLP algorithm;
-useAlgorithmMatrix = False
-useAlgorithmDendriticSANI = True	#simulate sequential activation of dendritic input 
+useAlgorithmMatrix = True
+useAlgorithmDendriticSANI = False	#simulate sequential activation of dendritic input 
 useAlgorithmScan = False
 useAlgorithmArtificial = False	#default
 useAlgorithmDendriticPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
@@ -96,10 +96,15 @@ if(useHFconnectionMatrix):
 	HFreadSavedConnectionsMatrixBasic = False	#not available
 	HFwriteSavedConnectionsMatrixPyG = False	#currently requires useAlgorithmScan
 	HFwriteSavedConnectionsMatrixBasic = False	#not available
-	HFconnectionMatrixBasicMaxConcepts = 200	#1000	#debug: 100 [Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
 	useHFconnectionMatrixNormaliseSoftmax = False	#use softmax function to normalise connections matrix
 	usePytorch = True
-
+	if(useAlgorithmMatrix):
+		from HFNLPpy_MatrixGlobalDefs import useHFconnectionMatrixBasicSparse
+		from HFNLPpy_MatrixGlobalDefs import HFconnectionMatrixBasicMaxConcepts
+	else:
+		useHFconnectionMatrixBasicSparse = False
+		HFconnectionMatrixBasicMaxConcepts = 1000	#200	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
+	
 if(usePytorch):
 	import torch as pt
 	if(useHFconnectionMatrixBasicBool):

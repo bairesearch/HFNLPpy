@@ -24,7 +24,13 @@ import csv
 from torch_geometric.data import Data
 
 from HFNLPpy_ScanGlobalDefs import *
+from HFNLPpy_MatrixGlobalDefs import *
 from ANNtf2_loadDataset import datasetFolderRelative
+
+if(pt.cuda.is_available()):
+	device = pt.device("cuda")
+else:
+	device = pt.device("cpu")
 	
 def addContextConnectionsToGraph(HFconnectionGraph, neuronID, contextConnectionVector):
 	conceptsSize = contextConnectionVector.shape[0]
@@ -34,13 +40,16 @@ def addContextConnectionsToGraph(HFconnectionGraph, neuronID, contextConnectionV
 	if(useHFconnectionMatrixBasicBool):
 		pt.logical_and(HFconnectionGraph[neuronID], contextConnectionVectorPadded)
 	else:
+		#print("contextConnectionVectorPadded.shape = ", contextConnectionVectorPadded.shape)
+		#print("HFconnectionGraph.shape = ", HFconnectionGraph.shape)
+		#print("neuronID = ", neuronID)
 		HFconnectionGraph[neuronID] += contextConnectionVectorPadded
 	#print("HFconnectionGraph[neuronID] = ", HFconnectionGraph[neuronID])
 
-def readHFconnectionMatrix(sequenceIndex=""):
+def readHFconnectionMatrix(dendriticBranchIndex="", contextSizeIndex=""):
 	if(HFreadSavedConnectionsMatrixBasic):
-		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName + sequenceIndex + HFconnectionMatrixExtensionName
-		HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsFileName + sequenceIndex + HFconceptNeuronsExtensionName
+		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName + dendriticBranchIndex + contextSizeIndex + HFconnectionMatrixExtensionName
+		HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsFileName + dendriticBranchIndex + contextSizeIndex + HFconceptNeuronsExtensionName
 		neuronNamelist = readConceptNeuronList(HFconceptNeuronListPathName)
 		HFconnectionGraph = readGraphFromCsv(HFconnectionMatrixPathName)
 		conceptsSize = HFconnectionGraph.shape[0]
@@ -50,13 +59,25 @@ def readHFconnectionMatrix(sequenceIndex=""):
 		print("HFconnectionGraph.shape = ", HFconnectionGraph.shape)
 	else:
 		neuronNamelist = []
-		HFconnectionGraph = pt.zeros([HFconnectionMatrixBasicMaxConcepts, HFconnectionMatrixBasicMaxConcepts], dtype=HFconnectionsMatrixType)
+		if(useAlgorithmMatrix and algorithmMatrixSingleTensor):
+			tensorShape = (numberOfDendriticBranches, contextSizeMax, HFconnectionMatrixBasicMaxConcepts, HFconnectionMatrixBasicMaxConcepts)
+		else:
+			tensorShape = (HFconnectionMatrixBasicMaxConcepts, HFconnectionMatrixBasicMaxConcepts)
+		HFconnectionGraph = createEmptyTensor(tensorShape)
 	return neuronNamelist, HFconnectionGraph
 
-def writeHFconnectionMatrix(neuronNamelist, HFconnectionGraph, sequenceIndex=""):
+def createEmptyTensor(tensorShape):
+	if(useHFconnectionMatrixBasicSparse):
+		tensorDims = len(tensorShape)
+		emptyTensor = pt.sparse_coo_tensor(pt.empty((tensorDims, 0), dtype=pt.int64), pt.empty(0), tensorShape)
+	else:
+		emptyTensor = pt.zeros(tensorShape, dtype=HFconnectionsMatrixType)
+	return emptyTensor
+
+def writeHFconnectionMatrix(neuronNamelist, HFconnectionGraph, dendriticBranchIndex="", contextSizeIndex=""):
 	if(HFwriteSavedConnectionsMatrixBasic):
-		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName + sequenceIndex + HFconnectionMatrixExtensionName
-		HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsFileName + sequenceIndex + HFconceptNeuronsExtensionName
+		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName + dendriticBranchIndex + contextSizeIndex + HFconnectionMatrixExtensionName
+		HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsFileName + dendriticBranchIndex + contextSizeIndex + HFconceptNeuronsExtensionName
 		writeConceptNeuronList(neuronNamelist, HFconceptNeuronListPathName)
 		writeGraphToCsv(HFconnectionGraph, HFconnectionMatrixPathName)
 
@@ -67,9 +88,25 @@ def readGraphFromCsv(filePath):
 		for row in (reader):
 			connections.append(row)
 	HFconnectionGraph = np.array(connections, dtype=HFconnectionsMatrixType)
+	
+	if(useAlgorithmMatrix and algorithmMatrixSingleTensor):
+		numberOfConcepts = graph.shape[0]
+		originalShape = (numberOfDendriticBranches, contextSizeMax, numberOfConcepts, numberOfConcepts)
+		graph = graph.view(originalShape)
+	if(useHFconnectionMatrixBasicSparse):
+		graph = graph.to_sparse()
+	graph = graph.to(device)
+	
 	return HFconnectionGraph
 
 def writeGraphToCsv(graph, filePath):
+
+	graph = graph.cpu()
+	if(useHFconnectionMatrixBasicSparse):
+		graph = graph.to_dense()
+	if(useAlgorithmMatrix and algorithmMatrixSingleTensor):
+		graph = graph.view(tensor.size(0), -1)	# Flatten the ND tensor into a 2D tensor
+		
 	connections = graph.numpy()
 	with open(filePath, 'w') as f:
 		writer = csv.writer(f)

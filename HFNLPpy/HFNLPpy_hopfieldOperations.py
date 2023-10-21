@@ -26,7 +26,9 @@ from HFNLPpy_hopfieldConnectionClass import *
 from nltk.corpus import wordnet
 if(useHFconnectionMatrix):
 	import torch as pt
-	
+	from HFNLPpy_MatrixGlobalDefs import *
+	import torch.nn.functional as F
+
 def addConnectionToNode(nodeSource, nodeTarget, activationTime=-1, spatioTemporalIndex=-1, useAlgorithmDendriticPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, useAlgorithmDendriticSANI=False, nodeTargetSequentialSegmentInput=None):
 	connection = HopfieldConnection(nodeSource, nodeTarget, spatioTemporalIndex, activationTime, useAlgorithmDendriticPrototype)
 	connection.contextConnection = contextConnection
@@ -81,33 +83,66 @@ def retrieveSimilarConcepts(wSource, sentenceConceptNodeList, networkConceptNode
 		for conceptNeuron in connectionTargetNeuronSet:
 			if(linkSimilarConceptNodesBagOfWordsContextual):
 				conceptNeuronContextVector = createContextVector(wSource, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionMatrixBasicMaxConcepts, bagOfWordsDistanceMax, linkSimilarConceptNodesBagOfWordsWeightRetrieval, False)
-				connectionTargetNeuronSetExtended = connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject.HFconnectionGraphNormalised, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, linkSimilarConceptNodesBagOfWordsTopK)
+				connectionTargetNeuronSetExtended, _, _ = connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject.HFconnectionGraphNormalised, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, linkSimilarConceptNodesBagOfWordsTopK, False)
 			else:
 				conceptNeuronID = HFconnectionGraphObject.neuronIDdict[conceptNeuron.nodeName]
 				conceptNeuronContextVector = HFconnectionGraphObject.HFconnectionGraphNormalised[conceptNeuronID]
-				connectionTargetNeuronSetExtended = connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject.HFconnectionGraphNormalised, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, linkSimilarConceptNodesBagOfWordsTopK)
+				connectionTargetNeuronSetExtended, _, _ = connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject.HFconnectionGraphNormalised, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, linkSimilarConceptNodesBagOfWordsTopK, False)
 
 	return connectionTargetNeuronSetExtended
 
-def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphNormalised, neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, k):
+def connectionMatrixCalculateConnectionStrengthIndex(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, HFconnectionGraph, contextSizeIndex, weightStore, bidirectionalContext, contextSizeMax2=None):
+	contextConnectionVector = createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, len(HFconnectionGraphObject.neuronNamelist), contextSizeIndex, weightStore, bidirectionalContext)
+	conceptsSize = contextConnectionVector.shape[0]
+	spareConceptsSize = HFconnectionMatrixBasicMaxConcepts-conceptsSize
+	contextConnectionVectorPadded = F.pad(contextConnectionVector, (0, spareConceptsSize), mode='constant', value=0)
+	_, connectionStrength, connectionIndex = connectionMatrixCalculateConnectionTargetSet(HFconnectionGraph, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, contextConnectionVectorPadded, matrixPropagateTopKconceptNodes, algorithmMatrixSingleTensor, contextSizeMax2)
+	return connectionStrength, connectionIndex
+	
+def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphNormalised, neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, k, algorithmMatrixSingleTensor, contextSizeMax2=None):
 	connectionTargetNeuronList = []
 	
 	conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVector, dim=0)
 	conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(HFconnectionMatrixBasicMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)
+	if(algorithmMatrixSingleTensor):
+		conceptNeuronContextVectorExtended = createDiagonalMatrix(conceptNeuronContextVectorExtended, contextSizeMax2+1)
 	mask = HFconnectionGraphNormalised * conceptNeuronContextVectorExtended
+	
+	if(algorithmMatrixSingleTensor):
+		maskSummed = pt.sum(mask, dim=3)
+		maskSummedTopK = pt.topk(maskSummed, matrixPropagateTopKconceptNodes, dim=2)
+		maskSummedTopKindices = maskSummedTopK.indices
+		maskSummed = pt.sum(maskSummedTopK.values, dim=2)
+		maskSummedTopK = pt.topk(maskSummed, matrixPropagateTopKcontextSize, dim=1)	
+		if(simulatedDendriticBranches):
+			maskSummedTopKindices = maskSummedTopKindices.squeeze(-1).gather(dim=1, index=maskSummedTopK.indices)
+		else:
+			maskSummedTopKindices = maskSummedTopKindices[:, maskSummedTopK.indices]
+		maskSummed = pt.sum(maskSummedTopK.values, dim=1)
+		maskSummedTopK = pt.topk(maskSummed, matrixPropagateTopKdendriticBranches, dim=0)
+		maskSummedTopKindices = maskSummedTopKindices[maskSummedTopK.indices]
 
-	maskSummed = pt.sum(mask, dim=1)
-	maskSummedTopK = pt.topk(maskSummed, k, dim=0)
-	#print("maskSummed = ", maskSummed)
-	#print("maskSummedTopK = ", maskSummedTopK)
-	for i in maskSummedTopK.indices:
+	else:
+		maskSummed = pt.sum(mask, dim=1)
+		maskSummedTopK = pt.topk(maskSummed, k, dim=0)
+		maskSummedTopKindices = maskSummedTopK.indices
+		
+	#print("maskSummedTopKindices = ", maskSummedTopKindices)
+	for i in maskSummedTopKindices:
 		conceptName = neuronNamelist[i]
 		conceptNeuron, conceptInDict = convertLemmaToConcept(networkConceptNodeDict, conceptName)
 		if(conceptInDict):
 			connectionTargetNeuronList.append(conceptNeuron)
+	connectionTargetNeuronSet = set(connectionTargetNeuronList)	
 	
-	connectionTargetNeuronSet = set(connectionTargetNeuronList)		
-	return connectionTargetNeuronSet
+	if(algorithmMatrixSingleTensor):
+		connectionIndex = maskSummedTopK.indices[0]	#only valid for matrixPropagateTopKdendriticBranches=1
+		connectionStrength = None
+	else:
+		connectionIndex = None
+		connectionStrength = pt.sum(maskSummedTopK.values)
+		
+	return connectionTargetNeuronSet, connectionStrength, connectionIndex
 
 def createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextVectorLength, contextSizeIndex, weightStore, bidirectionalContext):
 	contextConnectionVector = pt.zeros(contextVectorLength, dtype=HFconnectionsMatrixType)
@@ -131,7 +166,12 @@ def createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, co
 def getContextSize(contextSizeIndex):
 	contextSize = contextSizeIndex+1	#min contextSize = 1
 	return contextSize
-
+	
+def createDiagonalMatrix(tensor, width):
+	diagonalMatrix = pt.tril(tensor, diagonal=0) - pt.tril(tensor, diagonal=-width)
+	#diagonalMatrix = pt.tril(tensor, diagonal=0) * torch.triu(tensor, diagonal=width)
+	return diagonalMatrix
+	
 def convertLemmaToConcept(networkConceptNodeDict, synonym):
 	synonymConcept = None
 	conceptInDict = False

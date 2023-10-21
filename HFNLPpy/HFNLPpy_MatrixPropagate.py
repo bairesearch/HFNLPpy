@@ -41,21 +41,30 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 	
 	connectionTargetNeuronList = []
 	contextSizeMax2 = min(contextSizeMax, wSource+1)	#len(sentenceConceptNodeList)
-	for contextSizeIndex in range(contextSizeMax2):
-		#calculate top k prediction
-		conceptNeuronID = HFconnectionGraphObject.neuronIDdict[conceptNeuronSource.nodeName]
+	conceptNeuronID = HFconnectionGraphObject.neuronIDdict[conceptNeuronSource.nodeName]
+	if(algorithmMatrixSingleTensor):
+		contextSizeIndex = contextSizeMax2
 		conceptNeuronContextVector = HFNLPpy_hopfieldOperations.createContextVector(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionMatrixBasicMaxConcepts, contextSizeIndex, contextMatrixWeightStore, False)	#HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSizeIndex][conceptNeuronID]
-		connectionTargetNeuronSetC = HFNLPpy_hopfieldOperations.connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSizeIndex], HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, matrixPropagateTopK1)
+		connectionTargetNeuronSetC, _, _ = HFNLPpy_hopfieldOperations.connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject.HFconnectionGraphMatrixNormalised, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, matrixPropagateTopKconceptNodes, algorithmMatrixSingleTensor, contextSizeMax2)
 		connectionTargetNeuronListC = list(connectionTargetNeuronSetC)
-		connectionTargetNeuronList.extend(connectionTargetNeuronListC)
+		connectionTargetNeuronSet.update(connectionTargetNeuronSetC)
 		if(debugAlgorithmMatrix):
 			print("connectionTargetNeuronListC[0] = ", connectionTargetNeuronListC[0].nodeName)
-
-	connectionTargetNeuronListTopK = Counter(connectionTargetNeuronList).most_common(matrixPropagateTopK2)
-	connectionTargetNeuronListTopKkeys = [i[0] for i in connectionTargetNeuronListTopK]
-	connectionTargetNeuronSet.update(set(connectionTargetNeuronListTopKkeys))
-	if(debugAlgorithmMatrix):
-		print("connectionTargetNeuronListTopKkeys[0] = ", connectionTargetNeuronListTopKkeys[0].nodeName)
+	else:
+		for dendriticBranchIndex in range(numberOfDendriticBranches):
+			for contextSizeIndex in range(contextSizeMax2):
+				conceptNeuronContextVector = HFNLPpy_hopfieldOperations.createContextVector(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionMatrixBasicMaxConcepts, contextSizeIndex, contextMatrixWeightStore, False)	#HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSizeIndex][conceptNeuronID]
+				connectionTargetNeuronSetC, _, _ = HFNLPpy_hopfieldOperations.connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchIndex][contextSizeIndex], HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, matrixPropagateTopKconceptNodes, algorithmMatrixSingleTensor)
+				connectionTargetNeuronListC = list(connectionTargetNeuronSetC)
+				connectionTargetNeuronList.extend(connectionTargetNeuronListC)
+				if(debugAlgorithmMatrix):
+					print("connectionTargetNeuronListC[0] = ", connectionTargetNeuronListC[0].nodeName)
+		#calculate top k prediction
+		connectionTargetNeuronListTopK = Counter(connectionTargetNeuronList).most_common(matrixPropagateTopKcontextSize)
+		connectionTargetNeuronListTopKkeys = [i[0] for i in connectionTargetNeuronListTopK]
+		connectionTargetNeuronSet.update(set(connectionTargetNeuronListTopKkeys))
+		if(debugAlgorithmMatrix):
+			print("connectionTargetNeuronListTopKkeys[0] = ", connectionTargetNeuronListTopKkeys[0].nodeName)
 	
 	somaActivationFound = False
 	if(conceptNeuronTarget in connectionTargetNeuronSet):
