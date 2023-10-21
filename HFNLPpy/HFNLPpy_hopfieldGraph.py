@@ -438,11 +438,25 @@ def addContextWordsToConnectionGraphMatrix(tokenisedSentence, sentenceConceptNod
 		#print("addContextWordsToConnectionGraphMatrix: conceptNode.nodeName = ", conceptNode.nodeName) 
 		neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
 		contextSizeMax2 = min(contextSizeMax, w1)	#min(contextSizeMax, len(tokenisedSentence))
-		if(algorithmMatrixSingleTensor):
-			contextSizeIndex = contextSizeMax
-			_, dendriticBranchClosestIndex = HFNLPpy_hopfieldOperations.connectionMatrixCalculateConnectionStrengthIndex(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, HFconnectionGraphObject.HFconnectionGraphMatrixNormalised, contextSizeIndex, contextMatrixWeightStore, False, contextSizeMax2)
+		dendriticBranchClosestIndex = calculateDendriticBranchClosestIndex(tokenisedSentence, sentenceConceptNodeList, neuronID, contextSizeMax2, w1)
+		
+		if(algorithmMatrixSingleTensorEfficientAdd):
+			HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchClosestIndex], HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchClosestIndex] = addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchClosestIndex], None, contextMatrixWeightStore, False, contextSizeMax2)
 		else:
-			dendriticBranchClosestIndex = -1
+			for contextSizeIndex in range(contextSizeMax2):
+				#print("contextSizeIndex = ", contextSizeIndex)
+				HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchClosestIndex][contextSizeIndex], HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchClosestIndex][contextSizeIndex] = addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchClosestIndex][contextSizeIndex], contextSizeIndex, contextMatrixWeightStore, False, contextSizeMax2)
+
+def calculateDendriticBranchClosestIndex(tokenisedSentence, sentenceConceptNodeList, neuronID, contextSizeMax2, w1):
+	dendriticBranchClosestIndex = 0
+	if(numberOfDendriticBranches == 1):
+		dendriticBranchClosestIndex = 0
+	else:
+		if(algorithmMatrixSingleTensor):
+			if(contextSizeMax2 > 0):
+				_, dendriticBranchClosestIndex = HFNLPpy_hopfieldOperations.connectionMatrixCalculateConnectionStrengthIndex(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, HFconnectionGraphObject.HFconnectionGraphMatrixNormalised, None, contextMatrixWeightStore, False, contextSizeMax2)
+		else:
+			dendriticBranchClosestIndex = 0
 			dendriticBranchClosestValue = 0
 			for dendriticBranchIndex in range(numberOfDendriticBranches):
 				#print("dendriticBranchIndex = ", dendriticBranchIndex)
@@ -454,12 +468,13 @@ def addContextWordsToConnectionGraphMatrix(tokenisedSentence, sentenceConceptNod
 						dendriticBranchClosestIndex = dendriticBranchIndex
 		if(debugAlgorithmMatrix):
 			print("dendriticBranchClosestIndex = ", dendriticBranchClosestIndex)
-		for contextSizeIndex in range(contextSizeMax2):
-			#print("contextSizeIndex = ", contextSizeIndex)
-			HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchClosestIndex][contextSizeIndex], HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchClosestIndex][contextSizeIndex] = addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchClosestIndex][contextSizeIndex], contextSizeIndex, contextMatrixWeightStore, False)
-	
-def addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraph, contextSizeIndex, weightStore, bidirectionalContext):
-	contextConnectionVector = HFNLPpy_hopfieldOperations.createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, len(HFconnectionGraphObject.neuronNamelist), contextSizeIndex, weightStore, bidirectionalContext)
+	return dendriticBranchClosestIndex
+			
+def addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraph, contextSizeIndex, weightStore, bidirectionalContext, contextSizeMax2):
+	contextConnectionVector = HFNLPpy_hopfieldOperations.createContextVectorWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObject, len(HFconnectionGraphObject.neuronNamelist), contextSizeIndex, weightStore, bidirectionalContext, algorithmMatrixSingleTensorEfficientAdd, contextSizeMax2)
+	if(algorithmMatrixSingleTensorEfficientAdd):
+		#contextConnectionVector = HFNLPpy_ConnectionMatrixBasic.extendConceptNeuronContextVector(contextConnectionVector, contextSizeMax2)
+		printe("algorithmMatrixSingleTensorEfficientAdd is incomplete")
 	HFNLPpy_ConnectionMatrix.addContextConnectionsToGraph(HFconnectionGraph, neuronID, contextConnectionVector)
 	HFconnectionGraphNormalised = normaliseBatchedTensor(HFconnectionGraph)
 	#if(debugAlgorithmMatrix):

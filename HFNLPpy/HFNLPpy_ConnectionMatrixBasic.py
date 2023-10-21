@@ -33,19 +33,43 @@ else:
 	device = pt.device("cpu")
 	
 def addContextConnectionsToGraph(HFconnectionGraph, neuronID, contextConnectionVector):
+	if(algorithmMatrixSingleTensorEfficientAdd):
+		maskSummedTopKindices = maskSummedTopKindices.squeeze(-1).gather(dim=1, index=maskSummedTopK.indices)
+		HFconnectionGraph[neuronID] += contextConnectionVector
+	else:
+		contextConnectionVectorPadded = padContextConnectionVector(contextConnectionVector)
+		if(useHFconnectionMatrixBasicBool):
+			pt.logical_and(HFconnectionGraph[neuronID], contextConnectionVectorPadded)
+		else:
+			#print("contextConnectionVectorPadded.shape = ", contextConnectionVectorPadded.shape)
+			#print("HFconnectionGraph.shape = ", HFconnectionGraph.shape)
+			#print("neuronID = ", neuronID)
+			HFconnectionGraph[neuronID] += contextConnectionVectorPadded
+	#print("HFconnectionGraph[neuronID] = ", HFconnectionGraph[neuronID])
+
+def padContextConnectionVector(contextConnectionVector):
 	conceptsSize = contextConnectionVector.shape[0]
 	spareConceptsSize = HFconnectionMatrixBasicMaxConcepts-conceptsSize
 	contextConnectionVectorPadded = F.pad(contextConnectionVector, (0, spareConceptsSize), mode='constant', value=0)
 	#contextConnectionVectorPadded = pt.nn.ZeroPad1d(spareConceptsSize)(contextConnectionVector)	#requires later version of pytorch
-	if(useHFconnectionMatrixBasicBool):
-		pt.logical_and(HFconnectionGraph[neuronID], contextConnectionVectorPadded)
-	else:
-		#print("contextConnectionVectorPadded.shape = ", contextConnectionVectorPadded.shape)
-		#print("HFconnectionGraph.shape = ", HFconnectionGraph.shape)
-		#print("neuronID = ", neuronID)
-		HFconnectionGraph[neuronID] += contextConnectionVectorPadded
-	#print("HFconnectionGraph[neuronID] = ", HFconnectionGraph[neuronID])
+	return contextConnectionVectorPadded
 
+def extendConceptNeuronContextVector(conceptNeuronContextVector, contextSizeMax2):
+	if(algorithmMatrixSingleTensor):
+		#conceptNeuronContextVectorExtended = createDiagonalMatrix(conceptNeuronContextVector, contextSizeMax2+1)	#OLD; concept neurons are not necessarily contiguous
+		conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVector, dim=1)
+		conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(1, HFconnectionMatrixBasicMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	
+		conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVectorExtended, dim=0)
+	else:
+		conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVector, dim=0)
+		conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(HFconnectionMatrixBasicMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	
+	return conceptNeuronContextVectorExtended
+	
+def createDiagonalMatrix(squareMatrix, width):
+	diagonalMatrix = pt.tril(squareMatrix, diagonal=0) - pt.tril(squareMatrix, diagonal=-width)
+	#diagonalMatrix = pt.tril(squareMatrix, diagonal=0) * torch.triu(squareMatrix, diagonal=width)
+	return diagonalMatrix
+	
 def readHFconnectionMatrix(dendriticBranchIndex="", contextSizeIndex=""):
 	if(HFreadSavedConnectionsMatrixBasic):
 		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName + dendriticBranchIndex + contextSizeIndex + HFconnectionMatrixExtensionName

@@ -35,6 +35,10 @@ if(debugHFconnectionMatrix):
 else:
 	HFconnectionMatrixBasicMaxConcepts = 1000	#200	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
 
+algorithmMatrixSingleTensorEfficientAdd = False	#initialise (dependent var)
+if(algorithmMatrixSingleTensor):
+	algorithmMatrixSingleTensorEfficientAdd = False	#incomplete	#efficiently add context to connection matrix (use parallelised algorithm) 
+
 #### simulated dendritic branches ####
 
 simulatedDendriticBranches = False	#independent dendritic branches
@@ -54,7 +58,7 @@ if(selectActivatedTop):
 #### context connections matrix ####
 
 if(debugHFconnectionMatrix):
-	contextSizeMax = 20 #[Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]
+	contextSizeMax = 30 #[Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]
 else:
 	contextSizeMax = 100 #max sequential context width use for next word prediction
 contextMatrixWeightStore = False	#optional	#CHECKTHIS
