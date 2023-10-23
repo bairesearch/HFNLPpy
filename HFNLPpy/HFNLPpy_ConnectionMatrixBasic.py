@@ -87,9 +87,21 @@ def readHFconnectionMatrix(dendriticBranchIndex="", contextSizeIndex=""):
 			tensorShape = (numberOfDendriticBranches, contextSizeMax, HFconnectionMatrixBasicMaxConcepts, HFconnectionMatrixBasicMaxConcepts)
 		else:
 			tensorShape = (HFconnectionMatrixBasicMaxConcepts, HFconnectionMatrixBasicMaxConcepts)
-		HFconnectionGraph = createEmptyTensor(tensorShape)
+		if(simulatedDendriticBranchesInitialisation):
+			HFconnectionGraph = createRandomisedTensor(tensorShape)
+		else:
+			HFconnectionGraph = createEmptyTensor(tensorShape)
+			
 	return neuronNamelist, HFconnectionGraph
 
+def createRandomisedTensor(tensorShape):
+	if(useHFconnectionMatrixBasicSparse):
+		printe("useHFconnectionMatrixBasicSparse:simulatedDendriticBranchesInitialisation not currently supported")
+	else:
+		emptyTensor = pt.rand(tensorShape, dtype=HFconnectionsMatrixType)*simulatedDendriticBranchesInitialisationWeight
+	return emptyTensor
+
+	
 def createEmptyTensor(tensorShape):
 	if(useHFconnectionMatrixBasicSparse):
 		tensorDims = len(tensorShape)

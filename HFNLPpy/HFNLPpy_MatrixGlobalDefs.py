@@ -42,10 +42,17 @@ if(algorithmMatrixSingleTensor):
 #### simulated dendritic branches ####
 
 simulatedDendriticBranches = False	#independent dendritic branches
+HFconnectionMatrixMinValue = 0
 if(simulatedDendriticBranches):
+	simulatedDendriticBranchesMinMatchStrength = 1.0	#minimum branch match strength for comparison before randomise selection of new branch to write	#CHECKTHIS
+	simulatedDendriticBranchesInitialisation = False #incomplete #perform random initialisation to break symmetry (required to select more than 1 dendritic branch)
+	if(simulatedDendriticBranchesInitialisation):
+		simulatedDendriticBranchesInitialisationWeight = 0.01	#only apply a very small randomisation magnitude to break symmetry
+		HFconnectionMatrixMinValue = simulatedDendriticBranchesInitialisationWeight
 	numberOfDendriticBranches = 10
 else: 
 	numberOfDendriticBranches = 1
+	simulatedDendriticBranchesInitialisation = False
 
 #### topk selection ####
 

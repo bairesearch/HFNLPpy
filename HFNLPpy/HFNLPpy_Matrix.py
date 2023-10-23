@@ -123,7 +123,4 @@ def selectActivatedNeurons(networkConceptNodeDict, connectionTargetNeuronSet, HF
 		connectionTargetNeuronSetLocalFiltered = HFNLPpy_hopfieldOperations.retrieveSimilarConcepts(networkConceptNodeDict, connectionTargetNeuronSetLocalFiltered, HFconnectionGraphObject)
 	return connectionTargetNeuronSetLocalFiltered
 	
-
-
-	
 	

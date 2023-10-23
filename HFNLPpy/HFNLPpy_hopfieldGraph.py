@@ -28,7 +28,10 @@ from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 import HFNLPpy_hopfieldOperations
 from HFNLPpy_globalDefs import *
-
+import random
+if(tokeniseSubwords):
+	import HFNLPpy_dataTokeniser
+	
 if(useHFconnectionMatrix):
 	import torch as pt
 	if(useHFconnectionMatrixPyG):
@@ -120,7 +123,7 @@ def createIndexStringDendriticBranch(dendriticBranchIndex):
 def createIndexStringContextSizeIndex(contextSizeIndex):
 	return "contextSizeIndex" + str(contextSizeIndex)	
 			
-def generateHopfieldGraphNetwork(articles):
+def generateHopfieldGraphNetwork(articles, tokenizer):
 	numberOfSentences = len(articles)
 
 	if(useHFconnectionMatrix):
@@ -130,27 +133,28 @@ def generateHopfieldGraphNetwork(articles):
 		verifySeedSentenceIsReplicant(articles, numberOfSentences)
 
 	for sentenceIndex, sentence in enumerate(articles):
-		generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences)	
+		generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences, tokenizer)	
 		
 	if(useHFconnectionMatrix):
 		writeHFconnectionMatrix()
 
-def generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences):
+def generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences, tokenizer):
 	print("\n\ngenerateHopfieldGraphSentenceString: sentenceIndex = ", sentenceIndex, "; ", sentence)
 
-	tokenisedSentence = tokeniseSentence(sentence)
+	tokenisedSentence = tokeniseSentence(sentence, tokenizer)
 	sentenceLength = len(tokenisedSentence)
 	#print("sentenceLength = ", sentenceLength)
 	
 	if(sentenceLength > 1):
 		return generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSentences)
-
+ 
 def regenerateGraphNodes():
 	#regenerates graph nodes from a saved list
-	sentence = ' '.join(HFconnectionGraphObject.neuronNamelist)
-	tokenisedSentence = tokeniseSentence(sentence)
+	if(linkSimilarConceptNodesWordnet and not tokenWordnetSynonymsFromLemma):
+		sentence = ' '.join(HFconnectionGraphObject.neuronNamelist)
+		tokenisedSentence = tokeniseSentence(sentence, None)
 	for neuronID, nodeName in enumerate(HFconnectionGraphObject.neuronNamelist):	
-		token = tokenisedSentence[neuronID]
+		#token = tokenisedSentence[neuronID]
 		networkIndex = getNetworkIndex()
 		nodeGraphType = graphNodeTypeConcept
 		wordVector = None	#getTokenWordVector(token)	#numpy word vector	#not used by useHFconnectionMatrix
@@ -159,7 +163,8 @@ def regenerateGraphNodes():
 		sentenceIndex = 0	#sentence artificial var (not used)
 		
 		conceptNode = HopfieldNode(networkIndex, nodeName, nodeGraphType, wordVector, w, sentenceIndex)
-		getTokenSynonyms(conceptNode, token)
+		if(linkSimilarConceptNodesWordnet):
+			getTokenSynonyms(conceptNode, token)
 		'''
 		if(useAlgorithmLayeredSANI):
 			print("not supported")
@@ -175,9 +180,12 @@ def regenerateGraphNodes():
 def generateHopfieldGraphSentenceNodes(tokenisedSentence, sentenceIndex, sentenceConceptNodeList):
 	#declare Hopfield graph nodes;	
 	for w, token in enumerate(tokenisedSentence):	
-		word = getTokenWord(token)
-		lemma = getTokenLemma(token)
-		nodeName = generateHopfieldGraphNodeName(word, lemma)	
+		if(tokeniseSubwords):
+			nodeName = token
+		else:
+			word = getTokenWord(token)
+			lemma = getTokenLemma(token)
+			nodeName = generateHopfieldGraphNodeName(word, lemma)	
 		if(graphNodeExists(nodeName)):
 			conceptNode = getGraphNode(nodeName)
 			#set sentence artificial vars (for sentence graph only, do not generalise to network graph);
@@ -190,11 +198,14 @@ def generateHopfieldGraphSentenceNodes(tokenisedSentence, sentenceIndex, sentenc
 			nodeGraphType = graphNodeTypeConcept
 			networkIndex = getNetworkIndex()
 			#unused vars;
-			wordVector = getTokenWordVector(token)	#numpy word vector
-			#posTag = getTokenPOStag(token)	#not used
+			wordVector = None
+			if(not tokeniseSubwords):
+				wordVector = getTokenWordVector(token)	#numpy word vector
+				#posTag = getTokenPOStag(token)	#not used
 			
 			conceptNode = HopfieldNode(networkIndex, nodeName, nodeGraphType, wordVector, w, sentenceIndex)
-			getTokenSynonyms(conceptNode, token)
+			if(not tokeniseSubwords):
+				getTokenSynonyms(conceptNode, token)
 
 			addNodeToGraph(conceptNode)
 			if(printVerbose):
@@ -346,8 +357,16 @@ def addNodeToGraph(conceptNode):
 			
 #tokenisation:
 
-def tokeniseSentence(sentence):
-	tokenList = spacyWordVectorGenerator(sentence)
+def tokeniseSentence(sentence, tokenizer):
+	if(tokeniseSubwords):
+		sample = HFNLPpy_dataTokeniser.tokenise(sentence, tokenizer, sequenceMaxNumTokens)
+		inputIdList = sample.input_ids[0].tolist()	#[0]: select first sentence (only 1 sentence available)
+		tokenList = tokenizer.convert_ids_to_tokens(inputIdList)
+		for specialToken in specialTokens:
+			while specialToken in tokenList:
+				tokenList.remove(specialToken)
+	else:
+		tokenList = spacyWordVectorGenerator(sentence)
 	return tokenList
 
 def getTokenWord(token):
@@ -439,7 +458,6 @@ def addContextWordsToConnectionGraphMatrix(tokenisedSentence, sentenceConceptNod
 		neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
 		contextSizeMax2 = min(contextSizeMax, w1)	#min(contextSizeMax, len(tokenisedSentence))
 		dendriticBranchClosestIndex = calculateDendriticBranchClosestIndex(tokenisedSentence, sentenceConceptNodeList, neuronID, contextSizeMax2, w1)
-		
 		if(algorithmMatrixSingleTensorEfficientAdd):
 			HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchClosestIndex], HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchClosestIndex] = addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchClosestIndex], None, contextMatrixWeightStore, False, contextSizeMax2)
 		else:
@@ -452,9 +470,13 @@ def calculateDendriticBranchClosestIndex(tokenisedSentence, sentenceConceptNodeL
 	if(numberOfDendriticBranches == 1):
 		dendriticBranchClosestIndex = 0
 	else:
+		foundDendriticBranchClosest = False
 		if(algorithmMatrixSingleTensor):
 			if(contextSizeMax2 > 0):
-				_, dendriticBranchClosestIndex = HFNLPpy_hopfieldOperations.connectionMatrixCalculateConnectionStrengthIndex(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, HFconnectionGraphObject.HFconnectionGraphMatrixNormalised, None, contextMatrixWeightStore, False, contextSizeMax2)
+				connectionStrength, dendriticBranchIndex = HFNLPpy_hopfieldOperations.connectionMatrixCalculateConnectionStrengthIndex(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, HFconnectionGraphObject.HFconnectionGraphMatrixNormalised, None, contextMatrixWeightStore, False, contextSizeMax2)
+				if(connectionStrength/contextSizeIndex > simulatedDendriticBranchesMinMatchStrength):
+					dendriticBranchClosestIndex = dendriticBranchIndex
+					foundDendriticBranchClosest = True
 		else:
 			dendriticBranchClosestIndex = 0
 			dendriticBranchClosestValue = 0
@@ -464,10 +486,14 @@ def calculateDendriticBranchClosestIndex(tokenisedSentence, sentenceConceptNodeL
 					#print("contextSizeIndex = ", contextSizeIndex)
 					connectionStrength, _ = HFNLPpy_hopfieldOperations.connectionMatrixCalculateConnectionStrengthIndex(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchIndex][contextSizeIndex], contextSizeIndex, contextMatrixWeightStore, False)
 					if(connectionStrength > dendriticBranchClosestValue):
-						dendriticBranchClosestValue = connectionStrength
-						dendriticBranchClosestIndex = dendriticBranchIndex
-		if(debugAlgorithmMatrix):
-			print("dendriticBranchClosestIndex = ", dendriticBranchClosestIndex)
+						if(connectionStrength/contextSizeIndex > simulatedDendriticBranchesMinMatchStrength):
+							dendriticBranchClosestValue = connectionStrength
+							dendriticBranchClosestIndex = dendriticBranchIndex
+							foundDendriticBranchClosest = True
+		#if(debugAlgorithmMatrix):
+		print("dendriticBranchClosestIndex = ", dendriticBranchClosestIndex)
+		if(not foundDendriticBranchClosest):
+			dendriticBranchClosestIndex = random.randint(0, numberOfDendriticBranches-1)
 	return dendriticBranchClosestIndex
 			
 def addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraph, contextSizeIndex, weightStore, bidirectionalContext, contextSizeMax2):

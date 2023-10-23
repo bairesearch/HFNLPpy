@@ -45,42 +45,10 @@ np.set_printoptions(threshold=sys.maxsize)
 import random
 import ANNtf2_loadDataset
 import HFNLPpy_hopfieldGraph
+from HFNLPpy_globalDefs import *
+if(tokeniseSubwords):
+	import HFNLPpy_dataTokeniser
 
-
-#HFNLP algorithm selection;
-algorithmHFNLP = "generateHopfieldNetwork"
-
-#debug parameters
-debugUseSmallSequentialInputDataset = True
-
-
-NLPsequentialInputTypeTokeniseWords = False	#perform spacy tokenization later in pipeline
-
-NLPsequentialInputTypeMinWordVectors = True
-NLPsequentialInputTypeMaxWordVectors = True
-limitSentenceLengthsSize = None
-limitSentenceLengths = False
-NLPsequentialInputTypeTrainWordVectors = False
-wordVectorLibraryNumDimensions = 300	#https://spacy.io/models/en#en_core_web_md (300 dimensions)
-
-trainMultipleFiles = False	#can set to true for production (after testing algorithm)
-numEpochs = 1
-if(numEpochs > 1):
-	randomiseFileIndexParse = True
-else:
-	randomiseFileIndexParse = False
-
-	
-#code from ANNtf;
-dataset = "wikiXmlDataset"
-#if(NLPsequentialInputTypeMinWordVectors):
-#	numberOfFeaturesPerWord = 1000	#used by wordToVec
-paddingTagIndex = 0.0	#not used
-if(debugUseSmallSequentialInputDataset):
-	dataset4FileNameXstart = "Xdataset4PartSmall"
-else:
-	dataset4FileNameXstart = "Xdataset4Part"
-xmlDatasetFileNameEnd = ".xml"
 def loadDataset(fileIndex, textualDatasetLoadPerformProcessing=True):
 
 	global numberOfFeaturesPerWord
@@ -89,7 +57,7 @@ def loadDataset(fileIndex, textualDatasetLoadPerformProcessing=True):
 	datasetNumFeatures = 0
 	datasetNumClasses = 0
 	
-	fileIndexStr = str(fileIndex).zfill(4)
+	fileIndexStr = str(fileIndex).zfill(datasetFileNameIndexDigits)
 	if(dataset == "POStagSequence"):
 		datasetType1FileNameX = dataset1FileNameXstart + fileIndexStr + datasetFileNameXend
 		datasetType1FileNameY = dataset1FileNameYstart + fileIndexStr + datasetFileNameYend
@@ -127,6 +95,11 @@ def loadDataset(fileIndex, textualDatasetLoadPerformProcessing=True):
 
 def trainSequentialInput(trainMultipleFiles=False):
 	
+	if(tokeniseSubwords):
+		tokenizer = HFNLPpy_dataTokeniser.initialiseTokeniser()
+	else:
+		tokenizer = None
+		
 	#if(algorithmHFNLP == "generateHopfieldNetwork"):
 	#	HFNLPpy_hopfieldNetwork.constructPOSdictionary()	#required for HFNLPpy_hopfieldNetwork:HFNLPtf_getAllPossiblePosTags.getAllPossiblePosTags(word)
 					
@@ -162,16 +135,16 @@ def trainSequentialInput(trainMultipleFiles=False):
 			#print("articles = ", articles)
 			#print("listDimensions(articles) = ", listDimensions(articles))
 
-			processingSimple(articles)
+			processingSimple(articles, tokenizer)
 					
 						
-def processingSimple(articles):
+def processingSimple(articles, tokenizer):
 	if(NLPsequentialInputTypeMaxWordVectors):
 		#flatten any higher level abstractions defined in NLPsequentialInputTypeMax down to word vector lists (sentences);
 		articles = ANNtf2_loadDataset.flattenNestedListToSentences(articles)
 
 	if(algorithmHFNLP == "generateHopfieldNetwork"):
-		articles = HFNLPpy_hopfieldGraph.generateHopfieldGraphNetwork(articles)
+		articles = HFNLPpy_hopfieldGraph.generateHopfieldGraphNetwork(articles, tokenizer)
 	
 
 if __name__ == "__main__":

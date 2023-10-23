@@ -28,6 +28,32 @@ useAlgorithmScan = False
 useAlgorithmArtificial = False	#default
 useAlgorithmDendriticPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
 	
+
+#### tokenise subwords ####
+convertLemmasToLowercase = True #required to ensure that capitalised start of sentence words are always converted to the same lemmas (irrespective of inconsistent propernoun detection)
+convertWordsToLowercase = True
+if(useAlgorithmMatrix):	
+	tokeniseSubwords = False	#optional
+	storeConceptNodesByLemma = False	#enable prediction across grammatical forms #False: store by word (morphology included)
+else:
+	tokeniseSubwords = False	
+	storeConceptNodesByLemma = True	#False: store by word (morphology included)
+if(tokeniseSubwords):
+	stateTrainTokeniser = False	#only required to be executed once	#should enable trainMultipleFiles with high numberOfDatafiles to perform comprehensive tokenizer train
+	if(useAlgorithmMatrix):
+		from HFNLPpy_MatrixGlobalDefs import contextSizeMax
+		sequenceMaxNumTokens = contextSizeMax	#max number tokens per sentence
+	else:
+		sequenceMaxNumTokens =  512	#max number tokens per sentence
+	useFullwordTokenizer = False
+	useFullwordTokenizerClass = True	#required #legacy config; always uses tokenizer class even with full word tokenizer
+	usePreprocessedDataset = True	#required #legacy config; ensures trainTokeniserFromDataFiles
+	specialTokens = ['<s>', '<pad>', '</s>', '<mask>']	#'<unk>'
+	dataset4FileNameXstartTokenise = "Xdataset4Part"
+	modelPathName = 'tokeniser'
+	tokeniserOnlyTrainOnDictionary = False
+	vocabularySize = 30522	#default: 30522	#number of independent tokens identified by HFNLPpy_dataTokeniser.trainTokeniserSubwords
+	
 	
 #### concept connections/connectionMatrix ####
 
@@ -46,7 +72,8 @@ elif(useAlgorithmMatrix):
 	linkSimilarConceptNodes = False	#optional
 
 if(linkSimilarConceptNodes):
-	linkSimilarConceptNodesWordnet = False
+	if(not tokeniseSubwords):
+		linkSimilarConceptNodesWordnet = False
 	linkSimilarConceptNodesBagOfWords = True
 	if(linkSimilarConceptNodesWordnet):
 		tokenWordnetSynonyms = True	#requires spacy nltk:wordnet
@@ -107,11 +134,15 @@ if(useHFconnectionMatrix):
 	
 if(usePytorch):
 	import torch as pt
-	if(useHFconnectionMatrixBasicBool):
-		HFconnectionsMatrixType = pt.bool
+	from HFNLPpy_MatrixGlobalDefs import simulatedDendriticBranchesInitialisation
+	if(simulatedDendriticBranchesInitialisation):
+		HFconnectionsMatrixType = pt.float	
 	else:
-		HFconnectionsMatrixType = pt.long
-		#print("HFconnectionsMatrixType = ", HFconnectionsMatrixType)
+		if(useHFconnectionMatrixBasicBool):
+			HFconnectionsMatrixType = pt.bool
+		else:
+			HFconnectionsMatrixType = pt.long
+			#print("HFconnectionsMatrixType = ", HFconnectionsMatrixType)
 	useLovelyTensors = False
 	if(useLovelyTensors):
 		import lovely_tensors as lt
@@ -152,10 +183,63 @@ if(drawHopfieldGraph):
 	drawHopfieldGraphSentence = False
 	drawHopfieldGraphNetwork = True	#default: True	#draw graph for entire network (not just sentence)
 
+
 #initialise (dependent var)
 seedHFnetworkSubsequence = False
 HFNLPnonrandomSeed = False
 
+
+#### data loading (main) #### 
+
+#HFNLP algorithm selection;
+algorithmHFNLP = "generateHopfieldNetwork"
+
+#debug parameters
+debugUseSmallSequentialInputDataset = True
+
+
+NLPsequentialInputTypeTokeniseWords = False	#perform spacy tokenization later in pipeline
+
+NLPsequentialInputTypeMinWordVectors = True
+NLPsequentialInputTypeMaxWordVectors = True
+limitSentenceLengthsSize = None
+limitSentenceLengths = False
+NLPsequentialInputTypeTrainWordVectors = False
+wordVectorLibraryNumDimensions = 300	#https://spacy.io/models/en#en_core_web_md (300 dimensions)
+
+datasetFolderRelative = "datasets"
+datasetFileNameIndexDigits = 4
+
+trainMultipleFiles = False	#can set to true for production (after testing algorithm)
+if(trainMultipleFiles):
+	numberOfDatafiles = 10
+else:
+	numberOfDatafiles = 1
+fileIndexFirst = 0
+fileIndexLast = numberOfDatafiles
+	
+numEpochs = 1
+if(numEpochs > 1):
+	randomiseFileIndexParse = True
+else:
+	randomiseFileIndexParse = False
+	
+#code from ANNtf;
+dataset = "wikiXmlDataset"
+#if(NLPsequentialInputTypeMinWordVectors):
+#	numberOfFeaturesPerWord = 1000	#used by wordToVec
+paddingTagIndex = 0.0	#not used
+if(debugUseSmallSequentialInputDataset):
+	dataset4FileNameXstart = "Xdataset4PartSmall"
+else:
+	dataset4FileNameXstart = "Xdataset4Part"
+xmlDatasetFileNameEnd = ".xml"
+
+if(tokeniseSubwords):
+	datasetNumberOfDataFiles = numberOfDatafiles
+	trainTokenizerNumberOfFilesToUseSmall = numberOfDatafiles	#CHECKTHIS
+	useSmallTokenizerTrainNumberOfFiles = False
+	
 def printe(str):
 	print(str)
 	exit()

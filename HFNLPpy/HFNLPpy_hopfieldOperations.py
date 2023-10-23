@@ -124,7 +124,7 @@ def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphNormalised, ne
 		#maskSummedTopKindices = maskSummedTopKindices[maskSummedTopK.indices]
 		for i in range(len(maskSummedTopK.values)):
 			value = maskSummedTopK.values[i]
-			if(value > 0):
+			if(value > HFconnectionMatrixMinValue):
 				neuronIndexList.append(maskSummedTopKindices[maskSummedTopK.indices[i]])
 	else:
 		maskSummed = pt.sum(mask, dim=1)
@@ -133,10 +133,9 @@ def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphNormalised, ne
 		#maskSummedTopKindices = maskSummedTopK.indices
 		for i in range(len(maskSummedTopK.values)):
 			value = maskSummedTopK.values[i]
-			if(value > 0):
+			if(value > HFconnectionMatrixMinValue):
 				neuronIndexList.append(maskSummedTopK.indices[i])
 					
-	#print("maskSummedTopKindices = ", maskSummedTopKindices)
 	for i in neuronIndexList:
 		conceptName = neuronNamelist[i]
 		conceptNeuron, conceptInDict = convertLemmaToConcept(networkConceptNodeDict, conceptName)
@@ -146,7 +145,7 @@ def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphNormalised, ne
 	
 	if(algorithmMatrixSingleTensor):
 		connectionIndex = maskSummedTopK.indices[0]	#only valid for matrixPropagateTopKdendriticBranches=1
-		connectionStrength = None
+		connectionStrength = pt.sum(maskSummedTopK.values)
 	else:
 		connectionIndex = None
 		connectionStrength = pt.sum(maskSummedTopK.values)
