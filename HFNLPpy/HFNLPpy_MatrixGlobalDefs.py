@@ -27,6 +27,19 @@ import numpy as np
 debugAlgorithmMatrix = False
 debugHFconnectionMatrix = False
 
+#### SANI ####
+algorithmMatrixSANI = True	#emulate DendriticSANIbiologicalSimulationSimple
+if(algorithmMatrixSANI):
+	algorithmMatrixSANIenforceSequentialActivation = False	#not yet implemented (else sum sequential segment activations)
+	numberOfBranchSequentialSegments = 5
+	sequentialSegmentContextEncodingAbsoluteLinear = False
+	if(sequentialSegmentContextEncodingAbsoluteLinear):
+		sequentialSegmentContextEncodingAbsoluteLinearSize = 1	#number of tokens per segment
+	sequentialSegmentContextEncodingRelativeLinear = True
+	sequentialSegmentContextEncodingRelativeExponential = False
+	#sequential segments could capture input (past context tokens) at exponentially further distances, or their encodings could be partially randomised (note dendritic SANI implementation creates multiple encodings of past context in different dendritic branches) 
+	#it is not necessary that previous segments be activated, but their activation will bias the selection of a particular
+	
 #### memory constraints ####
 algorithmMatrixSingleTensor = False	#store context size array (and simulated dendritic branches) in pytorch tensor rather than python list	#requires high ram
 useHFconnectionMatrixBasicSparse = False		#reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)
@@ -34,13 +47,11 @@ if(debugHFconnectionMatrix):
 	HFconnectionMatrixBasicMaxConcepts = 20	 #[Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]
 else:
 	HFconnectionMatrixBasicMaxConcepts = 1000	#200	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
-
 algorithmMatrixSingleTensorEfficientAdd = False	#initialise (dependent var)
 if(algorithmMatrixSingleTensor):
 	algorithmMatrixSingleTensorEfficientAdd = False	#incomplete	#efficiently add context to connection matrix (use parallelised algorithm) 
 
 #### simulated dendritic branches ####
-
 simulatedDendriticBranches = False	#independent dendritic branches
 HFconnectionMatrixMinValue = 0
 if(simulatedDendriticBranches):
@@ -49,13 +60,12 @@ if(simulatedDendriticBranches):
 	if(simulatedDendriticBranchesInitialisation):
 		simulatedDendriticBranchesInitialisationWeight = 0.01	#only apply a very small randomisation magnitude to break symmetry
 		HFconnectionMatrixMinValue = simulatedDendriticBranchesInitialisationWeight
-	numberOfDendriticBranches = 10
+	numberOfIndependentDendriticBranches = 10
 else: 
-	numberOfDendriticBranches = 1
+	numberOfIndependentDendriticBranches = 1
 	simulatedDendriticBranchesInitialisation = False
 
 #### topk selection ####
-
 selectActivatedTop = True	#mandatory (implied) select activated top k target neurons during propagation test
 if(selectActivatedTop):
 	matrixPropagateTopKconceptNodes = 1	#number of top k elements to save
@@ -79,7 +89,6 @@ if(biologicalSimulationTestHarness):
 	HFNLPnonrandomSeed = True	#always generate the same set of random numbers upon execution
 	
 #### seed HF network with subsequence ####
-
 seedHFnetworkSubsequence = True #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
 if(seedHFnetworkSubsequence):
 	#seedHFnetworkSubsequence currently requires !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
@@ -92,12 +101,10 @@ if(enforceMinimumEncodedSequenceLength):
 	minimumEncodedSequenceLength = 4	#should be high enough to fill a significant proportion of dendrite vertical branch length (numberOfBranches1)	#~seedHFnetworkSubsequenceLength
 
 #### propagation algorithm (source/target activation) ####
-
 biologicalSimulationForward = True	#mandatory (implied)
 
 
 #### error ####
-
 def printe(str):
 	print(str)
 	exit()

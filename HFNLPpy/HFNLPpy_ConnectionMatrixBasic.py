@@ -26,6 +26,8 @@ from torch_geometric.data import Data
 from HFNLPpy_ScanGlobalDefs import *
 from HFNLPpy_MatrixGlobalDefs import *
 from ANNtf2_loadDataset import datasetFolderRelative
+if(useAlgorithmMatrix):
+	import HFNLPpy_MatrixOperations
 
 if(pt.cuda.is_available()):
 	device = pt.device("cuda")
@@ -54,9 +56,8 @@ def padContextConnectionVector(contextConnectionVector):
 	#contextConnectionVectorPadded = pt.nn.ZeroPad1d(spareConceptsSize)(contextConnectionVector)	#requires later version of pytorch
 	return contextConnectionVectorPadded
 
-def extendConceptNeuronContextVector(conceptNeuronContextVector, contextSizeMax2):
+def extendConceptNeuronContextVector(conceptNeuronContextVector):
 	if(algorithmMatrixSingleTensor):
-		#conceptNeuronContextVectorExtended = createDiagonalMatrix(conceptNeuronContextVector, contextSizeMax2+1)	#OLD; concept neurons are not necessarily contiguous
 		conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVector, dim=1)
 		conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(1, HFconnectionMatrixBasicMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	
 		conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVectorExtended, dim=0)
@@ -84,7 +85,8 @@ def readHFconnectionMatrix(dendriticBranchIndex="", contextSizeIndex=""):
 	else:
 		neuronNamelist = []
 		if(useAlgorithmMatrix and algorithmMatrixSingleTensor):
-			tensorShape = (numberOfDendriticBranches, contextSizeMax, HFconnectionMatrixBasicMaxConcepts, HFconnectionMatrixBasicMaxConcepts)
+			secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax()
+			tensorShape = (numberOfIndependentDendriticBranches, secondDataIndexMax, HFconnectionMatrixBasicMaxConcepts, HFconnectionMatrixBasicMaxConcepts)
 		else:
 			tensorShape = (HFconnectionMatrixBasicMaxConcepts, HFconnectionMatrixBasicMaxConcepts)
 		if(simulatedDendriticBranchesInitialisation):
@@ -127,7 +129,7 @@ def readGraphFromCsv(filePath):
 	
 	if(useAlgorithmMatrix and algorithmMatrixSingleTensor):
 		numberOfConcepts = graph.shape[0]
-		originalShape = (numberOfDendriticBranches, contextSizeMax, numberOfConcepts, numberOfConcepts)
+		originalShape = (numberOfIndependentDendriticBranches, contextSizeMax, numberOfConcepts, numberOfConcepts)
 		graph = graph.view(originalShape)
 	if(useHFconnectionMatrixBasicSparse):
 		graph = graph.to_sparse()
@@ -170,3 +172,40 @@ def writeConceptNeuronList(names, filePath):
 	except Exception as e:
 		print("Error:", e)
 		
+def readHFconnectionMatrixWrapper(HFconnectionGraphObject):
+	if(useAlgorithmMatrix):
+		if(algorithmMatrixSingleTensor):
+			HFconnectionGraphObject.neuronNamelist, HFconnectionGraphObject.HFconnectionGraphMatrix = readHFconnectionMatrix()
+			HFconnectionGraphObject.HFconnectionGraphMatrixNormalised = HFNLPpy_MatrixOperations.normaliseBatchedTensor(HFconnectionGraphObject.HFconnectionGraphMatrix)
+		else:
+			secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax()
+			for dendriticBranchIndex in range(numberOfIndependentDendriticBranches):
+				for secondDataIndex in range(secondDataIndexMax):
+					HFconnectionGraphObject.neuronNamelist, HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex][secondDataIndex] = readHFconnectionMatrix(createIndexStringDendriticBranch(dendriticBranchIndex), createIndexStringSecondDataIndex(secondDataIndex))
+					HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchIndex][secondDataIndex] = HFNLPpy_MatrixOperations.normaliseBatchedTensor(HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex][secondDataIndex])
+	else:
+		HFconnectionGraphObject.neuronNamelist, HFconnectionGraphObject.HFconnectionGraphBasic = readHFconnectionMatrix()
+
+def writeHFconnectionMatrixWrapper(HFconnectionGraphObject):
+	if(useAlgorithmMatrix):
+		if(algorithmMatrixSingleTensor):
+			writeHFconnectionMatrix(HFconnectionGraphObject.HFconnectionGraphMatrix, HFconnectionGraphObject.neuronNamelist)
+		else:
+			secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax()
+			for dendriticBranchIndex in range(numberOfIndependentDendriticBranches):
+				for secondDataIndex in range(secondDataIndexMax):
+					writeHFconnectionMatrix(HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex][secondDataIndex], HFconnectionGraphObject.neuronNamelist, createIndexStringDendriticBranch(dendriticBranchIndex), createIndexStringSecondDataIndex(secondDataIndex))
+	else:
+		writeHFconnectionMatrix(HFconnectionGraphObject.HFconnectionGraphBasic, HFconnectionGraphObject.neuronNamelist)
+
+def createIndexStringDendriticBranch(dendriticBranchIndex):
+	return "dendriticBranchIndex" + str(dendriticBranchIndex)
+def createIndexStringSecondDataIndex(secondDataIndex):
+	return "secondDataIndex" + str(secondDataIndex)		
+'''
+def createIndexStringContextSizeIndex(contextSizeIndex):
+	return "contextSizeIndex" + str(contextSizeIndex)	
+def createIndexStringSequentialSegmentIndex(sequentialSegmentIndex):
+	return "sequentialSegmentIndex" + str(sequentialSegmentIndex)	
+'''
+

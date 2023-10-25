@@ -38,7 +38,6 @@ if(useHFconnectionMatrix):
 		import HFNLPpy_ConnectionMatrixPyG as HFNLPpy_ConnectionMatrix
 	if(useHFconnectionMatrixBasic):
 		import HFNLPpy_ConnectionMatrixBasic as HFNLPpy_ConnectionMatrix
-		
 if(useAlgorithmScan):
 	from HFNLPpy_ScanGlobalDefs import seedHFnetworkSubsequence
 	if(seedHFnetworkSubsequence):
@@ -56,6 +55,7 @@ elif(useAlgorithmDendriticSANI):
 elif(useAlgorithmMatrix):
 	from HFNLPpy_MatrixGlobalDefs import *
 	import HFNLPpy_Matrix
+	import HFNLPpy_MatrixOperations
 	
 if(useDependencyParseTree):
 	import SPNLPpy_globalDefs
@@ -70,64 +70,34 @@ if(drawHopfieldGraph):
 		import HFNLPpy_hopfieldGraphDraw as hopfieldGraphDrawNetwork
 
 
+class HFconnectionGraphClass:
+	def __init__(self):
+		if(useAlgorithmMatrix):
+			if(algorithmMatrixSingleTensor):
+				self.HFconnectionGraphMatrix = None
+				self.HFconnectionGraphMatrixNormalised = None
+			else:
+				secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax()
+				self.HFconnectionGraphMatrix = [[None for _ in range(secondDataIndexMax)] for _ in range(numberOfIndependentDendriticBranches)]	#[[None]*contextSizeMax]*numberOfIndependentDendriticBranches	#[[[None]*contextSizeMax] for i in range(numberOfIndependentDendriticBranches)]
+				self.HFconnectionGraphMatrixNormalised = [[None for _ in range(secondDataIndexMax)] for _ in range(numberOfIndependentDendriticBranches)]	#[[None]*contextSizeMax]*numberOfIndependentDendriticBranches	#[[[None]*contextSizeMax] for i in range(numberOfIndependentDendriticBranches)]
+		if(linkSimilarConceptNodesBagOfWords):
+			self.HFconnectionGraphBasic = None
+		if(useAlgorithmScan):
+			self.HFconnectionGraphPyG = None
+		self.neuronNamelist = None
+		self.neuronIDdict = {}
 
 networkConceptNodeDict = {}
 networkSize = 0
-if(useHFconnectionMatrix):
-	class HFconnectionGraphClass:
-		def __init__(self):
-			if(useAlgorithmMatrix):
-				if(algorithmMatrixSingleTensor):
-					self.HFconnectionGraphMatrix = None
-					self.HFconnectionGraphMatrixNormalised = None
-				else:
-					self.HFconnectionGraphMatrix = [[None for _ in range(contextSizeMax)] for _ in range(numberOfDendriticBranches)]	#[[None]*contextSizeMax]*numberOfDendriticBranches	#[[[None]*contextSizeMax] for i in range(numberOfDendriticBranches)]
-					self.HFconnectionGraphMatrixNormalised = [[None for _ in range(contextSizeMax)] for _ in range(numberOfDendriticBranches)]	#[[None]*contextSizeMax]*numberOfDendriticBranches	#[[[None]*contextSizeMax] for i in range(numberOfDendriticBranches)]
-			if(linkSimilarConceptNodesBagOfWords):
-				self.HFconnectionGraphBasic = None
-			if(useAlgorithmScan):
-				self.HFconnectionGraphPyG = None
-			self.neuronNamelist = None
-			self.neuronIDdict = {}
-	HFconnectionGraphObject = HFconnectionGraphClass()
-else:
-	HFconnectionGraphObject = None
-	
-def readHFconnectionMatrix():
-	if(useAlgorithmMatrix):
-		if(algorithmMatrixSingleTensor):
-			HFconnectionGraphObject.neuronNamelist, HFconnectionGraphObject.HFconnectionGraphMatrix = HFNLPpy_ConnectionMatrix.readHFconnectionMatrix()
-			HFconnectionGraphObject.HFconnectionGraphMatrixNormalised = normaliseBatchedTensor(HFconnectionGraphObject.HFconnectionGraphMatrix)
-		else:
-			for dendriticBranchIndex in range(numberOfDendriticBranches):
-				for contextSizeIndex in range(contextSizeMax):
-					HFconnectionGraphObject.neuronNamelist, HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex][contextSizeIndex] = HFNLPpy_ConnectionMatrix.readHFconnectionMatrix(createIndexStringDendriticBranch(dendriticBranchIndex), createIndexStringContextSizeIndex(contextSizeIndex))
-					HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchIndex][contextSizeIndex] = normaliseBatchedTensor(HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex][contextSizeIndex])
-	else:
-		HFconnectionGraphObject.neuronNamelist, HFconnectionGraphObject.HFconnectionGraphBasic = HFNLPpy_ConnectionMatrix.readHFconnectionMatrix()
-	regenerateGraphNodes()
-	
-def writeHFconnectionMatrix():
-	if(useAlgorithmMatrix):
-		if(algorithmMatrixSingleTensor):
-			HFNLPpy_ConnectionMatrix.writeHFconnectionMatrix(HFconnectionGraphObject.HFconnectionGraphMatrix, HFconnectionGraphObject.neuronNamelist)
-		else:
-			for dendriticBranchIndex in range(numberOfDendriticBranches):
-				for contextSizeIndex in range(contextSizeMax):
-					HFNLPpy_ConnectionMatrix.writeHFconnectionMatrix(HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex][contextSizeIndex], HFconnectionGraphObject.neuronNamelist, createIndexStringDendriticBranch(dendriticBranchIndex), createIndexStringContextSizeIndex(contextSizeIndex))
-	else:
-		HFNLPpy_ConnectionMatrix.writeHFconnectionMatrix(HFconnectionGraphObject.HFconnectionGraphBasic, HFconnectionGraphObject.neuronNamelist)
+HFconnectionGraphObject = HFconnectionGraphClass()
 
-def createIndexStringDendriticBranch(dendriticBranchIndex):
-	return "dendriticBranchIndex" + str(dendriticBranchIndex)
-def createIndexStringContextSizeIndex(contextSizeIndex):
-	return "contextSizeIndex" + str(contextSizeIndex)	
-			
+
 def generateHopfieldGraphNetwork(articles, tokenizer):
 	numberOfSentences = len(articles)
 
 	if(useHFconnectionMatrix):
-		readHFconnectionMatrix()
+		HFNLPpy_ConnectionMatrix.readHFconnectionMatrixWrapper(HFconnectionGraphObject)
+		regenerateGraphNodes()
 
 	if(seedHFnetworkSubsequence):
 		verifySeedSentenceIsReplicant(articles, numberOfSentences)
@@ -136,7 +106,7 @@ def generateHopfieldGraphNetwork(articles, tokenizer):
 		generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences, tokenizer)	
 		
 	if(useHFconnectionMatrix):
-		writeHFconnectionMatrix()
+		HFNLPpy_ConnectionMatrix.writeHFconnectionMatrixWrapper(HFconnectionGraphObject)
 
 def generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences, tokenizer):
 	print("\n\ngenerateHopfieldGraphSentenceString: sentenceIndex = ", sentenceIndex, "; ", sentence)
@@ -240,7 +210,7 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 			
 	if(trainSentence):
 		if(linkSimilarConceptNodesBagOfWords):
-			addContextWordsToConnectionGraphLinkConcepts(tokenisedSentence, sentenceConceptNodeList)
+			HFNLPpy_Matrix.addContextWordsToConnectionGraphLinkConcepts(tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject)
 
 		#create Hopfield graph direct connections (for draw only)
 		if(useDependencyParseTree):
@@ -276,7 +246,7 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 					HFNLPpy_ConnectionMatrix.updateOrAddConnectionToGraph(HFconnectionGraphObject, sourceNeuronID, targetNeuronID)
 				neuronIDprevious = neuronID
 		elif(useHFconnectionMatrix):
-			addContextWordsToConnectionGraphMatrix(tokenisedSentence, sentenceConceptNodeList)
+			HFNLPpy_Matrix.addContextWordsToConnectionGraphMatrix(networkConceptNodeDict, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject)
 	else:
 		#predict Hopfield graph flow;
 		seedSentenceConceptNodeList = sentenceConceptNodeList
@@ -299,8 +269,6 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 
 	result = True
 	return result
-
-
 
 #if(useDependencyParseTree):
 	
@@ -401,7 +369,6 @@ def getNetworkIndex():
 	return networkIndex
 		
 
-
 #subsequence seed;
 		
 def verifySeedSentenceIsReplicant(articles, numberOfSentences):
@@ -441,85 +408,3 @@ def recalculateHopfieldGraphNetworkSize():
 	global networkSize
 	networkSize = len(networkConceptNodeDict)
 
-
-#connection graph;
-
-def addContextWordsToConnectionGraphLinkConcepts(tokenisedSentence, sentenceConceptNodeList):
-	for w1, token1 in enumerate(tokenisedSentence):
-		conceptNode = sentenceConceptNodeList[w1]
-		neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
-		HFconnectionGraphObject.HFconnectionGraphBasic, HFconnectionGraphObject.HFconnectionGraphBasicNormalised = addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphBasic, linkSimilarConceptNodesBagOfWordsDistanceMax, linkSimilarConceptNodesBagOfWordsWeightStore, linkSimilarConceptNodesBagOfWordsBidirectional)
-
-def addContextWordsToConnectionGraphMatrix(tokenisedSentence, sentenceConceptNodeList):
-	for w1, token1 in enumerate(tokenisedSentence):
-		#print("w1 = ", w1)
-		conceptNode = sentenceConceptNodeList[w1]
-		#print("addContextWordsToConnectionGraphMatrix: conceptNode.nodeName = ", conceptNode.nodeName) 
-		neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
-		contextSizeMax2 = min(contextSizeMax, w1)	#min(contextSizeMax, len(tokenisedSentence))
-		dendriticBranchClosestIndex = calculateDendriticBranchClosestIndex(tokenisedSentence, sentenceConceptNodeList, neuronID, contextSizeMax2, w1)
-		if(algorithmMatrixSingleTensorEfficientAdd):
-			HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchClosestIndex], HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchClosestIndex] = addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchClosestIndex], None, contextMatrixWeightStore, False, contextSizeMax2)
-		else:
-			for contextSizeIndex in range(contextSizeMax2):
-				#print("contextSizeIndex = ", contextSizeIndex)
-				HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchClosestIndex][contextSizeIndex], HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchClosestIndex][contextSizeIndex] = addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchClosestIndex][contextSizeIndex], contextSizeIndex, contextMatrixWeightStore, False, contextSizeMax2)
-
-def calculateDendriticBranchClosestIndex(tokenisedSentence, sentenceConceptNodeList, neuronID, contextSizeMax2, w1):
-	dendriticBranchClosestIndex = 0
-	if(numberOfDendriticBranches == 1):
-		dendriticBranchClosestIndex = 0
-	else:
-		foundDendriticBranchClosest = False
-		if(algorithmMatrixSingleTensor):
-			if(contextSizeMax2 > 0):
-				connectionStrength, dendriticBranchIndex = HFNLPpy_hopfieldOperations.connectionMatrixCalculateConnectionStrengthIndex(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, HFconnectionGraphObject.HFconnectionGraphMatrixNormalised, None, contextMatrixWeightStore, False, contextSizeMax2)
-				if(connectionStrength/contextSizeIndex > simulatedDendriticBranchesMinMatchStrength):
-					dendriticBranchClosestIndex = dendriticBranchIndex
-					foundDendriticBranchClosest = True
-		else:
-			dendriticBranchClosestIndex = 0
-			dendriticBranchClosestValue = 0
-			for dendriticBranchIndex in range(numberOfDendriticBranches):
-				#print("dendriticBranchIndex = ", dendriticBranchIndex)
-				for contextSizeIndex in range(contextSizeMax2):
-					#print("contextSizeIndex = ", contextSizeIndex)
-					connectionStrength, _ = HFNLPpy_hopfieldOperations.connectionMatrixCalculateConnectionStrengthIndex(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchIndex][contextSizeIndex], contextSizeIndex, contextMatrixWeightStore, False)
-					if(connectionStrength > dendriticBranchClosestValue):
-						if(connectionStrength/contextSizeIndex > simulatedDendriticBranchesMinMatchStrength):
-							dendriticBranchClosestValue = connectionStrength
-							dendriticBranchClosestIndex = dendriticBranchIndex
-							foundDendriticBranchClosest = True
-		#if(debugAlgorithmMatrix):
-		print("dendriticBranchClosestIndex = ", dendriticBranchClosestIndex)
-		if(not foundDendriticBranchClosest):
-			dendriticBranchClosestIndex = random.randint(0, numberOfDendriticBranches-1)
-	return dendriticBranchClosestIndex
-			
-def addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionGraph, contextSizeIndex, weightStore, bidirectionalContext, contextSizeMax2):
-	contextConnectionVector = HFNLPpy_hopfieldOperations.createContextVectorWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObject, len(HFconnectionGraphObject.neuronNamelist), contextSizeIndex, weightStore, bidirectionalContext, algorithmMatrixSingleTensorEfficientAdd, contextSizeMax2)
-	if(algorithmMatrixSingleTensorEfficientAdd):
-		#contextConnectionVector = HFNLPpy_ConnectionMatrixBasic.extendConceptNeuronContextVector(contextConnectionVector, contextSizeMax2)
-		printe("algorithmMatrixSingleTensorEfficientAdd is incomplete")
-	HFNLPpy_ConnectionMatrix.addContextConnectionsToGraph(HFconnectionGraph, neuronID, contextConnectionVector)
-	HFconnectionGraphNormalised = normaliseBatchedTensor(HFconnectionGraph)
-	#if(debugAlgorithmMatrix):
-	#	print("contextConnectionVector = ", contextConnectionVector)
-	#	#print("HFconnectionGraph[neuronID] = ", HFconnectionGraph[neuronID])
-	#	print("HFconnectionGraphNormalised[neuronID] = ", HFconnectionGraphNormalised[neuronID])
-	return HFconnectionGraph, HFconnectionGraphNormalised
-
-def normaliseBatchedTensor(HFconnectionGraph):
-	if(useHFconnectionMatrixBasicBool):	#OLD: if(not weightStore)
-		HFconnectionGraphNormalised = HFconnectionGraphFloat
-	else:
-		HFconnectionGraphFloat = (HFconnectionGraph).float()
-		#calculate a temporary normalised version of the HFconnectionGraph	#CHECKTHIS
-		if(useHFconnectionMatrixNormaliseSoftmax):
-			HFconnectionGraphNormalised = pt.nn.functional.softmax(HFconnectionGraphFloat, dim=1)
-		else:
-			min_vals, _ = pt.min(HFconnectionGraphFloat, dim=1, keepdim=True)
-			max_vals, _ = pt.max(HFconnectionGraphFloat, dim=1, keepdim=True)
-			epsilon = 1e-8  # Small epsilon value
-			HFconnectionGraphNormalised = (HFconnectionGraphFloat - min_vals) / (max_vals - min_vals + epsilon)
-	return HFconnectionGraphNormalised

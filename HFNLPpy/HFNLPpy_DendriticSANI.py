@@ -49,7 +49,9 @@ else:
 	import HFNLPpy_DendriticSANIPropagateStandard
 import HFNLPpy_DendriticSANIDraw
 import HFNLPpy_hopfieldOperations
-
+if(useHFconnectionMatrix):
+	import HFNLPpy_MatrixOperations
+	
 printVerbose = False
 
 
@@ -234,7 +236,7 @@ def simulateBiologicalHFnetworkSequenceNodePropagateForwardFull(networkConceptNo
 def selectActivatedNeurons(wSource, sentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSet, HFconnectionGraphObject=None):
 	connectionTargetNeuronSetLocalFiltered = connectionTargetNeuronSet
 	if(linkSimilarConceptNodes):
-		connectionTargetNeuronSetLocalFiltered = HFNLPpy_hopfieldOperations.retrieveSimilarConcepts(wSource, sentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSetLocalFiltered, HFconnectionGraphObject)
+		connectionTargetNeuronSetLocalFiltered = retrieveSimilarConcepts(wSource, sentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSetLocalFiltered, HFconnectionGraphObject)
 	if(selectActivatedTop):
 		connectionTargetNeuronSetLocalFiltered = selectTopKactivatedNeurons(connectionTargetNeuronSetLocalFiltered)
 	return connectionTargetNeuronSetLocalFiltered
@@ -283,4 +285,16 @@ def connectionExists(nodeSource, nodeTarget, contextConnection):
 			result = True
 	return result
 	
-	
+def retrieveSimilarConcepts(wSource, sentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSet, HFconnectionGraphObject=None):
+	if(linkSimilarConceptNodesWordnet):
+		for conceptNeuron in connectionTargetNeuronSet:
+			connectionTargetNeuronSetExtended.append(conceptNeuron)
+			for synonym in conceptNeuron.synonymsList:
+				synonymConcept, conceptInDict = convertLemmaToConcept(networkConceptNodeDict, synonym)
+				if(conceptInDict):
+					#print("conceptInDict: ", synonymConcept.nodeName)
+					connectionTargetNeuronSetExtended.append(synonymConcept)
+	elif(linkSimilarConceptNodesBagOfWords):
+		connectionTargetNeuronSetExtended = HFNLPpy_MatrixOperations.retrieveSimilarConceptsBagOfWords(wSource, sentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSet, HFconnectionGraphObject)
+
+	return connectionTargetNeuronSetExtended
