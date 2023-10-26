@@ -58,13 +58,17 @@ def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphNormalised, ne
 	
 	neuronIndexList = []
 	if(algorithmMatrixSingleTensor):
+		if(algorithmMatrixSANIaddActivationAcrossSegments):
+			array = pt.sum(array, dim=1, keepdim=True)
+
 		arraySummedTopK = performSumTopK(array, matrixPropagateTopKconceptNodes, 3)
 		arraySummedTopKindices = arraySummedTopK.indices
-		arraySummedTopK = performSumTopK(arraySummedTopK.values, matrixPropagateTopKconceptNodes, 2)
+		arraySummedTopK = performSumTopK(arraySummedTopK.values, matrixPropagateTopKsecondIndex, 2)
 		if(simulatedDendriticBranches):
 			arraySummedTopKindices = arraySummedTopKindices.squeeze(-1).gather(dim=1, index=arraySummedTopK.indices)
 		else:
 			arraySummedTopKindices = arraySummedTopKindices[:, arraySummedTopK.indices]
+			
 		arraySummedTopK = performSumTopK(arraySummedTopK.values, matrixPropagateTopKdendriticBranches, 1)
 		for i in range(len(arraySummedTopK.values)):
 			value = arraySummedTopK.values[i]

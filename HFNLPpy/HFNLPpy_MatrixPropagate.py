@@ -61,8 +61,8 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 				connectionTargetNeuronList1.extend(connectionTargetNeuronList2)
 				if(debugAlgorithmMatrix):
 					print("connectionTargetNeuronList2[0] = ", connectionTargetNeuronList2[0].nodeName)
-			if(algorithmMatrixSANI):
-				connectionTargetNeuronListTopKneurons = performListTopK(connectionTargetNeuronList1, 1)
+			if(algorithmMatrixSANItopkActivationAcrossSegments):
+				connectionTargetNeuronListTopKneurons = performListTopK(connectionTargetNeuronList1, matrixPropagateTopKsequentialSegments)
 				connectionTargetNeuronList.extend(connectionTargetNeuronListTopKneurons)
 			else:
 				connectionTargetNeuronList.extend(connectionTargetNeuronList1)

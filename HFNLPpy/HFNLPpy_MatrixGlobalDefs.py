@@ -30,7 +30,11 @@ debugHFconnectionMatrix = False
 #### SANI ####
 algorithmMatrixSANI = True	#emulate DendriticSANIbiologicalSimulationSimple
 if(algorithmMatrixSANI):
+	#algorithmMatrixSANI currently requires algorithmMatrixSingleTensor (!algorithmMatrixSingleTensor:algorithmMatrixSANIaddActivationAcrossSegments incomplete)
+	algorithmMatrixSANIaddActivationAcrossSegments = True	#default: True
+	algorithmMatrixSANItopkActivationAcrossSegments = False	#default: False	#False: perform topk activation across segments and dendritic branches combined (same as !algorithmMatrixSANI implementation)	#only for if(not algorithmMatrixSingleTensor)
 	algorithmMatrixSANIenforceSequentialActivation = False	#not yet implemented (else sum sequential segment activations)
+	
 	numberOfBranchSequentialSegments = 5
 	sequentialSegmentContextEncodingAbsoluteLinear = False
 	if(sequentialSegmentContextEncodingAbsoluteLinear):
@@ -39,9 +43,11 @@ if(algorithmMatrixSANI):
 	sequentialSegmentContextEncodingRelativeExponential = False
 	#sequential segments could capture input (past context tokens) at exponentially further distances, or their encodings could be partially randomised (note dendritic SANI implementation creates multiple encodings of past context in different dendritic branches) 
 	#it is not necessary that previous segments be activated, but their activation will bias the selection of a particular
+else:
+	algorithmMatrixSANIaddActivationAcrossSegments = False
 	
 #### memory constraints ####
-algorithmMatrixSingleTensor = False	#store context size array (and simulated dendritic branches) in pytorch tensor rather than python list	#requires high ram
+algorithmMatrixSingleTensor = True	#store context size array (and simulated dendritic branches) in pytorch tensor rather than python list	#requires high ram
 useHFconnectionMatrixBasicSparse = False		#reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)
 if(debugHFconnectionMatrix):
 	HFconnectionMatrixBasicMaxConcepts = 20	 #[Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]
@@ -52,7 +58,7 @@ if(algorithmMatrixSingleTensor):
 	algorithmMatrixSingleTensorEfficientAdd = False	#incomplete	#efficiently add context to connection matrix (use parallelised algorithm) 
 
 #### simulated dendritic branches ####
-simulatedDendriticBranches = False	#independent dendritic branches
+simulatedDendriticBranches = True	#independent dendritic branches
 HFconnectionMatrixMinValue = 0
 if(simulatedDendriticBranches):
 	simulatedDendriticBranchesMinMatchStrength = 1.0	#minimum branch match strength for comparison before randomise selection of new branch to write	#CHECKTHIS
@@ -70,7 +76,12 @@ selectActivatedTop = True	#mandatory (implied) select activated top k target neu
 if(selectActivatedTop):
 	matrixPropagateTopKconceptNodes = 1	#number of top k elements to save
 	matrixPropagateTopKcontextSize = 1	#number of top k elements to save
+	matrixPropagateTopKsequentialSegments = 1	#number of top k elements to save
 	matrixPropagateTopKdendriticBranches = 1 	#number of top k elements to save
+	if(algorithmMatrixSANI):
+		matrixPropagateTopKsecondIndex = matrixPropagateTopKsequentialSegments
+	else:
+		matrixPropagateTopKsecondIndex = matrixPropagateTopKcontextSize
 	
 #### context connections matrix ####
 

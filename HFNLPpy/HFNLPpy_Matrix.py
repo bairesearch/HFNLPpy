@@ -173,11 +173,15 @@ def calculateDendriticBranchClosestIndex(networkConceptNodeDict, tokenisedSenten
 					#print("contextSizeIndex = ", contextSizeIndex)
 					connectionStrength, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionStrengthIndex(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchIndex][secondDataIndex], secondDataIndex, None, contextMatrixWeightStore, False)
 					if(algorithmMatrixSANI):
-						connectionStrengthSegments += calculateSequentialSegmentActivation(connectionStrength)
+						if(algorithmMatrixSANIaddActivationAcrossSegments):
+							connectionStrengthSegments += HFNLPpy_MatrixOperations.calculateSequentialSegmentActivation(connectionStrength)
+						else:
+							if(connectionStrength > simulatedDendriticBranchesMinMatchStrength):
+								foundDendriticBranchClosest, dendriticBranchClosestValue, dendriticBranchClosestIndex = updateDendriticBranchClosestValue(foundDendriticBranchClosest, dendriticBranchClosestValue, dendriticBranchClosestIndex, connectionStrength, dendriticBranchIndex)
 					else:
 						if(connectionStrength/secondDataIndex > simulatedDendriticBranchesMinMatchStrength):
 							foundDendriticBranchClosest, dendriticBranchClosestValue, dendriticBranchClosestIndex = updateDendriticBranchClosestValue(foundDendriticBranchClosest, dendriticBranchClosestValue, dendriticBranchClosestIndex, connectionStrength, dendriticBranchIndex)
-				if(algorithmMatrixSANI):
+				if(algorithmMatrixSANIaddActivationAcrossSegments):
 					foundDendriticBranchClosest, dendriticBranchClosestValue, dendriticBranchClosestIndex = updateDendriticBranchClosestValue(foundDendriticBranchClosest, dendriticBranchClosestValue, dendriticBranchClosestIndex, connectionStrengthSegments, dendriticBranchIndex)
 					
 		#if(debugAlgorithmMatrix):
