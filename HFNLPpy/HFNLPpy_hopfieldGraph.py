@@ -77,9 +77,13 @@ class HFconnectionGraphClass:
 				self.HFconnectionGraphMatrix = None
 				self.HFconnectionGraphMatrixNormalised = None
 			else:
-				secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax()
-				self.HFconnectionGraphMatrix = [[None for _ in range(secondDataIndexMax)] for _ in range(numberOfIndependentDendriticBranches)]	#[[None]*contextSizeMax]*numberOfIndependentDendriticBranches	#[[[None]*contextSizeMax] for i in range(numberOfIndependentDendriticBranches)]
-				self.HFconnectionGraphMatrixNormalised = [[None for _ in range(secondDataIndexMax)] for _ in range(numberOfIndependentDendriticBranches)]	#[[None]*contextSizeMax]*numberOfIndependentDendriticBranches	#[[[None]*contextSizeMax] for i in range(numberOfIndependentDendriticBranches)]
+				if(algorithmMatrixSANImethodUseActivationAcrossSegments):
+					self.HFconnectionGraphMatrix = [None for _ in range(numberOfIndependentDendriticBranches)]
+					self.HFconnectionGraphMatrixNormalised = [None for _ in range(numberOfIndependentDendriticBranches)]
+				else:
+					secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax()
+					self.HFconnectionGraphMatrix = [[None for _ in range(secondDataIndexMax)] for _ in range(numberOfIndependentDendriticBranches)]	#[[None]*contextSizeMax]*numberOfIndependentDendriticBranches	#[[[None]*contextSizeMax] for i in range(numberOfIndependentDendriticBranches)]
+					self.HFconnectionGraphMatrixNormalised = [[None for _ in range(secondDataIndexMax)] for _ in range(numberOfIndependentDendriticBranches)]	#[[None]*contextSizeMax]*numberOfIndependentDendriticBranches	#[[[None]*contextSizeMax] for i in range(numberOfIndependentDendriticBranches)]
 		if(linkSimilarConceptNodesBagOfWords):
 			self.HFconnectionGraphBasic = None
 		if(useAlgorithmScan):

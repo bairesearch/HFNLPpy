@@ -30,21 +30,26 @@ debugHFconnectionMatrix = False
 #### SANI ####
 algorithmMatrixSANI = True	#emulate DendriticSANIbiologicalSimulationSimple
 if(algorithmMatrixSANI):
-	#algorithmMatrixSANI currently requires algorithmMatrixSingleTensor (!algorithmMatrixSingleTensor:algorithmMatrixSANIaddActivationAcrossSegments incomplete)
-	algorithmMatrixSANIaddActivationAcrossSegments = True	#default: True
-	algorithmMatrixSANItopkActivationAcrossSegments = False	#default: False	#False: perform topk activation across segments and dendritic branches combined (same as !algorithmMatrixSANI implementation)	#only for if(not algorithmMatrixSingleTensor)
-	algorithmMatrixSANIenforceSequentialActivation = False	#not yet implemented (else sum sequential segment activations)
-	
-	numberOfBranchSequentialSegments = 5
+	#select algorithmMatrixSANI method (select one);
+	algorithmMatrixSANImethodAddActivationAcrossSegments = True	#default: True	#it is not necessary that previous segments be activated, but their activation will bias the selection of a particular dendritic branch
+	algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments = False	#not yet implemented (else sum sequential segment activations)
+	#select sequentialSegmentContextEncoding method (select one);
 	sequentialSegmentContextEncodingAbsoluteLinear = False
 	if(sequentialSegmentContextEncodingAbsoluteLinear):
 		sequentialSegmentContextEncodingAbsoluteLinearSize = 1	#number of tokens per segment
 	sequentialSegmentContextEncodingRelativeLinear = True
-	sequentialSegmentContextEncodingRelativeExponential = False
-	#sequential segments could capture input (past context tokens) at exponentially further distances, or their encodings could be partially randomised (note dendritic SANI implementation creates multiple encodings of past context in different dendritic branches) 
-	#it is not necessary that previous segments be activated, but their activation will bias the selection of a particular
+	sequentialSegmentContextEncodingRelativeExponential = False	#sequential segments capture input (past context tokens) at exponentially further distances
+	#sequentialSegmentContextEncodingRandom = False #encodings are partially randomised (note dendritic SANI implementation creates multiple semi-random encodings of past context in different dendritic branches) 
+	numberOfBranchSequentialSegments = 5
 else:
-	algorithmMatrixSANIaddActivationAcrossSegments = False
+	algorithmMatrixSANImethodAddActivationAcrossSegments = False
+	algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments = False
+	algorithmMatrixSANImethodTopkActivationAcrossSegments = False
+	algorithmMatrixSANImethodAddActivationAcrossSegmentsOld = False
+
+algorithmMatrixSANImethodUseActivationAcrossSegments = False
+if(algorithmMatrixSANImethodAddActivationAcrossSegments or algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments):
+	algorithmMatrixSANImethodUseActivationAcrossSegments = True
 	
 #### memory constraints ####
 algorithmMatrixSingleTensor = True	#store context size array (and simulated dendritic branches) in pytorch tensor rather than python list	#requires high ram
@@ -54,7 +59,7 @@ if(debugHFconnectionMatrix):
 else:
 	HFconnectionMatrixBasicMaxConcepts = 1000	#200	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
 algorithmMatrixSingleTensorEfficientAdd = False	#initialise (dependent var)
-if(algorithmMatrixSingleTensor):
+if(algorithmMatrixSingleTensor or algorithmMatrixSANImethodUseActivationAcrossSegments):
 	algorithmMatrixSingleTensorEfficientAdd = False	#incomplete	#efficiently add context to connection matrix (use parallelised algorithm) 
 
 #### simulated dendritic branches ####

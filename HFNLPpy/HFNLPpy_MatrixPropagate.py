@@ -45,26 +45,21 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 	
 	conceptNeuronID = HFconnectionGraphObject.neuronIDdict[conceptNeuronSource.nodeName]
 	if(algorithmMatrixSingleTensor):
-		conceptNeuronContextVector = HFNLPpy_MatrixOperations.createContextVectorWrapper(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionMatrixBasicMaxConcepts, None, secondDataIndexMax, contextMatrixWeightStore, False, algorithmMatrixSingleTensor)	#HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSizeIndex][conceptNeuronID]
-		connectionTargetNeuronSetC, _, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject.HFconnectionGraphMatrixNormalised, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, matrixPropagateTopKconceptNodes, algorithmMatrixSingleTensor)
-		connectionTargetNeuronListC = list(connectionTargetNeuronSetC)
-		connectionTargetNeuronSet.update(connectionTargetNeuronSetC)
+		connectionTargetNeuronSet0, _, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, HFconnectionGraphObject.HFconnectionGraphMatrixNormalised, None, secondDataIndexMax, contextMatrixWeightStore, False, algorithmMatrixSingleTensor)
+		connectionTargetNeuronSet.update(list(connectionTargetNeuronSet0))
 		if(debugAlgorithmMatrix):
-			print("connectionTargetNeuronListC[0] = ", connectionTargetNeuronListC[0].nodeName)
+			print("connectionTargetNeuronListC[0] = ", list(connectionTargetNeuronSet0)[0].nodeName)
 	else:
 		for dendriticBranchIndex in range(numberOfIndependentDendriticBranches):
-			connectionTargetNeuronList1 = []
-			for secondDataIndex in range(secondDataIndexMax):
-				conceptNeuronContextVector = HFNLPpy_MatrixOperations.createContextVectorWrapper(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionMatrixBasicMaxConcepts, secondDataIndex, None, contextMatrixWeightStore, False, algorithmMatrixSingleTensor)	#HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[contextSizeIndex][conceptNeuronID]
-				connectionTargetNeuronSet2, _, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchIndex][secondDataIndex], HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, matrixPropagateTopKconceptNodes, algorithmMatrixSingleTensor)
-				connectionTargetNeuronList2 = list(connectionTargetNeuronSet2)
-				connectionTargetNeuronList1.extend(connectionTargetNeuronList2)
-				if(debugAlgorithmMatrix):
-					print("connectionTargetNeuronList2[0] = ", connectionTargetNeuronList2[0].nodeName)
-			if(algorithmMatrixSANItopkActivationAcrossSegments):
-				connectionTargetNeuronListTopKneurons = performListTopK(connectionTargetNeuronList1, matrixPropagateTopKsequentialSegments)
-				connectionTargetNeuronList.extend(connectionTargetNeuronListTopKneurons)
+			if(algorithmMatrixSANImethodUseActivationAcrossSegments):
+				HFconnectionGraphMatrixNormalisedDB = HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchIndex].unsqueeze(dim=0)
+				connectionTargetNeuronSet1, _, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, HFconnectionGraphMatrixNormalisedDB, None, secondDataIndexMax, contextMatrixWeightStore, False, True)
+				connectionTargetNeuronList.extend(list(connectionTargetNeuronSet1))
 			else:
+				connectionTargetNeuronList1 = []
+				for secondDataIndex in range(secondDataIndexMax):
+					connectionTargetNeuronSet2, _, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, HFconnectionGraphObject.HFconnectionGraphMatrixNormalised[dendriticBranchIndex][secondDataIndex], secondDataIndex, None, contextMatrixWeightStore, False, algorithmMatrixSingleTensor)
+					connectionTargetNeuronList1.extend(list(connectionTargetNeuronSet2))
 				connectionTargetNeuronList.extend(connectionTargetNeuronList1)
 		connectionTargetNeuronListTopKneurons = performListTopK(connectionTargetNeuronList, matrixPropagateTopKdendriticBranches)
 		connectionTargetNeuronSet.update(set(connectionTargetNeuronListTopKneurons))
