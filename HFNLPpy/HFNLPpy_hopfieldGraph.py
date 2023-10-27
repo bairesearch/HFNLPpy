@@ -73,11 +73,11 @@ if(drawHopfieldGraph):
 class HFconnectionGraphClass:
 	def __init__(self):
 		if(useAlgorithmMatrix):
-			if(algorithmMatrixSingleTensor):
+			if(algorithmMatrixTensorDim4):
 				self.HFconnectionGraphMatrix = None
 				self.HFconnectionGraphMatrixNormalised = None
 			else:
-				if(algorithmMatrixSANImethodUseActivationAcrossSegments):
+				if(algorithmMatrixTensorDim3):
 					self.HFconnectionGraphMatrix = [None for _ in range(numberOfIndependentDendriticBranches)]
 					self.HFconnectionGraphMatrixNormalised = [None for _ in range(numberOfIndependentDendriticBranches)]
 				else:

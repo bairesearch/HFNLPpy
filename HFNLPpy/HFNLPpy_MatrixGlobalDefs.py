@@ -25,7 +25,7 @@ import numpy as np
 
 
 debugAlgorithmMatrix = False
-debugHFconnectionMatrix = False
+debugHFconnectionMatrix = True
 
 #### SANI ####
 algorithmMatrixSANI = True	#emulate DendriticSANIbiologicalSimulationSimple
@@ -41,26 +41,28 @@ if(algorithmMatrixSANI):
 	sequentialSegmentContextEncodingRelativeExponential = False	#sequential segments capture input (past context tokens) at exponentially further distances
 	#sequentialSegmentContextEncodingRandom = False #encodings are partially randomised (note dendritic SANI implementation creates multiple semi-random encodings of past context in different dendritic branches) 
 	numberOfBranchSequentialSegments = 5
+	normaliseConnectionStrengthWrtContextLength = False
 else:
 	algorithmMatrixSANImethodAddActivationAcrossSegments = False
 	algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments = False
 	algorithmMatrixSANImethodTopkActivationAcrossSegments = False
 	algorithmMatrixSANImethodAddActivationAcrossSegmentsOld = False
+	normaliseConnectionStrengthWrtContextLength = True	#optional	#orig:True	#CHECKTHIS
 
-algorithmMatrixSANImethodUseActivationAcrossSegments = False
-if(algorithmMatrixSANImethodAddActivationAcrossSegments or algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments):
-	algorithmMatrixSANImethodUseActivationAcrossSegments = True
-	
 #### memory constraints ####
-algorithmMatrixSingleTensor = True	#store context size array (and simulated dendritic branches) in pytorch tensor rather than python list	#requires high ram
+algorithmMatrixTensorDim4 = True	#optional	#store context size array (and simulated dendritic branches) in pytorch tensor rather than python list	#requires high ram
+algorithmMatrixTensorDim3 = False	#initialise (dependent var)
+if(not algorithmMatrixTensorDim4):
+	if(algorithmMatrixSANImethodAddActivationAcrossSegments or algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments):
+		algorithmMatrixTensorDim3 = True	#mandatory
 useHFconnectionMatrixBasicSparse = False		#reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)
 if(debugHFconnectionMatrix):
-	HFconnectionMatrixBasicMaxConcepts = 20	 #[Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]
+	HFconnectionMatrixBasicMaxConcepts = 200	#200	#20	 #[Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]
 else:
-	HFconnectionMatrixBasicMaxConcepts = 1000	#200	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
+	HFconnectionMatrixBasicMaxConcepts = 1000	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
 algorithmMatrixSingleTensorEfficientAdd = False	#initialise (dependent var)
-if(algorithmMatrixSingleTensor or algorithmMatrixSANImethodUseActivationAcrossSegments):
-	algorithmMatrixSingleTensorEfficientAdd = False	#incomplete	#efficiently add context to connection matrix (use parallelised algorithm) 
+if(algorithmMatrixTensorDim4 or algorithmMatrixTensorDim3):
+	algorithmMatrixSingleTensorEfficientAdd = False	#incomplete	#optional	#efficiently add context to connection matrix (use parallelised algorithm) 
 
 #### simulated dendritic branches ####
 simulatedDendriticBranches = True	#independent dendritic branches
@@ -89,7 +91,6 @@ if(selectActivatedTop):
 		matrixPropagateTopKsecondIndex = matrixPropagateTopKcontextSize
 	
 #### context connections matrix ####
-
 if(debugHFconnectionMatrix):
 	contextSizeMax = 30 #[Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]
 else:
@@ -97,9 +98,7 @@ else:
 contextMatrixWeightStore = False	#optional	#CHECKTHIS
 
 #### test harness (compare standard/vectorised computation) ####
-
 biologicalSimulationTestHarness = True
-
 HFNLPnonrandomSeed = False	#initialise (dependent var)
 if(biologicalSimulationTestHarness):
 	HFNLPnonrandomSeed = True	#always generate the same set of random numbers upon execution
@@ -111,7 +110,6 @@ if(seedHFnetworkSubsequence):
 	seedHFnetworkSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
 	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
 	seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant = True
-
 enforceMinimumEncodedSequenceLength = True	#do not execute addPredictiveSequenceToNeuron if predictive sequence is short (ie does not use up the majority of numberOfBranches1)
 if(enforceMinimumEncodedSequenceLength):
 	minimumEncodedSequenceLength = 4	#should be high enough to fill a significant proportion of dendrite vertical branch length (numberOfBranches1)	#~seedHFnetworkSubsequenceLength
