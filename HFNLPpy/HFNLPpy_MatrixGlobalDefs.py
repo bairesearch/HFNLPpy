@@ -25,7 +25,7 @@ import numpy as np
 
 
 debugAlgorithmMatrix = False
-debugHFconnectionMatrix = True
+debugHFconnectionMatrix = False
 
 #### SANI ####
 algorithmMatrixSANI = True	#emulate DendriticSANIbiologicalSimulationSimple
@@ -97,23 +97,7 @@ else:
 	contextSizeMax = 100 #max sequential context width use for next word prediction
 contextMatrixWeightStore = False	#optional	#CHECKTHIS
 
-#### test harness (compare standard/vectorised computation) ####
-biologicalSimulationTestHarness = True
-HFNLPnonrandomSeed = False	#initialise (dependent var)
-if(biologicalSimulationTestHarness):
-	HFNLPnonrandomSeed = True	#always generate the same set of random numbers upon execution
 	
-#### seed HF network with subsequence ####
-seedHFnetworkSubsequence = True #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
-if(seedHFnetworkSubsequence):
-	#seedHFnetworkSubsequence currently requires !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
-	seedHFnetworkSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
-	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
-	seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant = True
-enforceMinimumEncodedSequenceLength = True	#do not execute addPredictiveSequenceToNeuron if predictive sequence is short (ie does not use up the majority of numberOfBranches1)
-if(enforceMinimumEncodedSequenceLength):
-	minimumEncodedSequenceLength = 4	#should be high enough to fill a significant proportion of dendrite vertical branch length (numberOfBranches1)	#~seedHFnetworkSubsequenceLength
-
 #### propagation algorithm (source/target activation) ####
 biologicalSimulationForward = True	#mandatory (implied)
 

@@ -34,10 +34,10 @@ convertLemmasToLowercase = True #required to ensure that capitalised start of se
 convertWordsToLowercase = True
 if(useAlgorithmMatrix):	
 	tokeniseSubwords = False	#optional
-	storeConceptNodesByLemma = False	#enable prediction across grammatical forms #False: store by word (morphology included)
+	storeConceptNodesByLemma = False	#default: False	#False: enable prediction across grammatical forms - store by word (morphology included)
 else:
 	tokeniseSubwords = False	
-	storeConceptNodesByLemma = True	#False: store by word (morphology included)
+	storeConceptNodesByLemma = True	#default: True	#False: enable prediction across grammatical forms - store by word (morphology included)
 if(tokeniseSubwords):
 	stateTrainTokeniser = False	#only required to be executed once	#should enable trainMultipleFiles with high numberOfDatafiles to perform comprehensive tokenizer train
 	if(useAlgorithmMatrix):
@@ -99,24 +99,29 @@ if(linkSimilarConceptNodes):
 useDependencyParseTree = False	#initialise (dependent var)
 if(useAlgorithmLayeredSANI):
 	useDependencyParseTree = False
-elif(useAlgorithmMatrix):
+else:
+	if(useAlgorithmMatrix):
+		useDependencyParseTree = False
+	elif(useAlgorithmScan):
+		useDependencyParseTree = False
+	elif(useAlgorithmDendriticSANI):
+		from HFNLPpy_DendriticSANIGlobalDefs import biologicalSimulationEncodeSyntaxInDendriticBranchStructure
+		if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
+			useDependencyParseTree = True
+		else:
+			useDependencyParseTree = False
+	else:
+		useDependencyParseTree = True
+		biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False
+
+if(useAlgorithmMatrix):
 	useHFconnectionMatrix = True
 	useHFconnectionMatrixBasic = True
 	useHFconnectionMatrixBasicBool = False
 elif(useAlgorithmScan):
-	useDependencyParseTree = False
 	useHFconnectionMatrix = True
 	useHFconnectionMatrixPyG = True
-elif(useAlgorithmDendriticSANI):
-	from HFNLPpy_DendriticSANIGlobalDefs import biologicalSimulationEncodeSyntaxInDendriticBranchStructure
-	if(biologicalSimulationEncodeSyntaxInDendriticBranchStructure):
-		useDependencyParseTree = True
-	else:
-		useDependencyParseTree = False
-else:
-	useDependencyParseTree = True
-	biologicalSimulationEncodeSyntaxInDendriticBranchStructure = False
-
+	
 usePytorch = False
 if(useHFconnectionMatrix):
 	HFreadSavedConnectionsMatrixPyG = False	#currently requires useAlgorithmScan
@@ -168,14 +173,15 @@ if(useDependencyParseTree):
 drawHopfieldGraph = True
 if(useAlgorithmLayeredSANI):
 	drawHopfieldGraph = False	#default: False
-elif(useAlgorithmMatrix):
-	drawHopfieldGraph = False	#default: False
-elif(useAlgorithmScan):
-	drawHopfieldGraph = False	#default: False
-elif(useAlgorithmDendriticSANI):
-	drawHopfieldGraph = False	#default: False
 else:
-	drawHopfieldGraph = True	#default: True
+	if(useAlgorithmMatrix):
+		drawHopfieldGraph = False	#default: False
+	elif(useAlgorithmScan):
+		drawHopfieldGraph = False	#default: False
+	elif(useAlgorithmDendriticSANI):
+		drawHopfieldGraph = False	#default: False
+	else:
+		drawHopfieldGraph = True	#default: True
 	
 if(drawHopfieldGraph):
 	drawHopfieldGraphPlot = True
@@ -184,9 +190,23 @@ if(drawHopfieldGraph):
 	drawHopfieldGraphNetwork = True	#default: True	#draw graph for entire network (not just sentence)
 
 
-#initialise (dependent var)
-seedHFnetworkSubsequence = False
-HFNLPnonrandomSeed = False
+#### test harness (compare standard/vectorised computation) ####
+from HFNLPpy_DendriticSANIGlobalDefs import biologicalSimulationTestHarness
+HFNLPnonrandomSeed = False	#initialise (dependent var)
+if(biologicalSimulationTestHarness):
+	HFNLPnonrandomSeed = True	#always generate the same set of random numbers upon execution
+
+
+#### seed HF network with subsequence ####
+seedHFnetworkSubsequence = True #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
+if(seedHFnetworkSubsequence):
+	#seedHFnetworkSubsequence currently requires !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
+	seedHFnetworkSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
+	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
+	seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant = True
+enforceMinimumEncodedSequenceLength = True	#do not execute addPredictiveSequenceToNeuron if predictive sequence is short (eg does not use up the majority of numberOfBranches1)	#do not expect prediction to work if predictive sequence is short
+if(enforceMinimumEncodedSequenceLength):
+	minimumEncodedSequenceLength = 4	#should be high enough to fill a significant proportion of dendrite vertical branch length (numberOfBranches1)	#~seedHFnetworkSubsequenceLength
 
 
 #### data loading (main) #### 

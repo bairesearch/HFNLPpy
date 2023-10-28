@@ -1,4 +1,4 @@
-"""HFNLPpy_DendriticSANIGlobalDefs.py
+"""HFNLPpy_ScanGlobalDefs.py
 
 # Author:
 Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
@@ -70,10 +70,6 @@ HFconceptNeuronsFileName = "HFconceptNeurons"
 HFconnectionMatrixExtensionName = ".csv"
 HFconceptNeuronsExtensionName = ".csv"
 
-#### test harness ####
-
-HFNLPnonrandomSeed = False	#initialise (dependent var)
-
 #### draw ####
 
 drawBiologicalSimulation = True	#optional
@@ -84,19 +80,8 @@ if(drawBiologicalSimulation):
 	drawBiologicalSimulationNetwork = True	#default: False	#draw graph for entire network (not just sentence)
 		
 #### seed HF network with subsequence ####
+seedHFnetworkSubsequenceSimulateScan = True	#optional #simulate scan during seed as if the graph activations were propagated as normal	#only used if HFNLPpy_GlobalDefs:seedHFnetworkSubsequence is True
 
-seedHFnetworkSubsequence = True #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
-if(seedHFnetworkSubsequence):
-	#seedHFnetworkSubsequence currently requires !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
-	seedHFnetworkSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
-	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
-	seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant = True
-
-	seedHFnetworkSubsequenceSimulateScan = True	#optional #simulate scan during seed as if the graph activations were propagated as normal
-
-enforceMinimumEncodedSequenceLength = True	#do not expect prediction to work if predictive sequence is short
-if(enforceMinimumEncodedSequenceLength):
-	minimumEncodedSequenceLength = 4
 
 def printe(str):
 	print(str)

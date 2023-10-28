@@ -25,12 +25,12 @@ from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
 from nltk.corpus import wordnet
 
-def addConnectionToNode(nodeSource, nodeTarget, activationTime=-1, spatioTemporalIndex=-1, useAlgorithmDendriticPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, useAlgorithmDendriticSANI=False, nodeTargetSequentialSegmentInput=None):
+def addConnectionToNode(nodeSource, nodeTarget, activationTime=-1, spatioTemporalIndex=-1, useAlgorithmDendriticPrototype=False, weight=1.0, subsequenceConnection=False, contextConnection=False, contextConnectionSANIindex=0, useAlgorithmDendriticSANI=False, nodeTargetSequentialSegmentInput=None, useAlgorithmLayeredSANI=False):
 	connection = HopfieldConnection(nodeSource, nodeTarget, spatioTemporalIndex, activationTime, useAlgorithmDendriticPrototype)
 	connection.contextConnection = contextConnection
 	
 	if(contextConnection):
-		print("addConnectionToNode contextConnection")
+		#print("addConnectionToNode contextConnection")
 		nodeSource.HFcontextTargetConnectionDict[nodeTarget.nodeName] = connection
 		nodeTarget.HFcontextSourceConnectionDict[nodeSource.nodeName] = connection
 		if(useAlgorithmLayeredSANI):

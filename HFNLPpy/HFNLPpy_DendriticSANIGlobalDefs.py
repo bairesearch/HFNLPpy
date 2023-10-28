@@ -46,8 +46,6 @@ else:
  
 #### test harness (compare standard/vectorised computation) ####
 
-biologicalSimulationTestHarness = True
-
 writeBiologicalSimulation = False	#initialise (dependent var)
 writeBiologicalSimulationActivationStates = False	#initialise (dependent var)
 outputFileNameComputationType = False	#initialise (dependent var)
@@ -59,8 +57,7 @@ emulateVectorisedComputationOrderPreactivateAxonsAndTargetInputs = False	#initia
 vectorisedComputationActivateSomaAfterFinishingPropagation = True	#initialise (dependent var)	#orig: True
 emulateVectorisedComputationOrderActivateSomaAfterFinishingPropagation = False	#initialise (dependent var)	#orig: False	#requires storeBranchActivationState
 
-HFNLPnonrandomSeed = False	#initialise (dependent var)
-
+biologicalSimulationTestHarness = True
 if(biologicalSimulationTestHarness):
 	writeBiologicalSimulation = False	#default: True	#write biological simulation to xml file
 	if(writeBiologicalSimulation):
@@ -75,8 +72,7 @@ if(biologicalSimulationTestHarness):
 		if(emulateVectorisedComputationOrder):
 			emulateVectorisedComputationOrderVerifyTargetConnectionFound = True
 			emulateVectorisedComputationOrderPreactivateAxonsAndTargetInputs = True			
-	HFNLPnonrandomSeed = True	#always generate the same set of random numbers upon execution
-	
+	#assert(HFNLPnonrandomSeed==True)	#compare standard/vectorised computation
 
 #### write (xml) ####
 
@@ -136,19 +132,6 @@ reversePropagationOrder = True		#optional	#True: original implementation
 if(emulateVectorisedComputationOrder):
 	emulateVectorisedComputationOrderReversed = reversePropagationOrder	#initialise (dependent var)
 
-
-#### seed HF network with subsequence ####
-
-seedHFnetworkSubsequence = True #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
-if(seedHFnetworkSubsequence):
-	#seedHFnetworkSubsequence currently requires !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
-	seedHFnetworkSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
-	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
-	seedHFnetworkSubsequenceVerifySeedSentenceIsReplicant = True
-
-enforceMinimumEncodedSequenceLength = True	#do not execute addPredictiveSequenceToNeuron if predictive sequence is short (ie does not use up the majority of numberOfBranches1)
-if(enforceMinimumEncodedSequenceLength):
-	minimumEncodedSequenceLength = 4	#should be high enough to fill a significant proportion of dendrite vertical branch length (numberOfBranches1)	#~seedHFnetworkSubsequenceLength
 
 #### dendritic encoding calibration ####
 
