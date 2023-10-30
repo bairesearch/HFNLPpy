@@ -240,10 +240,13 @@ def normaliseBatchedTensor(HFconnectionGraph):
 		if(useHFconnectionMatrixNormaliseSoftmax):
 			HFconnectionGraphNormalised = pt.nn.functional.softmax(HFconnectionGraphFloat, dim=1)
 		else:
-			min_vals, _ = pt.min(HFconnectionGraphFloat, dim=1, keepdim=True)
-			max_vals, _ = pt.max(HFconnectionGraphFloat, dim=1, keepdim=True)
-			epsilon = 1e-8  # Small epsilon value
-			HFconnectionGraphNormalised = (HFconnectionGraphFloat - min_vals) / (max_vals - min_vals + epsilon)
+			if(useHFconnectionMatrixBasicSparse):
+				printe("normaliseBatchedTensor does not yet support useHFconnectionMatrixBasicSparse")
+			else:
+				min_vals, _ = pt.min(HFconnectionGraphFloat, dim=-1, keepdim=True)
+				max_vals, _ = pt.max(HFconnectionGraphFloat, dim=-1, keepdim=True)
+				epsilon = 1e-8  # Small epsilon value
+				HFconnectionGraphNormalised = (HFconnectionGraphFloat - min_vals) / (max_vals - min_vals + epsilon)
 	return HFconnectionGraphNormalised
 
 def updateDendriticBranchClosestValue(foundClosest, dendriticBranchClosestTargetSet, closestConnectionStrength, closestDendriticBranchIndex, targetSet, connectionStrength, dendriticBranchIndex, threshold=False, connectionStrengthNormalised=None):

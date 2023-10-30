@@ -9,15 +9,15 @@ MIT License
 # Installation:
 conda create -n anntf2 python=3.7
 source activate anntf2
-pip install tensorflow [required for HFNLPpy_DendriticSANIPropagateVectorised]
-pip install networkx [required for HFNLPpy_hopfieldGraphDraw/HFNLPpy_DendriticSANIDraw]
-pip install matplotlib==2.2.3 [required for HFNLPpy_hopfieldGraphDraw/HFNLPpy_DendriticSANIDraw]
-pip install yattag [required for HFNLPpy_DendriticSANIXML]
-pip install torch [required for HFNLPpy_Scan/SANIHFNLPpy_LayeredSANI:vectoriseComputation]
-pip install torch_geometric [required for HFNLPpy_Scan]
+pip install tensorflow
+pip install networkx
+pip install matplotlib==2.2.3
+pip install yattag
+pip install torch
+pip install torch_geometric
 pip install nltk spacy==2.3.7
 python3 -m spacy download en_core_web_md
-pip install benepar [required for SPNLPpy_syntacticalGraphConstituencyParserFormal]
+pip install benepar
 
 # Usage:
 source activate anntf2

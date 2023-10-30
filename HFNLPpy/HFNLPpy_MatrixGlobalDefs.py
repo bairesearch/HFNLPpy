@@ -65,7 +65,7 @@ if(algorithmMatrixTensorDim4 or algorithmMatrixTensorDim3):
 	algorithmMatrixSingleTensorEfficientAdd = False	#incomplete	#optional	#efficiently add context to connection matrix (use parallelised algorithm) 
 
 #### simulated dendritic branches ####
-simulatedDendriticBranches = True	#independent dendritic branches
+simulatedDendriticBranches = False	#independent dendritic branches
 HFconnectionMatrixMinValue = 0
 if(simulatedDendriticBranches):
 	simulatedDendriticBranchesMinMatchStrength = 1.0	#minimum branch match strength for comparison before randomise selection of new branch to write	#CHECKTHIS
