@@ -191,7 +191,7 @@ def addContextWordsToConnectionGraph(w1, neuronID, tokenisedSentence, sentenceCo
 	if(matrixTensorDim4):	#algorithmMatrixSingleTensorEfficientAdd
 		#contextConnectionVector = HFNLPpy_ConnectionMatrixBasic.extendConceptNeuronContextVector(contextConnectionVector, secondDataIndexMax)
 		printe("addContextWordsToConnectionGraph:matrixTensorDim4 error: algorithmMatrixSingleTensorEfficientAdd is incomplete")
-	HFNLPpy_ConnectionMatrix.addContextConnectionsToGraph(HFconnectionGraph, neuronID, contextConnectionVector, matrixTensorDim4)
+	HFconnectionGraph = HFNLPpy_ConnectionMatrix.addContextConnectionsToGraph(HFconnectionGraph, neuronID, contextConnectionVector, matrixTensorDim4)
 	HFconnectionGraphNormalised = HFNLPpy_MatrixOperations.normaliseBatchedTensor(HFconnectionGraph)
 	return HFconnectionGraph, HFconnectionGraphNormalised
 

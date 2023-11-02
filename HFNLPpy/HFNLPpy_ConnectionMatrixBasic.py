@@ -42,14 +42,15 @@ def addContextConnectionsToGraph(HFconnectionGraph, neuronID, contextConnectionV
 	else:
 		contextConnectionVectorPadded = padContextConnectionVector(contextConnectionVector)
 		if(useHFconnectionMatrixBasicBool):
-			pt.logical_and(HFconnectionGraph[neuronID], contextConnectionVectorPadded)
+			HFconnectionGraph[neuronID] = pt.logical_and(HFconnectionGraph[neuronID], contextConnectionVectorPadded)
 		else:
 			#print("contextConnectionVectorPadded.shape = ", contextConnectionVectorPadded.shape)
 			#print("HFconnectionGraph.shape = ", HFconnectionGraph.shape)
 			#print("neuronID = ", neuronID)
 			HFconnectionGraph[neuronID] += contextConnectionVectorPadded
 	#print("HFconnectionGraph[neuronID] = ", HFconnectionGraph[neuronID])
-
+	return HFconnectionGraph
+	
 def padContextConnectionVector(contextConnectionVector):
 	conceptsSize = contextConnectionVector.shape[0]
 	spareConceptsSize = HFconnectionMatrixBasicMaxConcepts-conceptsSize
