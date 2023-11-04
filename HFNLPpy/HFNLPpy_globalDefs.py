@@ -38,13 +38,13 @@ if(useAlgorithmMatrix):
 else:
 	tokeniseSubwords = False	
 	storeConceptNodesByLemma = True	#default: True	#False: enable prediction across grammatical forms - store by word (morphology included)
+if(useAlgorithmMatrix):
+	from HFNLPpy_MatrixGlobalDefs import contextSizeMax
+else:
+	contextSizeMax =  512	#max number tokens per sentence
 if(tokeniseSubwords):
 	stateTrainTokeniser = False	#only required to be executed once	#should enable trainMultipleFiles with high numberOfDatafiles to perform comprehensive tokenizer train
-	if(useAlgorithmMatrix):
-		from HFNLPpy_MatrixGlobalDefs import contextSizeMax
-		sequenceMaxNumTokens = contextSizeMax	#max number tokens per sentence
-	else:
-		sequenceMaxNumTokens =  512	#max number tokens per sentence
+	sequenceMaxNumTokens =  contextSizeMax	#max number tokens per sentence
 	useFullwordTokenizer = False
 	useFullwordTokenizerClass = True	#required #legacy config; always uses tokenizer class even with full word tokenizer
 	usePreprocessedDataset = True	#required #legacy config; ensures trainTokeniserFromDataFiles
@@ -130,13 +130,13 @@ if(useHFconnectionMatrix):
 	HFwriteSavedConnectionsMatrixBasic = False	#not available
 	useHFconnectionMatrixNormaliseSoftmax = False	#use softmax function to normalise connections matrix
 	usePytorch = True
-	if(useAlgorithmMatrix):
-		from HFNLPpy_MatrixGlobalDefs import useHFconnectionMatrixBasicSparse
-		from HFNLPpy_MatrixGlobalDefs import HFconnectionMatrixBasicMaxConcepts
-	else:
+	if(not useAlgorithmMatrix):
 		useHFconnectionMatrixBasicSparse = False
+		useHFconnectionMatrixBasicSplit = False
 		HFconnectionMatrixBasicMaxConcepts = 1000	#200	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
-	
+		HFcontextVectorSparse = False
+		HFconnectionMatrixGPU = True
+		
 if(usePytorch):
 	import torch as pt
 	from HFNLPpy_MatrixGlobalDefs import simulatedDendriticBranchesInitialisation

@@ -44,7 +44,7 @@ def updateOrAddConnectionToGraph(HFconnectionGraphObject, sourceNeuronID, target
 			HFconnectionGraph.edge_index = edge_indexAdd
 			HFconnectionGraph.edge_attr = edge_attrAdd
 
-def readHFconnectionMatrix():
+def initialiseHFconnectionMatrix():
 	if(HFreadSavedConnectionsMatrixPyG):
 		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName
 		HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsFileName

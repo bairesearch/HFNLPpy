@@ -50,20 +50,29 @@ else:
 	normaliseConnectionStrengthWrtContextLength = True	#optional	#orig:True	#CHECKTHIS
 
 #### memory constraints ####
-algorithmMatrixTensorDim4 = True	#optional	#store context size array (and simulated dendritic branches) in pytorch tensor rather than python list	#requires high ram
-algorithmMatrixTensorDim3 = False	#initialise (dependent var)
-if(not algorithmMatrixTensorDim4):
+#algorithmMatrixTensorDim = 2	#default
+algorithmMatrixTensorDim = 4	#optional	#store context size array (and simulated dendritic branches) in pytorch tensor rather than python list	#requires high ram
+if(algorithmMatrixTensorDim != 4):
 	if(algorithmMatrixSANImethodAddActivationAcrossSegments or algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments):
-		algorithmMatrixTensorDim3 = True	#mandatory
-useHFconnectionMatrixBasicSparse = False		#reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)
+		algorithmMatrixTensorDim = 3 #mandatory
+useHFconnectionMatrixBasicSparse = False		#incomplete: requires hybrid dense-sparse tensor implementation such that tensor can still be indexed #reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)
+useHFconnectionMatrixBasicSplit = True	#currently in testing #reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)	#store each column of connection matrix in separate array (or hard drive file) - bring into memory on demand (depending on the precise activated columns of the contextVector being compared)
 if(debugHFconnectionMatrix):
 	HFconnectionMatrixBasicMaxConcepts = 200	#200	#20	 #[Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]
 else:
 	HFconnectionMatrixBasicMaxConcepts = 1000	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
-algorithmMatrixSingleTensorEfficientAdd = False	#initialise (dependent var)
-if(algorithmMatrixTensorDim4 or algorithmMatrixTensorDim3):
-	algorithmMatrixSingleTensorEfficientAdd = False	#incomplete	#optional	#efficiently add context to connection matrix (use parallelised algorithm) 
 
+HFcontextVectorSparse = False	#store context vector as sparse tensor
+HFconnectionMatrixBasicSplitRAM = True	#store each column of connection matrix in separate array (or hard disk file) 
+HFconnectionMatrixGPU = True	#store connection matrix and context vector in GPU
+HFconnectionMatrixNormaliseRAM = True	#store a normalised connection matrix in RAM
+if(useHFconnectionMatrixBasicSplit):
+	HFcontextVectorSparse = True
+	HFconnectionMatrixGPU = False
+	HFconnectionMatrixNormaliseRAM = False	#False: store min/max of each target (row) word, for dynamic normalisation (on demand)
+if(HFcontextVectorSparse):
+	HFcontextVectorSparseNull = -1
+	
 #### simulated dendritic branches ####
 simulatedDendriticBranches = False	#independent dendritic branches
 HFconnectionMatrixMinValue = 0
