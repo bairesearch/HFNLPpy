@@ -21,8 +21,8 @@ import numpy as np
 
 import HFNLPpy_hopfieldOperations
 import HFNLPpy_MatrixOperations
-from HFNLPpy_MatrixGlobalDefs import *
 from HFNLPpy_globalDefs import *
+from HFNLPpy_MatrixGlobalDefs import *
 from collections import Counter
 
 printVerbose = False

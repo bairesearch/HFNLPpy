@@ -13,7 +13,7 @@ see HFNLPpy_main.py
 see HFNLPpy_main.py
 
 # Description:
-HFNLP Matrix Operations Basic
+HFNLP Concepts Matrix Operations
 
 """
 

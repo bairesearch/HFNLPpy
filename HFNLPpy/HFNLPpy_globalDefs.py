@@ -66,6 +66,8 @@ useHFconnectionMatrixPyG = False	#useHFconnectionMatrixScan
 useHFconnectionMatrixBasic = False 
 useHFconnectionMatrixAlgorithm = False 
 tokenWordnetSynonyms = False
+HFconnectionMatrixAlgorithmSplit = False
+HFconnectionMatrixAlgorithmSplitDatabase = False
 
 if(useAlgorithmDendriticSANI):
 	linkSimilarConceptNodes = False	#optional

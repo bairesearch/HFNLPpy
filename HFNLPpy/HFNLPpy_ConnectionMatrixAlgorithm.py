@@ -19,9 +19,7 @@ HFNLP Connection Matrix Algorithm
 
 import numpy as np
 import torch as pt
-import torch.nn.functional as F
 import csv
-from torch_geometric.data import Data
 
 from HFNLPpy_MatrixGlobalDefs import *
 from ANNtf2_loadDataset import datasetFolderRelative
@@ -45,16 +43,15 @@ def addContextConnectionsToGraphNeuronIDWrapper(HFconnectionGraphObject, context
 		setConnectionGraphNeuronID(HFconnectionGraphObject, contextConnectionVector, firstDataIndex, secondDataIndex, HFconnectionGraphNeuronID)
 		
 def setConnectionGraphContextIndexNeuronID(HFconnectionGraphObject, contextConnectionVector, firstDataIndex, secondDataIndex, HFconnectionGraphNeuronID, contextVectorSourceNeuronID):
-	if(HFconnectionMatrixAlgorithmSplitRAM):
-		#print("HFconnectionGraphObject.HFconnectionGraphMatrix = ", HFconnectionGraphObject.HFconnectionGraphMatrix)
-		#print("HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID].shape = ", HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID].shape)
-		HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID] = addContextConnectionsToGraph(HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID], contextConnectionVector)
-		HFconnectionGraphObject.HFconnectionGraphMatrixMax[firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID] = pt.max(HFconnectionGraphObject.HFconnectionGraphMatrixMax[firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID], HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID])
-		HFconnectionGraphObject.HFconnectionGraphMatrixMin[firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID] = pt.min(HFconnectionGraphObject.HFconnectionGraphMatrixMin[firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID], HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID])				
-		if(algorithmMatrixTensorDim == 4):
-			assert (HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID] == HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex, secondDataIndex, HFconnectionGraphNeuronID])	#verify pytorch assignment supports both [][] and [, ] syntaxes for multidimensional assignment
-	else:
-		printe("setConnectionGraphContextIndex error: !useHFconnectionMatrixAlgorithmSplitRAM has not been coded")
+	#preconditions: if(HFconnectionMatrixAlgorithmSplitDatabase): assume HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID] has already been loaded into RAM from hard drive
+	#print("contextConnectionVector = ", contextConnectionVector)
+	#print("setConnectionGraphContextIndexNeuronID; contextVectorSourceNeuronID = ", contextVectorSourceNeuronID)
+	#print("1 HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID].shape = ", HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID].shape)
+	HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID] = addContextConnectionsToGraph(HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID], contextConnectionVector)
+	HFconnectionGraphObject.HFconnectionGraphMatrixMax[firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID] = pt.max(HFconnectionGraphObject.HFconnectionGraphMatrixMax[firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID], HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID])
+	HFconnectionGraphObject.HFconnectionGraphMatrixMin[firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID] = pt.min(HFconnectionGraphObject.HFconnectionGraphMatrixMin[firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID], HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID])				
+	if(algorithmMatrixTensorDim == 4):
+		assert (HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID] == HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex, secondDataIndex, HFconnectionGraphNeuronID])	#verify pytorch assignment supports both [][] and [, ] syntaxes for multidimensional assignment
 
 def setConnectionGraphNeuronID(HFconnectionGraphObject, contextConnectionVector, firstDataIndex, secondDataIndex, HFconnectionGraphNeuronID):
 	HFconnectionGraphObject.HFconnectionGraphMatrix[firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID] = addContextConnectionsToGraph(HFconnectionGraphObject.HFconnectionGraphMatrix[firstDataIndex][secondDataIndex][HFconnectionGraphNeuronID], contextConnectionVector)
@@ -79,13 +76,6 @@ def extendConceptNeuronContextVector(conceptNeuronContextVector, matrixTensorDim
 		conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVector, dim=0)
 		conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(HFconnectionMatrixBasicMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	
 	return conceptNeuronContextVectorExtended
-
-def initialiseNeuronNameList():
-	if(HFreadSavedConceptListAlgorithm):
-		neuronNamelist = HFNLPpy_ConnectionMatrixBasic.readConceptNeuronList(HFconceptNeuronListPathName)
-	else:
-		neuronNamelist = []
-	return neuronNamelist
 	
 def initialiseHFconnectionMatrixAlgorithmMatrix(dendriticBranchIndex="", contextSizeIndex=""):
 	if(HFreadSavedConnectionsMatrixAlgorithm):
@@ -97,8 +87,8 @@ def initialiseHFconnectionMatrixAlgorithmMatrix(dendriticBranchIndex="", context
 def readHFconnectionMatrixAlgorithmMatrix(dendriticBranchIndex="", secondDataIndex=""):
 	if(useAlgorithmMatrix and not algorithmMatrixTensorDim2):
 		printe("initialiseHFconnectionMatrix error: HFreadSavedConnectionsMatrixAlgorithm does not currently support useAlgorithmMatrix and not algorithmMatrixTensorDim2")
-	HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixAlgorithmMatrixFileName + dendriticBranchIndex + secondDataIndex + HFconceptNeuronsAlgorithmMatrixExtensionName
-	HFconnectionGraph = HFNLPpy_ConnectionMatrixBasic.readGraphFromCsv(HFconnectionMatrixPathName)
+	HFconnectionMatrixPathName = generateHFconnectionMatrixAlgorithmMatrixFileName(dendriticBranchIndex, contextSizeIndex)
+	HFconnectionGraph = readGraphFromCsv(HFconnectionMatrixPathName)
 	conceptsSize = HFconnectionGraph.shape[0]
 	spareConceptsSize = HFconnectionMatrixBasicMaxConcepts-conceptsSize
 	print("HFconnectionGraph.shape = ", HFconnectionGraph.shape)
@@ -180,16 +170,16 @@ if(HFconnectionMatrixAlgorithmSplit):
 		return HFconnectionGraphContextSubset
 							
 	def getConnectionGraphContextIndex(HFconnectionGraphObject, firstDataIndex, secondDataIndex, matrixTensorDim4, contextVectorSourceNeuronID):
-		if(HFconnectionMatrixAlgorithmSplitRAM):
-			if(matrixTensorDim4):
-				if(algorithmMatrixTensorDim == 4):
-					HFconnectionGraphContextIndex = HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][:, secondDataIndex]	#[:][secondDataIndex] syntax unsupported by pytorch
-				elif(algorithmMatrixTensorDim == 3):
-					HFconnectionGraphContextIndex = HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex].unsqueeze(dim=0)	#[contextVectorSourceNeuronID][firstDataIndex].unsqueeze(dim=0)
-			else:
-				HFconnectionGraphContextIndex = HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex]
+		#preconditions: if(HFconnectionMatrixAlgorithmSplitDatabase): assume HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID] has already been loaded into RAM from hard drive
+		if(matrixTensorDim4):
+			if(algorithmMatrixTensorDim == 4):
+				HFconnectionGraphContextIndex = HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][:, secondDataIndex]	#[:][secondDataIndex] syntax unsupported by pytorch
+			elif(algorithmMatrixTensorDim == 3):
+				HFconnectionGraphContextIndex = HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex].unsqueeze(dim=0)	#[contextVectorSourceNeuronID][firstDataIndex].unsqueeze(dim=0)
 		else:
-			printe("getConnectionGraphContextIndex error: !HFconnectionMatrixAlgorithmSplitRAM has not been coded")
+			HFconnectionGraphContextIndex = HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex]
+		if(HFconnectionMatrixAlgorithmGPU):
+			HFconnectionGraphContextIndex = HFconnectionGraphContextIndex.to(device)
 		return HFconnectionGraphContextIndex
 		
 	def normaliseConnectionGraphContextIndex(HFconnectionGraphContextIndex, HFconnectionGraphObject, firstDataIndex, secondDataIndex, matrixTensorDim4, contextVectorSourceNeuronID):
@@ -266,14 +256,12 @@ def createEmptyTensor(tensorShape, sparse):
 	return emptyTensor
 	
 def writeHFconnectionMatrixAlgorithmMatrix(HFconnectionGraph, dendriticBranchIndex="", contextSizeIndex=""):
-	HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixAlgorithmMatrixFileName + dendriticBranchIndex + contextSizeIndex + HFconnectionMatrixAlgorithmMatrixExtensionName
-	HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsAlgorithmMatrixFileName + dendriticBranchIndex + contextSizeIndex + HFconceptNeuronsAlgorithmMatrixExtensionName
-	writeConceptNeuronList(neuronNamelist, HFconceptNeuronListPathName)
-	HFNLPpy_ConnectionMatrixBasic.writeGraphToCsv(HFconnectionGraph, HFconnectionMatrixPathName)
+	HFconnectionMatrixPathName = generateHFconnectionMatrixAlgorithmMatrixFileName(dendriticBranchIndex, contextSizeIndex)
+	writeGraphToCsv(HFconnectionGraph, HFconnectionMatrixPathName)
 
-def writeHFconceptListAlgorithmMatrix(neuronNamelist):
-	HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsAlgorithmMatrixFileName + dendriticBranchIndex + contextSizeIndex + HFconceptNeuronsAlgorithmMatrixExtensionName
-	writeConceptNeuronList(neuronNamelist, HFconceptNeuronListPathName)
+def generateHFconnectionMatrixAlgorithmMatrixFileName(dendriticBranchIndex="", contextSizeIndex=""):
+	HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixAlgorithmMatrixFileName + dendriticBranchIndex + contextSizeIndex + HFconnectionMatrixAlgorithmMatrixExtensionName
+	return HFconnectionMatrixPathName
 	
 def writeHFconnectionMatrixAlgorithmWrapper(HFconnectionGraphObject):
 	#if(useAlgorithmMatrix):
@@ -283,7 +271,7 @@ def writeHFconnectionMatrixAlgorithmWrapper(HFconnectionGraphObject):
 		else:
 			writeHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject)
 	if(HFwriteSavedConceptListAlgorithm):
-		writeHFconceptListAlgorithmMatrix(neuronNamelist)
+		HFNLPpy_ConnectionMatrixBasic.writeHFConceptListBasic(HFconnectionGraphObject.neuronNamelist)
 
 def writeHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject):
 	if(algorithmMatrixTensorDim==4):
@@ -334,3 +322,41 @@ def normaliseBatchedTensor(HFconnectionGraph):
 					HFconnectionGraphNormalised = (HFconnectionGraph - min_vals) / (max_vals - min_vals + epsilon)
 	return HFconnectionGraphNormalised
 	
+
+def readGraphFromCsv(filePath):
+	connections = []
+	with open(filePath, 'r') as f:
+		reader = csv.reader(f)
+		for row in (reader):
+			connections.append(row)
+	connections = [[int(value) for value in row] for row in connections]
+	graph = pt.tensor(connections, dtype=HFconnectionsMatrixAlgorithmType)
+	
+	if(algorithmMatrixTensorDim==4):
+		secondDataIndexMax = getSecondDataIndexMax()
+		numberOfConcepts = graph.shape[0]
+		originalShape = (numberOfIndependentDendriticBranches, secondDataIndexMax, numberOfConcepts, numberOfConcepts)
+		graph = graph.view(originalShape)
+	elif(algorithmMatrixTensorDim==3):
+		printe("HFNLPpy_ConnectionMatrixAlgorithm:readGraphFromCsv error: HFwriteSavedConnectionsMatrixAlgorithm/HFreadSavedConnectionsMatrixAlgorithm currently requires algorithmMatrixTensorDim=2 or algorithmMatrixTensorDim=4 such that the file i/o code can be simplified")
+	
+	if(HFconnectionMatrixAlgorithmSparse):
+		graph = graph.to_sparse()
+	
+	return graph
+
+def writeGraphToCsv(graph, filePath):
+
+	graph = graph.cpu()
+	if(HFconnectionMatrixAlgorithmSparse):
+		graph = graph.to_dense()
+		
+	if(algorithmMatrixTensorDim==4):
+		graph = graph.view(graph.shape[2], -1)	# Flatten the ND tensor into a 2D tensor
+	elif(algorithmMatrixTensorDim==3):
+		printe("HFNLPpy_ConnectionMatrixAlgorithm:writeGraphToCsv error: HFwriteSavedConnectionsMatrixAlgorithm/HFreadSavedConnectionsMatrixAlgorithm currently requires algorithmMatrixTensorDim=2 or algorithmMatrixTensorDim=4 such that the file i/o code can be simplified")
+		
+	connections = graph.numpy()
+	with open(filePath, 'w') as f:
+		writer = csv.writer(f)
+		writer.writerows(connections)

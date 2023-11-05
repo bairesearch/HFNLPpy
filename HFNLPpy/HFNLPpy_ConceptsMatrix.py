@@ -26,7 +26,7 @@ import HFNLPpy_ConceptsMatrixOperations
 def initialiseHFconnectionMatrixBasicWrapper(HFconnectionGraphObject):
 	if(linkSimilarConceptNodesBagOfWords):
 		HFconnectionGraphObject.HFconnectionGraphBasic = HFNLPpy_ConnectionMatrixBasic.initialiseHFconnectionMatrixBasic()
-	HFconnectionGraphObject.neuronNamelist = HFNLPpy_ConnectionMatrixBasic.initialiseNeuronNameList()
+	HFNLPpy_ConnectionMatrixBasic.initialiseNeuronNameList(HFconnectionGraphObject, HFreadSavedConceptListBasic)
 
 def addContextWordsToConnectionGraphLinkConcepts(tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject):
 	for w1, token1 in enumerate(tokenisedSentence):

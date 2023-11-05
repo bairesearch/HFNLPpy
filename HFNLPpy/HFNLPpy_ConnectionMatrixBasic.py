@@ -57,12 +57,13 @@ def createDiagonalMatrix(squareMatrix, width):
 	#diagonalMatrix = pt.tril(squareMatrix, diagonal=0) * torch.triu(squareMatrix, diagonal=width)
 	return diagonalMatrix
 
-def initialiseNeuronNameList():
-	if(HFreadSavedConceptListBasic):
-		neuronNamelist = readConceptNeuronList(HFconceptNeuronListPathName)
+def initialiseNeuronNameList(HFconnectionGraphObject, readSavedConceptList):
+	if(readSavedConceptList):
+		HFconceptNeuronListPathName = generateConceptListFileName()
+		HFconnectionGraphObject.neuronNamelist = readConceptNeuronList(HFconceptNeuronListPathName)
 	else:
-		neuronNamelist = []
-	return neuronNamelist
+		HFconnectionGraphObject.neuronNamelist = []
+	createNeuronIDdictFromNameList(HFconnectionGraphObject)
 	
 def initialiseHFconnectionMatrixBasic(dendriticBranchIndex="", contextSizeIndex=""):
 	if(HFreadSavedConnectionsMatrixBasic):
@@ -89,12 +90,20 @@ def createContextVectorTensorBasic():
 	return contextConnectionVector
 	
 def writeHFconnectionMatrixBasic(HFconnectionGraph, neuronNamelist):
-	HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixBasicFileName + HFconnectionMatrixBasicExtensionName
+	HFconnectionMatrixPathName = generateHFconnectionMatrixBasicFileName()
 	writeGraphToCsv(HFconnectionGraph, HFconnectionMatrixPathName)
 
-def writeHFConceptListBasic(HFconnectionGraph, neuronNamelist):
-	HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsBasicFileName + HFconceptNeuronsBasicExtensionName
+def generateHFconnectionMatrixBasicFileName():
+	HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixBasicFileName + HFconnectionMatrixBasicExtensionName
+	return HFconnectionMatrixPathName
+
+def writeHFConceptListBasic(neuronNamelist):
+	HFconceptNeuronListPathName = generateConceptListFileName()
 	writeConceptNeuronList(neuronNamelist, HFconceptNeuronListPathName)
+	
+def generateConceptListFileName():
+	HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsBasicFileName + HFconceptNeuronsBasicExtensionName
+	return HFconceptNeuronListPathName
 	
 def readGraphFromCsv(filePath):
 	connections = []
@@ -102,25 +111,12 @@ def readGraphFromCsv(filePath):
 		reader = csv.reader(f)
 		for row in (reader):
 			connections.append(row)
-	HFconnectionGraph = np.array(connections, dtype=HFconnectionsMatrixBasicType)
-	
-	if(useAlgorithmMatrix and algorithmMatrixTensorDim==4):
-		numberOfConcepts = graph.shape[0]
-		originalShape = (numberOfIndependentDendriticBranches, contextSizeMax, numberOfConcepts, numberOfConcepts)
-		graph = graph.view(originalShape)
-	if(HFconnectionMatrixAlgorithmSparse):
-		graph = graph.to_sparse()
-	
-	return HFconnectionGraph
+	connections = [[int(value) for value in row] for row in connections]
+	graph = pt.tensor(connections, dtype=HFconnectionsMatrixAlgorithmType)
+	return graph
 
 def writeGraphToCsv(graph, filePath):
-
-	graph = graph.cpu()
-	if(HFconnectionMatrixAlgorithmSparse):
-		graph = graph.to_dense()
-	if(useAlgorithmMatrix and algorithmMatrixTensorDim==4):
-		graph = graph.view(tensor.size(0), -1)	# Flatten the ND tensor into a 2D tensor
-		
+	graph = graph.cpu()		
 	connections = graph.numpy()
 	with open(filePath, 'w') as f:
 		writer = csv.writer(f)
@@ -170,3 +166,6 @@ def normaliseBatchedTensor(HFconnectionGraph):
 			HFconnectionGraphNormalised = (HFconnectionGraph - min_vals) / (max_vals - min_vals + epsilon)
 	return HFconnectionGraphNormalised
 	
+def createNeuronIDdictFromNameList(HFconnectionGraphObject):
+	for neuronID, neuronName in enumerate(HFconnectionGraphObject.neuronNamelist):
+		HFconnectionGraphObject.neuronIDdict[neuronName] = neuronID 
