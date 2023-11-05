@@ -34,12 +34,19 @@ if(tokeniseSubwords):
 if(useAlgorithmLayeredSANI):
 	import SANIHFNLPpy_LayeredSANIGraph
 	
+	HFNLPpy_ConceptsMatrix
+	
 if(useHFconnectionMatrix):
 	import torch as pt
 	if(useHFconnectionMatrixPyG):
-		import HFNLPpy_ConnectionMatrixPyG as HFNLPpy_ConnectionMatrix
+		import HFNLPpy_ConnectionMatrixPyG
 	if(useHFconnectionMatrixBasic):
-		import HFNLPpy_ConnectionMatrixBasic as HFNLPpy_ConnectionMatrix
+		import HFNLPpy_ConnectionMatrixBasic
+	if(useHFconnectionMatrixAlgorithm):
+		import HFNLPpy_ConnectionMatrixAlgorithm
+if(linkSimilarConceptNodesBagOfWords):
+	import HFNLPpy_ConceptsMatrix
+	
 if(useAlgorithmScan):
 	#from HFNLPpy_ScanGlobalDefs import *	#not currently required
 	import HFNLPpy_Scan
@@ -86,8 +93,11 @@ def generateHopfieldGraphNetwork(articles, tokenizer):
 	numberOfSentences = len(articles)
 
 	if(useHFconnectionMatrix):
-		HFNLPpy_Matrix.initialiseHFconnectionMatrixWrapper(HFconnectionGraphObject)
-		regenerateGraphNodes()
+		if(useHFconnectionMatrixBasic):
+			HFNLPpy_ConceptsMatrix.initialiseHFconnectionMatrixBasicWrapper(HFconnectionGraphObject)
+			regenerateGraphNodes()
+		if(useHFconnectionMatrixAlgorithm):
+			HFNLPpy_Matrix.initialiseHFconnectionMatrixAlgorithmWrapper(HFconnectionGraphObject)
 
 	if(seedHFnetworkSubsequence):
 		verifySeedSentenceIsReplicant(articles, numberOfSentences)
@@ -96,7 +106,11 @@ def generateHopfieldGraphNetwork(articles, tokenizer):
 		generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences, tokenizer)	
 		
 	if(useHFconnectionMatrix):
-		HFNLPpy_ConnectionMatrix.writeHFconnectionMatrixWrapper(HFconnectionGraphObject)
+		if(useHFconnectionMatrixBasic):
+			HFNLPpy_ConnectionMatrixBasic.writeHFconnectionMatrixBasicWrapper(HFconnectionGraphObject)
+		if(useHFconnectionMatrixAlgorithm):
+			HFNLPpy_ConnectionMatrixAlgorithm.writeHFconnectionMatrixAlgorithmWrapper(HFconnectionGraphObject)
+
 
 def generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences, tokenizer):
 	print("\n\ngenerateHopfieldGraphSentenceString: sentenceIndex = ", sentenceIndex, "; ", sentence)
@@ -196,7 +210,7 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 			
 	if(trainSentence):
 		if(linkSimilarConceptNodesBagOfWords):
-			HFNLPpy_Matrix.addContextWordsToConnectionGraphLinkConcepts(tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject)
+			HFNLPpy_ConceptsMatrix.addContextWordsToConnectionGraphLinkConcepts(tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject)
 		
 		#create Hopfield graph direct connections (for draw only)
 		if(useDependencyParseTree):
@@ -236,7 +250,7 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 				if(w > 0):
 					sourceNeuronID = neuronIDprevious
 					targetNeuronID = neuronID
-					HFNLPpy_ConnectionMatrix.updateOrAddConnectionToGraph(HFconnectionGraphObject, sourceNeuronID, targetNeuronID)
+					HFNLPpy_ConnectionMatrixPyG.updateOrAddConnectionToGraph(HFconnectionGraphObject, sourceNeuronID, targetNeuronID)
 				neuronIDprevious = neuronID
 		elif(useHFconnectionMatrix):
 			HFNLPpy_Matrix.addContextWordsToConnectionGraphMatrix(networkConceptNodeDict, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject)
@@ -272,12 +286,12 @@ def addSentenceConceptNodesToHFconnectionGraphObject(sentenceConceptNodeList):
 				HFconnectionGraphObject.neuronNamelist.append(conceptNode.nodeName)
 				neuronID = conceptNode.networkIndex
 				HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName] = neuronID
-				if(useHFconnectionMatrixBasicSplit):
+				if(HFconnectionMatrixAlgorithmSplit):
 					#dynamically initialise HFconnectionGraphMatrix when new concepts are declared)
-					if(HFconnectionMatrixBasicSplitRAM):
+					if(HFconnectionMatrixAlgorithmSplitRAM):
 						HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID], _ = HFNLPpy_Matrix.initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID])
 					else:
-						printe("addSentenceConceptNodesToHFconnectionGraphObject:!HFconnectionMatrixBasicSplitRAM has not yet been coded")
+						printe("addSentenceConceptNodesToHFconnectionGraphObject:!HFconnectionMatrixAlgorithmSplitRAM has not yet been coded")
 						
 def connectHopfieldGraphSentenceSyntacticalBranchDP(sentenceConceptNodeList, DPgovernorNode, spatioTemporalIndex, activationTime):
 	for DPdependentNode in DPgovernorNode.DPdependentList:

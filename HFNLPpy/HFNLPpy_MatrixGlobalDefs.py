@@ -55,33 +55,33 @@ algorithmMatrixTensorDim = 4	#optional	#store context size array (and simulated 
 if(algorithmMatrixTensorDim != 4):
 	if(algorithmMatrixSANImethodAddActivationAcrossSegments or algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments):
 		algorithmMatrixTensorDim = 3 #mandatory
-useHFconnectionMatrixBasicSparse = False		#incomplete: requires hybrid dense-sparse tensor implementation such that tensor can still be indexed #reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)
-useHFconnectionMatrixBasicSplit = True	#currently in testing #reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)	#store each column of connection matrix in separate array (or hard drive file) - bring into memory on demand (depending on the precise activated columns of the contextVector being compared)
+HFconnectionMatrixAlgorithmSparse = False		#incomplete: requires hybrid dense-sparse tensor implementation such that tensor can still be indexed #reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)
+HFconnectionMatrixAlgorithmSplit = True	#currently in testing #reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)	#store each column of connection matrix in separate array (or hard drive file) - bring into memory on demand (depending on the precise activated columns of the contextVector being compared)
 if(debugHFconnectionMatrix):
 	HFconnectionMatrixBasicMaxConcepts = 200	#200	#20	 #[Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]
 else:
 	HFconnectionMatrixBasicMaxConcepts = 1000	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
 
-HFcontextVectorSparse = False	#store context vector as sparse tensor
-HFconnectionMatrixBasicSplitRAM = True	#store each column of connection matrix in separate array (or hard disk file) 
-HFconnectionMatrixGPU = True	#store connection matrix and context vector in GPU
+HFconnectionMatrixAlgorithmContextVectorSparse = False	#store context vector as sparse tensor
+HFconnectionMatrixAlgorithmSplitRAM = True	#store each column of connection matrix in separate array (or hard disk file) 
+HFconnectionMatrixAlgorithmGPU = True	#store connection matrix and context vector in GPU
 HFconnectionMatrixNormaliseRAM = True	#store a normalised connection matrix in RAM
-if(useHFconnectionMatrixBasicSplit):
-	HFcontextVectorSparse = True
-	HFconnectionMatrixGPU = False
+if(HFconnectionMatrixAlgorithmSplit):
+	HFconnectionMatrixAlgorithmContextVectorSparse = True
+	HFconnectionMatrixAlgorithmGPU = False
 	HFconnectionMatrixNormaliseRAM = False	#False: store min/max of each target (row) word, for dynamic normalisation (on demand)
-if(HFcontextVectorSparse):
+if(HFconnectionMatrixAlgorithmContextVectorSparse):
 	HFcontextVectorSparseNull = -1
 	
 #### simulated dendritic branches ####
 simulatedDendriticBranches = False	#independent dendritic branches
-HFconnectionMatrixMinValue = 0
+HFconnectionMatrixAlgorithmMinValue = 0
 if(simulatedDendriticBranches):
 	simulatedDendriticBranchesMinMatchStrength = 1.0	#minimum branch match strength for comparison before randomise selection of new branch to write	#CHECKTHIS
 	simulatedDendriticBranchesInitialisation = False #incomplete #perform random initialisation to break symmetry (required to select more than 1 dendritic branch)
 	if(simulatedDendriticBranchesInitialisation):
 		simulatedDendriticBranchesInitialisationWeight = 0.01	#only apply a very small randomisation magnitude to break symmetry
-		HFconnectionMatrixMinValue = simulatedDendriticBranchesInitialisationWeight
+		HFconnectionMatrixAlgorithmMinValue = simulatedDendriticBranchesInitialisationWeight
 	numberOfIndependentDendriticBranches = 10
 else: 
 	numberOfIndependentDendriticBranches = 1
@@ -111,19 +111,31 @@ contextMatrixWeightStore = False	#optional	#CHECKTHIS
 biologicalSimulationForward = True	#mandatory (implied)
 
 #### file i/o ####
-
 HFconnectionMatrixAlgorithmMatrixFileName = "HFconnectionGraphAlgorithmMatrix"
 HFconceptNeuronsAlgorithmMatrixFileName = "HFconceptNeuronsBasic"	#uses same file as HFconceptNeuronsBasicFileName
 HFconnectionMatrixAlgorithmMatrixExtensionName = ".csv"
 HFconceptNeuronsAlgorithmMatrixExtensionName = ".csv"
 
-#### file i/o ####
-
-HFconnectionMatrixBasicFileName = "HFconnectionGraphBasic"
-HFconceptNeuronsBasicFileName = "HFconceptNeuronsBasic"
-HFconnectionMatriBasicExtensionName = ".csv"
-HFconceptNeuronsBasicExtensionName = ".csv"
-
+useHFconnectionMatrixAlgorithm = True
+if(useHFconnectionMatrixAlgorithm):
+	HFreadSavedConnectionsMatrixAlgorithm = False	#not available
+	HFwriteSavedConnectionsMatrixAlgorithm = False	#not available
+	HFconnectionMatrixAlgorithmNormaliseSoftmax = False	#use softmax function to normalise connections matrix
+	HFreadSavedConceptListAlgorithm = False	#not available
+	HFwriteSavedConceptListAlgorithm = False	#not available
+	
+useHFconnectionMatrixAlgorithmBool = False
+import torch as pt
+if(simulatedDendriticBranchesInitialisation):
+	HFconnectionsMatrixAlgorithmType = pt.float	
+else:
+	if(useHFconnectionMatrixAlgorithmBool):
+		HFconnectionsMatrixAlgorithmType = pt.bool
+	else:
+		HFconnectionsMatrixAlgorithmType = pt.long
+		#print("HFconnectionsMatrixAlgorithmType = ", HFconnectionsMatrixAlgorithmType)
+			
+	
 #### error ####
 def printe(str):
 	print(str)

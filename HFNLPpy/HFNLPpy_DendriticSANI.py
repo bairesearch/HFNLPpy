@@ -295,6 +295,6 @@ def retrieveSimilarConcepts(wSource, sentenceConceptNodeList, networkConceptNode
 					#print("conceptInDict: ", synonymConcept.nodeName)
 					connectionTargetNeuronSetExtended.append(synonymConcept)
 	elif(linkSimilarConceptNodesBagOfWords):
-		connectionTargetNeuronSetExtended = HFNLPpy_MatrixOperations.retrieveSimilarConceptsBagOfWords(wSource, sentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSet, HFconnectionGraphObject)
+		connectionTargetNeuronSetExtended = HFNLPpy_ConceptsMatrixOperations.retrieveSimilarConceptsBagOfWords(wSource, sentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSet, HFconnectionGraphObject)
 
 	return connectionTargetNeuronSetExtended

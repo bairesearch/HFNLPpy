@@ -62,7 +62,10 @@ if(debugLowActivationThresholds):
 else:
 	HFconnectionWeightObs = 0.1	#connection weight to add for each observed instance of an adjacent source-target word pair/tuple in a sentence; ie (w, w+1)
 	HFactivationThreshold = 10.0
-	
+
+HFreadSavedConnectionsMatrixPyG = False	#currently requires useAlgorithmScan
+HFwriteSavedConnectionsMatrixPyG = False	#currently requires useAlgorithmScan
+
 #### file i/o ####
 
 HFconnectionMatrixAlgorithmScanFileName = "HFconnectionGraphAlgorithmScan"

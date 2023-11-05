@@ -62,8 +62,9 @@ linkSimilarConceptNodes = False
 linkSimilarConceptNodesWordnet = False
 linkSimilarConceptNodesBagOfWords = False
 useHFconnectionMatrix = False
-useHFconnectionMatrixPyG = False
+useHFconnectionMatrixPyG = False	#useHFconnectionMatrixScan
 useHFconnectionMatrixBasic = False 
+useHFconnectionMatrixAlgorithm = False 
 tokenWordnetSynonyms = False
 
 if(useAlgorithmDendriticSANI):
@@ -116,38 +117,41 @@ else:
 
 if(useAlgorithmMatrix):
 	useHFconnectionMatrix = True
-	useHFconnectionMatrixBasic = True
-	useHFconnectionMatrixBasicBool = False
+	useHFconnectionMatrixAlgorithm = True
 elif(useAlgorithmScan):
 	useHFconnectionMatrix = True
 	useHFconnectionMatrixPyG = True
-	
+
+
+#### file i/o ####
+HFconnectionMatrixBasicFileName = "HFconnectionGraphBasic"
+HFconceptNeuronsBasicFileName = "HFconceptNeuronsBasic"
+HFconnectionMatriBasicExtensionName = ".csv"
+HFconceptNeuronsBasicExtensionName = ".csv"
+
 usePytorch = False
-if(useHFconnectionMatrix):
-	HFreadSavedConnectionsMatrixPyG = False	#currently requires useAlgorithmScan
+if(useHFconnectionMatrixBasic):
 	HFreadSavedConnectionsMatrixBasic = False	#not available
-	HFwriteSavedConnectionsMatrixPyG = False	#currently requires useAlgorithmScan
 	HFwriteSavedConnectionsMatrixBasic = False	#not available
-	useHFconnectionMatrixNormaliseSoftmax = False	#use softmax function to normalise connections matrix
+	HFconnectionMatrixBasicNormaliseSoftmax = False	#use softmax function to normalise connections matrix
 	usePytorch = True
-	if(not useAlgorithmMatrix):
-		useHFconnectionMatrixBasicSparse = False
-		useHFconnectionMatrixBasicSplit = False
-		HFconnectionMatrixBasicMaxConcepts = 1000	#200	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
-		HFcontextVectorSparse = False
-		HFconnectionMatrixGPU = True
+	HFconnectionMatrixBasicMaxConcepts = 1000	#200	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
+	HFconnectionMatrixBasicGPU = True
+	HFconnectionMatrixBasicMinValue = 0
+HFreadSavedConceptListBasic = False
+HFwriteSavedConceptListBasic = False
 		
 if(usePytorch):
 	import torch as pt
 	from HFNLPpy_MatrixGlobalDefs import simulatedDendriticBranchesInitialisation
 	if(simulatedDendriticBranchesInitialisation):
-		HFconnectionsMatrixType = pt.float	
+		HFconnectionsMatrixBasicType = pt.float	
 	else:
 		if(useHFconnectionMatrixBasicBool):
-			HFconnectionsMatrixType = pt.bool
+			HFconnectionsMatrixBasicType = pt.bool
 		else:
-			HFconnectionsMatrixType = pt.long
-			#print("HFconnectionsMatrixType = ", HFconnectionsMatrixType)
+			HFconnectionsMatrixBasicType = pt.long
+			#print("HFconnectionsMatrixBasicType = ", HFconnectionsMatrixBasicType)
 	useLovelyTensors = False
 	if(useLovelyTensors):
 		import lovely_tensors as lt
@@ -188,6 +192,7 @@ if(drawHopfieldGraph):
 	drawHopfieldGraphSave = False
 	drawHopfieldGraphSentence = False
 	drawHopfieldGraphNetwork = True	#default: True	#draw graph for entire network (not just sentence)
+
 
 
 #### test harness (compare standard/vectorised computation) ####

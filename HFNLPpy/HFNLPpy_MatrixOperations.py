@@ -23,7 +23,7 @@ from HFNLPpy_globalDefs import *
 import torch as pt
 from HFNLPpy_MatrixGlobalDefs import *
 import torch.nn.functional as F
-import HFNLPpy_ConnectionMatrixBasic
+import HFNLPpy_ConnectionMatrixAlgorithm
 import HFNLPpy_hopfieldOperations
 
 def createConnectionGraphMatrixHolder():
@@ -36,29 +36,18 @@ def createConnectionGraphMatrixHolder():
 			secondDataIndexMax = getSecondDataIndexMax()
 			HFconnectionGraphMatrix = [[None for _ in range(secondDataIndexMax)] for _ in range(numberOfIndependentDendriticBranches)]	#[[None]*contextSizeMax]*numberOfIndependentDendriticBranches	#[[[None]*contextSizeMax] for i in range(numberOfIndependentDendriticBranches)]
 	return HFconnectionGraphMatrix
-	
-def retrieveSimilarConceptsBagOfWords(wSource, sentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSet, HFconnectionGraphObject=None):
-	for conceptNeuron in connectionTargetNeuronSet:
-		if(linkSimilarConceptNodesBagOfWordsContextual):
-			conceptNeuronContextVector = createContextVectorBasic(wSource, sentenceConceptNodeList, HFconnectionGraphObject, linkSimilarConceptNodesBagOfWordsDistanceMax, linkSimilarConceptNodesBagOfWordsWeightRetrieval, False)
-			connectionTargetNeuronSetExtended, _, _ = connectionMatrixCalculateConnectionTargetSetBasic(HFconnectionGraphObject.HFconnectionGraphBasicNormalised, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, linkSimilarConceptNodesBagOfWordsTopK)
-		else:
-			conceptNeuronID = HFconnectionGraphObject.neuronIDdict[conceptNeuron.nodeName]
-			conceptNeuronContextVector = HFconnectionGraphObject.HFconnectionGraphNormalised[conceptNeuronID]
-			connectionTargetNeuronSetExtended, _, _ = connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject.HFconnectionGraphNormalised, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, linkSimilarConceptNodesBagOfWordsTopK, False)
-	return connectionTargetNeuronSetExtended
 
 def connectionMatrixCalculateConnectionTargetSetWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, dendriticBranchIndex, secondDataIndex, secondDataIndexMax, weightStore, bidirectionalContext, matrixTensorDim4):
 	conceptNeuronContextVector = createContextVectorWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObject, secondDataIndex, secondDataIndexMax, weightStore, bidirectionalContext, matrixTensorDim4)	#len(HFconnectionGraphObject.neuronNamelist)
-	HFconnectionGraph = HFNLPpy_ConnectionMatrixBasic.getConnectionGraph(HFconnectionGraphObject, conceptNeuronContextVector, dendriticBranchIndex, secondDataIndex, matrixTensorDim4)
-	if(useHFconnectionMatrixBasicSplit):
-		conceptNeuronContextVector = HFNLPpy_ConnectionMatrixBasic.convertContextVectorSparseListToDense(conceptNeuronContextVector, matrixTensorDim4)
+	HFconnectionGraph = HFNLPpy_ConnectionMatrixAlgorithm.getConnectionGraph(HFconnectionGraphObject, conceptNeuronContextVector, dendriticBranchIndex, secondDataIndex, matrixTensorDim4)
+	if(HFconnectionMatrixAlgorithmSplit):
+		conceptNeuronContextVector = HFNLPpy_ConnectionMatrixAlgorithm.convertContextVectorSparseListToDense(conceptNeuronContextVector, matrixTensorDim4)
 	connectionTargetNeuronSet, connectionStrength, connectionIndex = connectionMatrixCalculateConnectionTargetSet(HFconnectionGraph, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, matrixPropagateTopKconceptNodes, matrixTensorDim4)
 	return connectionTargetNeuronSet, connectionStrength, connectionIndex
 
 def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraph, neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, k, matrixTensorDim4):
 	connectionTargetNeuronList = []
-	conceptNeuronContextVectorExtended = HFNLPpy_ConnectionMatrixBasic.extendConceptNeuronContextVector(conceptNeuronContextVector, matrixTensorDim4)
+	conceptNeuronContextVectorExtended = HFNLPpy_ConnectionMatrixAlgorithm.extendConceptNeuronContextVector(conceptNeuronContextVector, matrixTensorDim4)
 	if(matrixTensorDim4):
 		if(not algorithmMatrixSANI):
 			HFconnectionGraph = HFconnectionGraph[:, 0:conceptNeuronContextVectorExtended.shape[1], :, :]	#only compare selected contextIndices
@@ -87,13 +76,13 @@ def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraph, neuronNameli
 		arraySummedTopK = performSumTopK(arraySummedTopK.values, matrixPropagateTopKdendriticBranches, 1)
 		for i in range(len(arraySummedTopK.values)):
 			value = arraySummedTopK.values[i]
-			if(value > HFconnectionMatrixMinValue):
+			if(value > HFconnectionMatrixAlgorithmMinValue):
 				neuronIndexList.append(arraySummedTopKindices[arraySummedTopK.indices[i]])
 	else:
 		arraySummedTopK = performSumTopK(array, k, 1)
 		for i in range(len(arraySummedTopK.values)):
 			value = arraySummedTopK.values[i]
-			if(value > HFconnectionMatrixMinValue):
+			if(value > HFconnectionMatrixAlgorithmMinValue):
 				neuronIndexList.append(arraySummedTopK.indices[i])
 	
 	for i in neuronIndexList:
@@ -112,33 +101,6 @@ def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraph, neuronNameli
 		
 	return connectionTargetNeuronSet, connectionStrength, connectionIndex
 
-def connectionMatrixCalculateConnectionTargetSetBasic(HFconnectionGraph, neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, k):
-	connectionTargetNeuronList = []
-	conceptNeuronContextVectorExtended = HFNLPpy_ConnectionMatrixBasic.extendConceptNeuronContextVector(conceptNeuronContextVector, False)
-	
-	mask = HFconnectionGraph * conceptNeuronContextVectorExtended
-	array = mask
-	
-	neuronIndexList = []
-	arraySummedTopK = performSumTopK(array, k, 1)
-	for i in range(len(arraySummedTopK.values)):
-		value = arraySummedTopK.values[i]
-		if(value > HFconnectionMatrixMinValue):
-			neuronIndexList.append(arraySummedTopK.indices[i])
-	
-	for i in neuronIndexList:
-		conceptName = neuronNamelist[i]
-		conceptNeuron, conceptInDict = HFNLPpy_hopfieldOperations.convertLemmaToConcept(networkConceptNodeDict, conceptName)
-		if(conceptInDict):
-			connectionTargetNeuronList.append(conceptNeuron)
-	connectionTargetNeuronSet = set(connectionTargetNeuronList)	
-	
-	#not used;
-	connectionIndex = None
-	connectionStrength = pt.sum(arraySummedTopK.values)
-		
-	return connectionTargetNeuronSet, connectionStrength, connectionIndex
-	
 	
 def calculateSequentialSegmentActivation(connectionStrength):
 	if(algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments):
@@ -163,9 +125,9 @@ def createContextVectorWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObj
 			contextConnectionVector = createContextVectors(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextSizeMaxSource, weightStore, bidirectionalContext)
 		else:
 			contextConnectionVector = createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextSizeIndex, weightStore, bidirectionalContext)
-	if(not useHFconnectionMatrixBasicSplit):
-		if(HFconnectionMatrixGPU):
-			contextConnectionVector = contextConnectionVector.to(HFNLPpy_ConnectionMatrixBasic.device)
+	if(not HFconnectionMatrixAlgorithmSplit):
+		if(HFconnectionMatrixAlgorithmGPU):
+			contextConnectionVector = contextConnectionVector.to(HFNLPpy_ConnectionMatrixAlgorithm.device)
 			
 	return contextConnectionVector
 	
@@ -174,7 +136,7 @@ def createContextVectorsSANI(w1, sentenceConceptNodeList, HFconnectionGraphObjec
 	for sequentialSegmentIndex in range(sequentialSegmentMax):	#numberOfBranchSequentialSegments
 		contextConnectionVector = createContextVectorSANI1(w1, sentenceConceptNodeList, HFconnectionGraphObject, sequentialSegmentIndex, weightStore)
 		contextConnectionVectorList.append(contextConnectionVector)
-	if(useHFconnectionMatrixBasicSplit):
+	if(HFconnectionMatrixAlgorithmSplit):
 		contextConnectionVector = contextConnectionVectorList
 	else:
 		contextConnectionVector = pt.stack(contextConnectionVectorList, dim=0)
@@ -228,28 +190,28 @@ def createContextVectors(w1, sentenceConceptNodeList, HFconnectionGraphObject, c
 	for contextSizeIndex in range(contextSizeMaxSource):
 		contextConnectionVector = createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextSizeIndex, weightStore, bidirectionalContext)	#len(HFconnectionGraphObject.neuronNamelist)
 		contextConnectionVectorList.append(contextConnectionVector)
-	if(useHFconnectionMatrixBasicSplit):
+	if(HFconnectionMatrixAlgorithmSplit):
 		contextConnectionVector = contextConnectionVectorList
 	else:
 		contextConnectionVector = pt.stack(contextConnectionVectorList, dim=0)
 	return contextConnectionVector
 	
 def createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextSizeIndex, weightStore, bidirectionalContext):
-	if(HFcontextVectorSparse):
+	if(HFconnectionMatrixAlgorithmContextVectorSparse):
 		if(bidirectionalContext):
 			contextLength = len(sentenceConceptNodeList)
 		else:
 			contextLength = w1	#len(sentenceConceptNodeList) [too large]	#int(w2Max-w2Min) [not possible as will vary across secondDataIndex]	#contextSizeMax [too large]
 	else:
 		contextLength = contextSizeMax
-	contextConnectionVector = HFNLPpy_ConnectionMatrixBasic.createContextVectorTensor(contextLength)
+	contextConnectionVector = HFNLPpy_ConnectionMatrixAlgorithm.createContextVectorTensor(contextLength)
 	for w2, conceptNeuron2 in enumerate(sentenceConceptNodeList):
 		if(w1 != w2):
 			if(bidirectionalContext or (w2 < w1)):
 				if(w1-w2 <= getContextSize(contextSizeIndex)):
 					conceptNodeContext = sentenceConceptNodeList[w2]
 					neuronIDcontext = HFconnectionGraphObject.neuronIDdict[conceptNodeContext.nodeName]
-					if(HFcontextVectorSparse):
+					if(HFconnectionMatrixAlgorithmContextVectorSparse):
 						if(bidirectionalContext):
 							contextConnectionVectorIndex = w2
 						else:
@@ -260,27 +222,15 @@ def createContextVector(w1, sentenceConceptNodeList, HFconnectionGraphObject, co
 						contextConnectionVector[neuronIDcontext] = calculateContextVectorValue(weightStore, w1, w2)
 	return contextConnectionVector
 
-def createContextVectorBasic(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextSizeIndex, weightStore, bidirectionalContext):
-	contextConnectionVector = HFNLPpy_ConnectionMatrixBasic.createContextVectorTensorBasic()
-	for w2, conceptNeuron2 in enumerate(sentenceConceptNodeList):
-		if(w1 != w2):
-			if(bidirectionalContext or (w2 < w1)):
-				if(w1-w2 <= getContextSize(contextSizeIndex)):
-					conceptNodeContext = sentenceConceptNodeList[w2]
-					neuronIDcontext = HFconnectionGraphObject.neuronIDdict[conceptNodeContext.nodeName]
-					contextConnectionVector[neuronIDcontext] = calculateContextVectorValue(weightStore, w1, w2)
-	return contextConnectionVector
-
-
 def createContextVectorSANI(w1, sentenceConceptNodeList, HFconnectionGraphObject, w2Min, w2Max, weightStore):
 	contextLength = w1	#len(sentenceConceptNodeList) [too large]	#int(w2Max-w2Min) [not possible as will vary across secondDataIndex]	#contextSizeMax [too large]
-	contextConnectionVector = HFNLPpy_ConnectionMatrixBasic.createContextVectorTensor(contextLength)
+	contextConnectionVector = HFNLPpy_ConnectionMatrixAlgorithm.createContextVectorTensor(contextLength)
 	for w2, conceptNeuron2 in enumerate(sentenceConceptNodeList):
 		if(w1 != w2):
 			if(w2 >= w2Min and w2 < w2Max):
 				conceptNodeContext = sentenceConceptNodeList[w2]
 				neuronIDcontext = HFconnectionGraphObject.neuronIDdict[conceptNodeContext.nodeName]
-				if(HFcontextVectorSparse):
+				if(HFconnectionMatrixAlgorithmContextVectorSparse):
 					contextConnectionVectorIndex = w2	#w2-w2Min
 					contextConnectionVector.values[contextConnectionVectorIndex] = calculateContextVectorValue(weightStore, w1, w2)
 					contextConnectionVector.indices[contextConnectionVectorIndex] = neuronIDcontext
@@ -293,7 +243,7 @@ def calculateContextVectorValue(weightStore, w1, w2):
 		weight = 1.0/(abs(w1 - w2))
 		contextVectorValue = weight
 	else:
-		if(useHFconnectionMatrixBasicBool):
+		if(useHFconnectionMatrixAlgorithmBool):
 			contextVectorValue = True
 		else:
 			contextVectorValue = 1.0
@@ -313,7 +263,6 @@ def getSecondDataIndexMax(getContextSizeSource=False, wSource=None):
 		else:
 			secondDataIndexMax = contextSizeMax
 	return secondDataIndexMax
-
 
 def updateDendriticBranchClosestValue(foundClosest, dendriticBranchClosestTargetSet, closestConnectionStrength, closestDendriticBranchIndex, targetSet, connectionStrength, dendriticBranchIndex, threshold=False, connectionStrengthNormalised=None):
 	if(connectionStrength > closestConnectionStrength):
