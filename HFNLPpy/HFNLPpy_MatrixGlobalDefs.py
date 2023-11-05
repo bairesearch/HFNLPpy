@@ -110,6 +110,19 @@ contextMatrixWeightStore = False	#optional	#CHECKTHIS
 #### propagation algorithm (source/target activation) ####
 biologicalSimulationForward = True	#mandatory (implied)
 
+#### file i/o ####
+
+HFconnectionMatrixAlgorithmMatrixFileName = "HFconnectionGraphAlgorithmMatrix"
+HFconceptNeuronsAlgorithmMatrixFileName = "HFconceptNeuronsBasic"	#uses same file as HFconceptNeuronsBasicFileName
+HFconnectionMatrixAlgorithmMatrixExtensionName = ".csv"
+HFconceptNeuronsAlgorithmMatrixExtensionName = ".csv"
+
+#### file i/o ####
+
+HFconnectionMatrixBasicFileName = "HFconnectionGraphBasic"
+HFconceptNeuronsBasicFileName = "HFconceptNeuronsBasic"
+HFconnectionMatriBasicExtensionName = ".csv"
+HFconceptNeuronsBasicExtensionName = ".csv"
 
 #### error ####
 def printe(str):

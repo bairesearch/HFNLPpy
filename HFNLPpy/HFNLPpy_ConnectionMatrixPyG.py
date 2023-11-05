@@ -46,8 +46,8 @@ def updateOrAddConnectionToGraph(HFconnectionGraphObject, sourceNeuronID, target
 
 def initialiseHFconnectionMatrix():
 	if(HFreadSavedConnectionsMatrixPyG):
-		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName
-		HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsFileName
+		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixAlgorithmScanFileName + HFconnectionMatrixAlgorithmScanExtensionName
+		HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsAlgorithmScanFileName + HFconceptNeuronsAlgorithmScanExtensionName
 		neuronNamelist = readConceptNeuronList(HFconceptNeuronListPathName)
 		HFconnectionGraph = readGraphFromCsv(HFconnectionMatrixPathName)
 	else:
@@ -57,8 +57,8 @@ def initialiseHFconnectionMatrix():
 
 def writeHFconnectionMatrix(neuronNamelist, HFconnectionGraph):
 	if(HFwriteSavedConnectionsMatrixPyG):
-		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixFileName
-		HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsFileName
+		HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixAlgorithmScanFileName + HFconnectionMatrixAlgorithmScanExtensionName
+		HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsAlgorithmScanFileName + HFconceptNeuronsAlgorithmScanExtensionName
 		writeConceptNeuronList(neuronNamelist, HFconceptNeuronListPathName)
 		writeGraphToCsv(HFconnectionGraph, HFconnectionMatrixPathName)
 

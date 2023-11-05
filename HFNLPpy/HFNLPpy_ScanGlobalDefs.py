@@ -65,10 +65,10 @@ else:
 	
 #### file i/o ####
 
-HFconnectionMatrixFileName = "HFconnectionGraph"
-HFconceptNeuronsFileName = "HFconceptNeurons"
-HFconnectionMatrixExtensionName = ".csv"
-HFconceptNeuronsExtensionName = ".csv"
+HFconnectionMatrixAlgorithmScanFileName = "HFconnectionGraphAlgorithmScan"
+HFconceptNeuronsAlgorithmScanFileName = "HFconceptNeuronsAlgorithmScan"
+HFconnectionMatrixAlgorithmScanExtensionName = ".csv"
+HFconceptNeuronsAlgorithmScanExtensionName = ".csv"
 
 #### draw ####
 

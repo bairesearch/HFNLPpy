@@ -92,9 +92,9 @@ if(linkSimilarConceptNodes):
 		useHFconnectionMatrix = True
 		useHFconnectionMatrixBasic = True
 		useHFconnectionMatrixBasicBool = False #initialise (dependent var)
-		if(not bagOfWordsWeightStore and not linkSimilarConceptNodesBagOfWordsWeightRetrieval):
-			assert (not useAlgorithmMatrix)	#useHFconnectionMatrixBasicBool is not supported by useAlgorithmMatrix
-			useHFconnectionMatrixBasicBool = True	
+		if(not linkSimilarConceptNodesBagOfWordsWeightStore and not linkSimilarConceptNodesBagOfWordsWeightRetrieval):
+			if(not useAlgorithmMatrix):	#useHFconnectionMatrixBasicBool is not supported by useAlgorithmMatrix
+				useHFconnectionMatrixBasicBool = True	
 			
 useDependencyParseTree = False	#initialise (dependent var)
 if(useAlgorithmLayeredSANI):
