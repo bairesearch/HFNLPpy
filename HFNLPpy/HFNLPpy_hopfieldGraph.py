@@ -59,7 +59,8 @@ elif(useAlgorithmMatrix):
 	import HFNLPpy_MatrixOperations
 	if(HFconnectionMatrixAlgorithmSplitDatabase):
 		import HFNLPpy_MatrixDatabase
-		
+	import HFNLPpy_ConnectionMatrixOperations
+
 if(useDependencyParseTree):
 	import SPNLPpy_globalDefs
 	import SPNLPpy_syntacticalGraph
@@ -81,6 +82,7 @@ class HFconnectionGraphClass:
 			self.HFconnectionGraphBasic = None
 		if(useAlgorithmScan):
 			self.HFconnectionGraphPyG = None
+		self.connectionMatrixMaxConcepts = None
 		self.neuronNamelist = None
 		self.neuronIDdict = {}
 
@@ -95,12 +97,11 @@ def generateHopfieldGraphNetwork(articles, tokenizer):
 	if(useHFconnectionMatrix):
 		if(useHFconnectionMatrixBasic):
 			HFNLPpy_ConceptsMatrix.initialiseHFconnectionMatrixBasicWrapper(HFconnectionGraphObject)
-			regenerateGraphNodes()
 		if(useHFconnectionMatrixAlgorithm):
 			HFNLPpy_Matrix.initialiseHFconnectionMatrixAlgorithmWrapper(HFconnectionGraphObject)
 		if(HFconnectionMatrixAlgorithmSplitDatabase):
 			HFNLPpy_MatrixDatabase.initialiseMatrixDatabase(HFconnectionGraphObject)
-		recalculateHopfieldGraphNetworkSize()
+		regenerateGraphNodes()
 
 	if(seedHFnetworkSubsequence):
 		verifySeedSentenceIsReplicant(articles, numberOfSentences)
@@ -113,7 +114,8 @@ def generateHopfieldGraphNetwork(articles, tokenizer):
 			HFNLPpy_ConnectionMatrixBasic.writeHFconnectionMatrixBasicWrapper(HFconnectionGraphObject)
 		if(useHFconnectionMatrixAlgorithm):
 			HFNLPpy_ConnectionMatrixAlgorithm.writeHFconnectionMatrixAlgorithmWrapper(HFconnectionGraphObject)
-
+		if(HFconnectionMatrixAlgorithmSplitDatabase):
+			HFNLPpy_MatrixDatabase.finaliseMatrixDatabase(HFconnectionGraphObject)
 
 def generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences, tokenizer):
 	print("\n\ngenerateHopfieldGraphSentenceString: sentenceIndex = ", sentenceIndex, "; ", sentence)
@@ -148,8 +150,6 @@ def regenerateGraphNodes():
 			conceptNode.SANIlayerNeuronID = 
 			conceptNode.SANIlayerIndex = 0
 		'''
-		if(useHFconnectionMatrix):
-			HFconnectionGraphObject.neuronIDdict[nodeName] = neuronID
 		addNodeToGraph(conceptNode)
 		if(printVerbose):
 			print("create new conceptNode; ", conceptNode.nodeName)
@@ -297,7 +297,7 @@ def addSentenceConceptNodesToHFconnectionGraphObject(sentenceConceptNodeList):
 				neuronIDdictNewlyAdded[conceptNode.nodeName] = neuronID
 				if(HFconnectionMatrixAlgorithmSplit):
 					#dynamically initialise HFconnectionGraphMatrix when new concepts are declared
-					HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID], _ = HFNLPpy_Matrix.initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID])
+					HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID], _ = HFNLPpy_Matrix.initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID])
 			else:
 				if(HFconnectionMatrixAlgorithmSplitDatabase):
 					#load HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] into RAM

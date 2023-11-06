@@ -140,8 +140,6 @@ if(useHFconnectionMatrixBasic):
 	HFconnectionMatrixBasicMaxConcepts = 1000	#200	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
 	HFconnectionMatrixBasicGPU = True
 	HFconnectionMatrixBasicMinValue = 0
-HFreadSavedConceptListBasic = False
-HFwriteSavedConceptListBasic = False
 		
 if(usePytorch):
 	import torch as pt

@@ -25,13 +25,9 @@ from HFNLPpy_MatrixGlobalDefs import *
 from ANNtf2_loadDataset import datasetFolderRelative
 import HFNLPpy_MatrixOperations
 import HFNLPpy_ConnectionMatrixBasic
+import HFNLPpy_ConnectionMatrixOperations
 
 epsilon = 1e-8  # Small epsilon value
-
-if(pt.cuda.is_available()):
-	device = pt.device("cuda")
-else:
-	device = pt.device("cpu")
 
 def addContextConnectionsToGraphNeuronIDWrapper(HFconnectionGraphObject, contextConnectionVector, firstDataIndex, secondDataIndex, HFconnectionGraphNeuronID):
 	if(HFconnectionMatrixAlgorithmSplit):
@@ -67,58 +63,87 @@ def addContextConnectionsToGraph(HFconnectionGraph, contextConnectionVector):
 		HFconnectionGraph += contextConnectionVector
 	return HFconnectionGraph
 
-def extendConceptNeuronContextVector(conceptNeuronContextVector, matrixTensorDim4):
+def extendConceptNeuronContextVector(HFconnectionGraphObject, conceptNeuronContextVector, matrixTensorDim4):
 	if(matrixTensorDim4):
 		conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVector, dim=1)
-		conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(1, HFconnectionMatrixBasicMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	
+		conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(1, HFconnectionGraphObject.connectionMatrixMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	
 		conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVectorExtended, dim=0)
 	else:
 		conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVector, dim=0)
-		conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(HFconnectionMatrixBasicMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	
+		conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(HFconnectionGraphObject.connectionMatrixMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	
 	return conceptNeuronContextVectorExtended
 	
-def initialiseHFconnectionMatrixAlgorithmMatrix(dendriticBranchIndex="", contextSizeIndex=""):
+def initialiseHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, dendriticBranchIndex="", contextSizeIndex=""):
 	if(HFreadSavedConnectionsMatrixAlgorithm):
-		HFconnectionGraph = readHFconnectionMatrixAlgorithmMatrix(dendriticBranchIndex, contextSizeIndex)
+		HFconnectionGraph = readHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, dendriticBranchIndex, contextSizeIndex)
 	else:
-		HFconnectionGraph = createHFconnectionMatrixAlgorithmMatrix()
+		HFconnectionGraph = createHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject)
 	return HFconnectionGraph
 	
-def readHFconnectionMatrixAlgorithmMatrix(dendriticBranchIndex="", secondDataIndex=""):
+def readHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, dendriticBranchIndex="", secondDataIndex=""):
 	if(useAlgorithmMatrix and not algorithmMatrixTensorDim2):
 		printe("initialiseHFconnectionMatrix error: HFreadSavedConnectionsMatrixAlgorithm does not currently support useAlgorithmMatrix and not algorithmMatrixTensorDim2")
 	HFconnectionMatrixPathName = generateHFconnectionMatrixAlgorithmMatrixFileName(dendriticBranchIndex, contextSizeIndex)
 	HFconnectionGraph = readGraphFromCsv(HFconnectionMatrixPathName)
-	conceptsSize = HFconnectionGraph.shape[0]
-	spareConceptsSize = HFconnectionMatrixBasicMaxConcepts-conceptsSize
-	print("HFconnectionGraph.shape = ", HFconnectionGraph.shape)
-	HFconnectionGraph = pt.nn.ZeroPad2d((0, spareConceptsSize, 0, spareConceptsSize))(HFconnectionGraph)
-	print("HFconnectionGraph.shape = ", HFconnectionGraph.shape)
+	HFconnectionGraph = padHFconnectionGraph(HFconnectionGraphObject, HFconnectionGraph)
 	return HFconnectionGraph
-		
-def createHFconnectionMatrixAlgorithmMatrix():
+
+def squeezeHFconnectionGraph(HFconnectionGraphObject, HFconnectionGraph):
+	networkSize = HFNLPpy_ConnectionMatrixOperations.getNetworkSize(HFconnectionGraphObject)
+	maxConceptsSize = HFconnectionGraphSourceIndex.shape[-1]
+	if(algorithmMatrixTensorDim == 4):
+		HFconnectionGraphSourceIndexSqueezed = HFconnectionGraph[:, :, 0:networkSize, 0:networkSize]	#squeeze to length of database
+	elif(algorithmMatrixTensorDim == 3):
+		HFconnectionGraphSourceIndexSqueezed = HFconnectionGraph[:, 0:networkSize, 0:networkSize]	#squeeze to length of database
+	elif(algorithmMatrixTensorDim == 2):
+		HFconnectionGraphSourceIndexSqueezed = HFconnectionGraph[0:networkSize, 0:networkSize]	#squeeze to length of database
+	else:
+		printe("padHFconnectionGraph error: illegal algorithmMatrixTensorDim")
+	return HFconnectionGraphSourceIndexSqueezed
+	
+def padHFconnectionGraph(HFconnectionGraphObject, HFconnectionGraphSourceIndex):
+	networkSize = HFNLPpy_ConnectionMatrixOperations.getNetworkSize(HFconnectionGraphObject)
+	conceptsSize = HFconnectionGraphSourceIndex.shape[-1]
+	assert (networkSize == conceptsSize)
+	spareConceptsSize = HFconnectionGraphObject.connectionMatrixMaxConcepts-networkSize
+	if(algorithmMatrixTensorDim == 4):
+		HFconnectionGraphSourceIndexPadded = F.pad(HFconnectionGraph, (0, spareConceptsSize, 0, spareConceptsSize, 0, 0, 0, 0), mode='constant', value=0)	#pad the the end of the last dimensions of the tensor (note that F.pad padding dimensions are reversed ordered)
+	elif(algorithmMatrixTensorDim == 3):
+		HFconnectionGraphSourceIndexPadded = F.pad(HFconnectionGraph, (0, spareConceptsSize, 0, spareConceptsSize, 0, 0), mode='constant', value=0)	#pad the the end of the last dimensions of the tensor (note that F.pad padding dimensions are reversed ordered)
+	elif(algorithmMatrixTensorDim == 2):
+		HFconnectionGraphSourceIndexPadded = F.pad(HFconnectionGraph, (0, spareConceptsSize, 0, spareConceptsSize), mode='constant', value=0)	#pad the the end of the last dimensions of the tensor (note that F.pad padding dimensions are reversed ordered)
+		#HFconnectionGraph = pt.nn.ZeroPad2d((0, spareConceptsSize, 0, spareConceptsSize))(HFconnectionGraph)
+	else:
+		printe("padHFconnectionGraph error: illegal algorithmMatrixTensorDim")
+	return HFconnectionGraphSourceIndexPadded
+	
+def createHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject):
 	secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax()
 	if(HFconnectionMatrixAlgorithmSplit):
 		#create connection matrix columns only (for a single source context neuron ID);
 		if(algorithmMatrixTensorDim == 4):
-			tensorShape = (numberOfIndependentDendriticBranches, secondDataIndexMax, HFconnectionMatrixBasicMaxConcepts)
+			tensorShape = (numberOfIndependentDendriticBranches, secondDataIndexMax, HFconnectionGraphObject.connectionMatrixMaxConcepts)
 		elif(algorithmMatrixTensorDim == 3):
-			tensorShape = (secondDataIndexMax, HFconnectionMatrixBasicMaxConcepts)
+			tensorShape = (secondDataIndexMax, HFconnectionGraphObject.connectionMatrixMaxConcepts)
+		elif(algorithmMatrixTensorDim == 2):
+			tensorShape = (HFconnectionGraphObject.connectionMatrixMaxConcepts)
 		else:
-			tensorShape = (HFconnectionMatrixBasicMaxConcepts)
+			printe("createHFconnectionMatrixAlgorithmMatrix error: invalid algorithmMatrixTensorDim")
 	else:
 		if(algorithmMatrixTensorDim == 4):
-			tensorShape = (numberOfIndependentDendriticBranches, secondDataIndexMax, HFconnectionMatrixBasicMaxConcepts, HFconnectionMatrixBasicMaxConcepts)
+			tensorShape = (numberOfIndependentDendriticBranches, secondDataIndexMax, HFconnectionGraphObject.connectionMatrixMaxConcepts, HFconnectionGraphObject.connectionMatrixMaxConcepts)
 		elif(algorithmMatrixTensorDim == 3):
-			tensorShape = (secondDataIndexMax, HFconnectionMatrixBasicMaxConcepts, HFconnectionMatrixBasicMaxConcepts)
+			tensorShape = (secondDataIndexMax, HFconnectionGraphObject.connectionMatrixMaxConcepts, HFconnectionGraphObject.connectionMatrixMaxConcepts)
+		elif(algorithmMatrixTensorDim == 2):
+			tensorShape = (HFconnectionGraphObject.connectionMatrixMaxConcepts, HFconnectionGraphObject.connectionMatrixMaxConcepts)
 		else:
-			tensorShape = (HFconnectionMatrixBasicMaxConcepts, HFconnectionMatrixBasicMaxConcepts)
+			printe("createHFconnectionMatrixAlgorithmMatrix error: invalid algorithmMatrixTensorDim")
 	if(simulatedDendriticBranchesInitialisation):
 		HFconnectionGraph = createRandomisedTensor(tensorShape)
 	else:
 		HFconnectionGraph = createEmptyTensor(tensorShape, HFconnectionMatrixAlgorithmSparse)
 	if(HFconnectionMatrixAlgorithmGPU):
-		HFconnectionGraph = HFconnectionGraph.to(device)
+		HFconnectionGraph = HFconnectionGraph.to(HFNLPpy_ConnectionMatrixOperations.device)
 	return HFconnectionGraph
 		
 def createRandomisedTensor(tensorShape):
@@ -179,7 +204,7 @@ if(HFconnectionMatrixAlgorithmSplit):
 		else:
 			HFconnectionGraphContextIndex = HFconnectionGraphObject.HFconnectionGraphMatrix[contextVectorSourceNeuronID][firstDataIndex][secondDataIndex]
 		if(HFconnectionMatrixAlgorithmGPU):
-			HFconnectionGraphContextIndex = HFconnectionGraphContextIndex.to(device)
+			HFconnectionGraphContextIndex = HFconnectionGraphContextIndex.to(HFNLPpy_ConnectionMatrixOperations.device)
 		return HFconnectionGraphContextIndex
 		
 	def normaliseConnectionGraphContextIndex(HFconnectionGraphContextIndex, HFconnectionGraphObject, firstDataIndex, secondDataIndex, matrixTensorDim4, contextVectorSourceNeuronID):
@@ -220,7 +245,7 @@ def convertContextVectorSparseListToDense(contextConnectionVectorData, matrixTen
 		else:
 			contextConnectionVector = contextConnectionVectorData.values
 	if(HFconnectionMatrixAlgorithmGPU):
-		contextConnectionVector = contextConnectionVector.to(device)
+		contextConnectionVector = contextConnectionVector.to(HFNLPpy_ConnectionMatrixOperations.device)
 	return contextConnectionVector
 		
 if(HFconnectionMatrixAlgorithmContextVectorSparse):
@@ -230,11 +255,11 @@ if(HFconnectionMatrixAlgorithmContextVectorSparse):
 			self.values = valuesTensor
 			self.contextVectorLength = contextVectorLength
 			
-def createContextVectorTensor(contextSize):
+def createContextVectorTensor(HFconnectionGraphObject, contextSize):
 	if(HFconnectionMatrixAlgorithmContextVectorSparse):
 		contextVectorLength = contextSize
 	else:
-		contextVectorLength = HFconnectionMatrixBasicMaxConcepts
+		contextVectorLength = HFconnectionGraphObject.connectionMatrixMaxConcepts
 	if(HFconnectionMatrixAlgorithmContextVectorSparse):
 		#print("contextVectorLength = ", contextVectorLength)
 		#print("HFconnectionsMatrixAlgorithmType = ", HFconnectionsMatrixAlgorithmType)
@@ -255,7 +280,8 @@ def createEmptyTensor(tensorShape, sparse):
 		emptyTensor = pt.zeros(tensorShape, dtype=HFconnectionsMatrixAlgorithmType)
 	return emptyTensor
 	
-def writeHFconnectionMatrixAlgorithmMatrix(HFconnectionGraph, dendriticBranchIndex="", contextSizeIndex=""):
+def writeHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraph, dendriticBranchIndex="", contextSizeIndex=""):
+	HFconnectionGraph = squeezeHFconnectionGraph(HFconnectionGraphObject, HFconnectionGraph)
 	HFconnectionMatrixPathName = generateHFconnectionMatrixAlgorithmMatrixFileName(dendriticBranchIndex, contextSizeIndex)
 	writeGraphToCsv(HFconnectionGraph, HFconnectionMatrixPathName)
 
@@ -270,22 +296,22 @@ def writeHFconnectionMatrixAlgorithmWrapper(HFconnectionGraphObject):
 			printe("writeHFconnectionMatrixAlgorithmWrapper error: HFconnectionMatrixAlgorithmSplit has not been coded")
 		else:
 			writeHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject)
-	if(HFwriteSavedConceptListAlgorithm):
-		HFNLPpy_ConnectionMatrixBasic.writeHFConceptListBasic(HFconnectionGraphObject.neuronNamelist)
+	if(HFwriteSavedConceptList):
+		HFNLPpy_ConnectionMatrixOperations.writeHFConceptList(HFconnectionGraphObject.neuronNamelist)
 
 def writeHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject):
 	if(algorithmMatrixTensorDim==4):
-		writeHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject.HFconnectionGraphMatrix, HFconnectionGraphObject.neuronNamelist)
+		writeHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix, HFconnectionGraphObject.neuronNamelist)
 	else:
 		secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax()
 		for dendriticBranchIndex in range(numberOfIndependentDendriticBranches):
 			if(algorithmMatrixTensorDim==3):
-				writeHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex], HFconnectionGraphObject.neuronNamelist, createIndexStringDendriticBranch(dendriticBranchIndex))
+				writeHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex], HFconnectionGraphObject.neuronNamelist, createIndexStringDendriticBranch(dendriticBranchIndex))
 			else:
 				#print("secondDataIndexMax = ", secondDataIndexMax)
 				#print("HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex] = ", len(HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex]))
 				for secondDataIndex in range(secondDataIndexMax):
-					writeHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex][secondDataIndex], HFconnectionGraphObject.neuronNamelist, createIndexStringDendriticBranch(dendriticBranchIndex), createIndexStringSecondDataIndex(secondDataIndex))
+					writeHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex][secondDataIndex], HFconnectionGraphObject.neuronNamelist, createIndexStringDendriticBranch(dendriticBranchIndex), createIndexStringSecondDataIndex(secondDataIndex))
 
 def createIndexStringDendriticBranch(dendriticBranchIndex):
 	return "dendriticBranchIndex" + str(dendriticBranchIndex)
@@ -324,13 +350,7 @@ def normaliseBatchedTensor(HFconnectionGraph):
 	
 
 def readGraphFromCsv(filePath):
-	connections = []
-	with open(filePath, 'r') as f:
-		reader = csv.reader(f)
-		for row in (reader):
-			connections.append(row)
-	connections = [[int(value) for value in row] for row in connections]
-	graph = pt.tensor(connections, dtype=HFconnectionsMatrixAlgorithmType)
+	graph = HFNLPpy_ConnectionMatrixOperations.readGraphFromCsv(filePath)
 	
 	if(algorithmMatrixTensorDim==4):
 		secondDataIndexMax = getSecondDataIndexMax()
@@ -346,7 +366,6 @@ def readGraphFromCsv(filePath):
 	return graph
 
 def writeGraphToCsv(graph, filePath):
-
 	graph = graph.cpu()
 	if(HFconnectionMatrixAlgorithmSparse):
 		graph = graph.to_dense()
@@ -356,7 +375,4 @@ def writeGraphToCsv(graph, filePath):
 	elif(algorithmMatrixTensorDim==3):
 		printe("HFNLPpy_ConnectionMatrixAlgorithm:writeGraphToCsv error: HFwriteSavedConnectionsMatrixAlgorithm/HFreadSavedConnectionsMatrixAlgorithm currently requires algorithmMatrixTensorDim=2 or algorithmMatrixTensorDim=4 such that the file i/o code can be simplified")
 		
-	connections = graph.numpy()
-	with open(filePath, 'w') as f:
-		writer = csv.writer(f)
-		writer.writerows(connections)
+	HFNLPpy_ConnectionMatrixOperations.writeGraphToCsv(graph, filePath)

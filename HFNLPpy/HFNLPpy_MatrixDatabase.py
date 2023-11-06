@@ -20,47 +20,52 @@ HFNLP Matrix Database
 import numpy as np
 import torch as pt
 import torch.nn.functional as F
-import csv
-import os
 
 from HFNLPpy_MatrixGlobalDefs import *
 import HFNLPpy_ConnectionMatrixBasic
 from HFNLPpy_MatrixOperations import getSecondDataIndexMax
+import HFNLPpy_ConnectionMatrixOperations
 
 def generateMatrixDatabaseFileName(sourceNeuronID):
 	#sourceNeuronID corresponds to the column index of a 2D connections matrix
-	filePath = matrixDatabasePathName + matrixDatabaseFileNameStart + str(sourceNeuronID) + matrixDatabaseFileNameEnd
+	filePath = matrixDatabasePathName + "/" + matrixDatabaseFileNameStart + str(sourceNeuronID) + matrixDatabaseFileNameEnd
 	return filePath
 	
-def saveMatrixDatabaseFile(sourceNeuronID, HFconnectionGraphSourceIndex):
+def saveMatrixDatabaseFile(HFconnectionGraphObject, sourceNeuronID, HFconnectionGraphSourceIndex):
+	HFconnectionGraphSourceIndex = squeezeHFconnectionGraph(HFconnectionGraphObject, HFconnectionGraphSourceIndex)
 	filePath = generateMatrixDatabaseFileName(sourceNeuronID)
 	writeGraphToCsv(HFconnectionGraphSourceIndex, filePath)
 	
 def loadMatrixDatabaseFile(HFconnectionGraphObject, sourceNeuronID):
 	filePath = generateMatrixDatabaseFileName(sourceNeuronID)
 	HFconnectionGraphSourceIndex = readGraphFromCsv(filePath)
-	#HFconnectionGraphSourceIndex = padHFconnectionGraph(HFconnectionGraphSourceIndex, HFconnectionGraphObject)	#not currently used as HFconnectionGraphObject.HFconnectionGraph is intialised with many blank rows (HFconnectionMatrixBasicMaxConcepts)
+	HFconnectionGraphSourceIndex = padHFconnectionGraph(HFconnectionGraphObject, HFconnectionGraphSourceIndex)
+	if(HFconnectionMatrixAlgorithmGPU):
+		HFconnectionGraphSourceIndex = HFconnectionGraphSourceIndex.to(HFNLPpy_ConnectionMatrixOperations.device)
 	return HFconnectionGraphSourceIndex
 
-def getDatabaseSize(HFconnectionGraphObject):
-	databaseSize = len(HFconnectionGraphObject.neuronNamelist)	#or len(HFconnectionGraphObject.neuronIDdict)
-	return databaseSize
-
-def padHFconnectionGraph(HFconnectionGraphSourceIndex, HFconnectionGraphObject):
-	print("HFconnectionGraphSourceIndex.shape = ", HFconnectionGraphSourceIndex.shape)
-	databaseSize = getDatabaseSize(HFconnectionGraphObject)
+def squeezeHFconnectionGraph(HFconnectionGraphObject, HFconnectionGraphSourceIndex):
+	networkSize = HFNLPpy_ConnectionMatrixOperations.getNetworkSize(HFconnectionGraphObject)
+	maxConceptsSize = HFconnectionGraphSourceIndex.shape[-1]
+	HFconnectionGraphSourceIndexSqueezed = HFconnectionGraphSourceIndex[:, :, 0:networkSize]	#squeeze to length of database
+	return HFconnectionGraphSourceIndexSqueezed
+	
+def padHFconnectionGraph(HFconnectionGraphObject, HFconnectionGraphSourceIndex):
+	networkSize = HFNLPpy_ConnectionMatrixOperations.getNetworkSize(HFconnectionGraphObject)
 	conceptsSize = HFconnectionGraphSourceIndex.shape[-1]
-	spareConceptsSize = databaseSize-conceptsSize
-	HFconnectionGraphSourceIndexPadded = F.pad(HFconnectionGraphSourceIndex, (0, spareConceptsSize, 0, 0, 0, 0), mode='constant', value=0)
-	print("HFconnectionGraphSourceIndexPadded.shape = ", HFconnectionGraphSourceIndexPadded.shape)
+	#print("networkSize = ", networkSize)
+	#print("conceptsSize = ", conceptsSize)
+	#assert (networkSize == conceptsSize)
+	#note networkSize will not necessarily equal conceptsSize (as array could have been previously written using a)
+	spareConceptsSize = HFconnectionGraphObject.connectionMatrixMaxConcepts-conceptsSize
+	HFconnectionGraphSourceIndexPadded = F.pad(HFconnectionGraphSourceIndex, (0, spareConceptsSize, 0, 0, 0, 0), mode='constant', value=0)	#pad the the end of the last dimension of the tensor (note that F.pad padding dimensions are reversed ordered)
 	return HFconnectionGraphSourceIndexPadded
 	
 def initialiseMatrixDatabase(HFconnectionGraphObject):
-	HFconceptNeuronListPathName = HFNLPpy_ConnectionMatrixBasic.generateConceptListFileName() 
+	HFconceptNeuronListPathName = HFNLPpy_ConnectionMatrixOperations.generateConceptListFileName() 
 	matrixDatabaseFileNameMinFilePath = generateMatrixDatabaseFileName(matrixDatabaseFileNameMin)
 
-	if(os.path.exists(HFconceptNeuronListPathName)):
-		HFNLPpy_ConnectionMatrixBasic.initialiseNeuronNameList(HFconnectionGraphObject, True)
+	HFNLPpy_ConnectionMatrixOperations.initialiseNeuronNameList(HFconnectionGraphObject)
 		
 	if(os.path.exists(matrixDatabaseFileNameMinFilePath) and os.path.exists(HFconceptNeuronListPathName)):
 		print("initialiseMatrixDatabase warning: matrixDatabaseAlreadyInitialised; using existing HFconnectionGraphMatrixMin/HFconnectionGraphMatrixMax and conceptList files")
@@ -73,25 +78,19 @@ def initialiseMatrixDatabase(HFconnectionGraphObject):
 
 def finaliseMatrixDatabaseSentence(HFconnectionGraphObject, sentenceConceptNodeList):
 	#save all tensors to drive and clear all tensors from RAM
-	saveMatrixDatabaseFile(matrixDatabaseFileNameMin, HFconnectionGraphObject.HFconnectionGraphMatrixMin)
-	saveMatrixDatabaseFile(matrixDatabaseFileNameMax, HFconnectionGraphObject.HFconnectionGraphMatrixMax)
-	#del HFconnectionGraphObject.HFconnectionGraphMatrixMin	#deletion not required - can retain HFconnectionGraphMatrixMin/Max in RAM across sentences [assuming sufficient initialisation padding for new concepts]
-	#del HFconnectionGraphObject.HFconnectionGraphMatrixMax #deletion not required - can retain HFconnectionGraphMatrixMin/Max in RAM across sentences [assuming sufficient initialisation padding for new concepts]
 	for conceptNode in sentenceConceptNodeList:
 		neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
-		saveMatrixDatabaseFile(neuronID, HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID])
+		saveMatrixDatabaseFile(HFconnectionGraphObject, neuronID, HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID])
 		#del HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID]	#TODO: resolve this issue - this inadvertently deletes other matrices within the list (at different indices)
-	HFNLPpy_ConnectionMatrixBasic.writeHFConceptListBasic(HFconnectionGraphObject.neuronNamelist)
+
+def finaliseMatrixDatabase(HFconnectionGraphObject):
+	#save all tensors to drive and clear all tensors from RAM
+	saveMatrixDatabaseFile(HFconnectionGraphObject, matrixDatabaseFileNameMin, HFconnectionGraphObject.HFconnectionGraphMatrixMin)
+	saveMatrixDatabaseFile(HFconnectionGraphObject, matrixDatabaseFileNameMax, HFconnectionGraphObject.HFconnectionGraphMatrixMax)
+	HFNLPpy_ConnectionMatrixOperations.writeHFConceptList(HFconnectionGraphObject.neuronNamelist)
 	
 def readGraphFromCsv(filePath):
-	connections = []
-	with open(filePath, 'r') as f:
-		reader = csv.reader(f)
-		for row in (reader):
-			connections.append(row)
-	#print("connections = ", connections)
-	connections = [[int(value) for value in row] for row in connections]
-	graph = pt.tensor(connections, dtype=HFconnectionsMatrixAlgorithmType)
+	graph = HFNLPpy_ConnectionMatrixOperations.readGraphFromCsv(filePath)
 	
 	if(algorithmMatrixTensorDim==4):
 		secondDataIndexMax = getSecondDataIndexMax()
@@ -107,12 +106,9 @@ def writeGraphToCsv(graph, filePath):
 	graph = graph.cpu()
 	
 	if(algorithmMatrixTensorDim==4):
-		graph = graph.view(graph.shape[2], -1)	# Flatten the ND tensor into a 2D tensor
+		graph = graph.reshape(graph.shape[2], -1)	# Flatten the ND tensor into a 2D tensor
 	else:
 		printe("HFNLPpy_MatrixDatabase:writeGraphToCsv error: HFconnectionMatrixAlgorithmSplitDatabase currently requires algorithmMatrixTensorDim=4 such that the file i/o code can be simplified")
 		
-	connections = graph.numpy()
-	with open(filePath, 'w') as f:
-		writer = csv.writer(f)
-		writer.writerows(connections)
+	HFNLPpy_ConnectionMatrixOperations.writeGraphToCsv(graph, filePath)
 

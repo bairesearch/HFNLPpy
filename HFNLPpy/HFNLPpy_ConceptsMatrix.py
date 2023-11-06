@@ -22,11 +22,12 @@ from HFNLPpy_globalDefs import *
 
 import HFNLPpy_ConnectionMatrixBasic
 import HFNLPpy_ConceptsMatrixOperations
+import HFNLPpy_ConnectionMatrixOperations
 
 def initialiseHFconnectionMatrixBasicWrapper(HFconnectionGraphObject):
 	if(linkSimilarConceptNodesBagOfWords):
-		HFconnectionGraphObject.HFconnectionGraphBasic = HFNLPpy_ConnectionMatrixBasic.initialiseHFconnectionMatrixBasic()
-	HFNLPpy_ConnectionMatrixBasic.initialiseNeuronNameList(HFconnectionGraphObject, HFreadSavedConceptListBasic)
+		HFconnectionGraphObject.HFconnectionGraphBasic = HFNLPpy_ConnectionMatrixBasic.initialiseHFconnectionMatrixBasic(HFconnectionGraphObject)
+	HFNLPpy_ConnectionMatrixOperations.initialiseNeuronNameList(HFconnectionGraphObject)
 
 def addContextWordsToConnectionGraphLinkConcepts(tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject):
 	for w1, token1 in enumerate(tokenisedSentence):

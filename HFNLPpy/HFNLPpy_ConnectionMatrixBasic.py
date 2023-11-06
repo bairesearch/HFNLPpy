@@ -20,18 +20,13 @@ HFNLP Connection Matrix Basic
 import numpy as np
 import torch as pt
 import torch.nn.functional as F
-import csv
 from torch_geometric.data import Data
 
 from HFNLPpy_globalDefs import *
 from ANNtf2_loadDataset import datasetFolderRelative
+import HFNLPpy_ConnectionMatrixOperations
 
 epsilon = 1e-8  # Small epsilon value
-
-if(pt.cuda.is_available()):
-	device = pt.device("cuda")
-else:
-	device = pt.device("cpu")
 
 def addContextConnectionsToGraphBasic(HFconnectionGraph, contextConnectionVector):
 	if(useHFconnectionMatrixBasicBool):
@@ -40,117 +35,72 @@ def addContextConnectionsToGraphBasic(HFconnectionGraph, contextConnectionVector
 		HFconnectionGraph += contextConnectionVector
 	return HFconnectionGraph
 
-def padContextConnectionVector(contextConnectionVector):
+def padContextConnectionVector(HFconnectionGraphObject, contextConnectionVector):
 	conceptsSize = contextConnectionVector.shape[0]
-	spareConceptsSize = HFconnectionMatrixBasicMaxConcepts-conceptsSize
+	spareConceptsSize = HFconnectionGraphObject.connectionMatrixMaxConcepts-conceptsSize
 	contextConnectionVectorPadded = F.pad(contextConnectionVector, (0, spareConceptsSize), mode='constant', value=0)
 	#contextConnectionVectorPadded = pt.nn.ZeroPad1d(spareConceptsSize)(contextConnectionVector)	#requires later version of pytorch
 	return contextConnectionVectorPadded
 
-def extendConceptNeuronContextVector(conceptNeuronContextVector):
+def extendConceptNeuronContextVector(HFconnectionGraphObject, conceptNeuronContextVector):
 	conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVector, dim=0)
-	conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(HFconnectionMatrixBasicMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	
+	conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(HFconnectionGraphObject.connectionMatrixMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	
 	return conceptNeuronContextVectorExtended
 	
 def createDiagonalMatrix(squareMatrix, width):
 	diagonalMatrix = pt.tril(squareMatrix, diagonal=0) - pt.tril(squareMatrix, diagonal=-width)
 	#diagonalMatrix = pt.tril(squareMatrix, diagonal=0) * torch.triu(squareMatrix, diagonal=width)
 	return diagonalMatrix
-
-def initialiseNeuronNameList(HFconnectionGraphObject, readSavedConceptList):
-	if(readSavedConceptList):
-		HFconceptNeuronListPathName = generateConceptListFileName()
-		HFconnectionGraphObject.neuronNamelist = readConceptNeuronList(HFconceptNeuronListPathName)
-	else:
-		HFconnectionGraphObject.neuronNamelist = []
-	createNeuronIDdictFromNameList(HFconnectionGraphObject)
 	
-def initialiseHFconnectionMatrixBasic(dendriticBranchIndex="", contextSizeIndex=""):
+def initialiseHFconnectionMatrixBasic(HFconnectionGraphObject, dendriticBranchIndex="", contextSizeIndex=""):
 	if(HFreadSavedConnectionsMatrixBasic):
-		HFconnectionGraph = readHFconnectionMatrixBasic(dendriticBranchIndex, contextSizeIndex)
+		HFconnectionGraph = readHFconnectionMatrixBasic(HFconnectionGraphObject, dendriticBranchIndex, contextSizeIndex)
 	else:
-		HFconnectionGraph = pt.zeros([HFconnectionMatrixBasicMaxConcepts, HFconnectionMatrixBasicMaxConcepts], dtype=HFconnectionsMatrixBasicType)
+		HFconnectionGraph = pt.zeros([HFconnectionGraphObject.connectionMatrixMaxConcepts, HFconnectionGraphObject.connectionMatrixMaxConcepts], dtype=HFconnectionsMatrixBasicType)
 	if(HFconnectionMatrixBasicGPU):
-		HFconnectionGraph = HFconnectionGraph.to(device)
+		HFconnectionGraph = HFconnectionGraph.to(HFNLPpy_ConnectionMatrixOperations.device)
 	return HFconnectionGraph
 
-def readHFconnectionMatrixBasic():
-	HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixBasicFileName + HFconnectionMatriBasicExtensionName
-	HFconnectionGraph = readGraphFromCsv(HFconnectionMatrixPathName)
-	conceptsSize = HFconnectionGraph.shape[0]
-	spareConceptsSize = HFconnectionMatrixBasicMaxConcepts-conceptsSize
-	print("HFconnectionGraph.shape = ", HFconnectionGraph.shape)
-	HFconnectionGraph = pt.nn.ZeroPad2d((0, spareConceptsSize, 0, spareConceptsSize))(HFconnectionGraph)
-	print("HFconnectionGraph.shape = ", HFconnectionGraph.shape)
+def readHFconnectionMatrixBasic(HFconnectionGraphObject):
+	HFconnectionMatrixPathName = generateHFconnectionMatrixBasicFileName()
+	HFconnectionGraph = HFNLPpy_ConnectionMatrixOperations.readGraphFromCsv(HFconnectionMatrixPathName)
+	HFconnectionGraph = padHFconnectionGraph(HFconnectionGraphObject, HFconnectionGraph)
 	return HFconnectionGraph
-		
-def createContextVectorTensorBasic():
-	contextVectorLength = HFconnectionMatrixBasicMaxConcepts
+
+def squeezeHFconnectionGraph(HFconnectionGraphObject, HFconnectionGraph):
+	networkSize = HFNLPpy_ConnectionMatrixOperations.getNetworkSize(HFconnectionGraphObject)
+	maxConceptsSize = HFconnectionGraphSourceIndex.shape[-1]
+	HFconnectionGraphSourceIndexSqueezed = HFconnectionGraph[0:networkSize, 0:networkSize]	#squeeze to length of database
+	return HFconnectionGraphSourceIndexSqueezed
+	
+def padHFconnectionGraph(HFconnectionGraphObject, HFconnectionGraphSourceIndex):
+	networkSize = HFNLPpy_ConnectionMatrixOperations.getNetworkSize(HFconnectionGraphObject)
+	conceptsSize = HFconnectionGraphSourceIndex.shape[-1]
+	assert (networkSize == conceptsSize)
+	#HFconnectionGraphSourceIndexPadded = F.pad(HFconnectionGraph, (0, spareConceptsSize, 0, spareConceptsSize), mode='constant', value=0)	#pad the the end of the last dimensions of the tensor (note that F.pad padding dimensions are reversed ordered)
+	HFconnectionGraph = pt.nn.ZeroPad2d((0, spareConceptsSize, 0, spareConceptsSize))(HFconnectionGraph)
+	return HFconnectionGraphSourceIndexPadded
+
+def createContextVectorTensorBasic(HFconnectionGraphObject):
+	contextVectorLength = HFconnectionGraphObject.connectionMatrixMaxConcepts
 	contextConnectionVector = pt.zeros(contextVectorLength, dtype=HFconnectionsMatrixBasicType)
 	return contextConnectionVector
 	
-def writeHFconnectionMatrixBasic(HFconnectionGraph, neuronNamelist):
+def writeHFconnectionMatrixBasic(HFconnectionGraphObject, HFconnectionGraph, neuronNamelist):
+	HFconnectionGraph = squeezeHFconnectionGraph(HFconnectionGraphObject, HFconnectionGraph)
 	HFconnectionMatrixPathName = generateHFconnectionMatrixBasicFileName()
-	writeGraphToCsv(HFconnectionGraph, HFconnectionMatrixPathName)
+	HFNLPpy_ConnectionMatrixOperations.writeGraphToCsv(HFconnectionGraph, HFconnectionMatrixPathName)
 
 def generateHFconnectionMatrixBasicFileName():
 	HFconnectionMatrixPathName = datasetFolderRelative + "/" + HFconnectionMatrixBasicFileName + HFconnectionMatrixBasicExtensionName
 	return HFconnectionMatrixPathName
-
-def writeHFConceptListBasic(neuronNamelist):
-	HFconceptNeuronListPathName = generateConceptListFileName()
-	writeConceptNeuronList(neuronNamelist, HFconceptNeuronListPathName)
-	
-def generateConceptListFileName():
-	HFconceptNeuronListPathName = datasetFolderRelative + "/" + HFconceptNeuronsBasicFileName + HFconceptNeuronsBasicExtensionName
-	return HFconceptNeuronListPathName
-	
-def readGraphFromCsv(filePath):
-	connections = []
-	with open(filePath, 'r') as f:
-		reader = csv.reader(f)
-		for row in (reader):
-			connections.append(row)
-	connections = [[int(value) for value in row] for row in connections]
-	graph = pt.tensor(connections, dtype=HFconnectionsMatrixAlgorithmType)
-	return graph
-
-def writeGraphToCsv(graph, filePath):
-	graph = graph.cpu()		
-	connections = graph.numpy()
-	with open(filePath, 'w') as f:
-		writer = csv.writer(f)
-		writer.writerows(connections)
-		
-def readConceptNeuronList(filePath):
-	names = []
-	try:
-		with open(filePath, 'r') as csvfile:
-			reader = csv.reader(csvfile)
-			for row in reader:
-				if row:
-					names.append(row[0])
-	except FileNotFoundError:
-		print("File not found.")
-	return names
-
-def writeConceptNeuronList(names, filePath):
-	try:
-		with open(filePath, 'w', newline='') as csvfile:
-			writer = csv.writer(csvfile)
-			for name in names:
-				writer.writerow([name])
-		print("Names written to file successfully.")
-	except Exception as e:
-		print("Error:", e)
-
 		
 def writeHFconnectionMatrixBasicWrapper(HFconnectionGraphObject):
 	if(HFwriteSavedConnectionsMatrixBasic):
 		if(linkSimilarConceptNodesBagOfWords):
-			writeHFconnectionMatrixBasic(HFconnectionGraphObject.HFconnectionGraphBasic)
-	if(HFwriteSavedConceptListBasic):
-		writeHFConceptListBasic(HFconnectionGraphObject.neuronNamelist)
+			writeHFconnectionMatrixBasic(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphBasic)
+	if(HFwriteSavedConceptList):
+		HFNLPpy_ConnectionMatrixOperations.writeHFConceptList(HFconnectionGraphObject.neuronNamelist)
 
 def normaliseBatchedTensor(HFconnectionGraph):
 	HFconnectionGraph = HFconnectionGraph.float()
@@ -166,6 +116,3 @@ def normaliseBatchedTensor(HFconnectionGraph):
 			HFconnectionGraphNormalised = (HFconnectionGraph - min_vals) / (max_vals - min_vals + epsilon)
 	return HFconnectionGraphNormalised
 	
-def createNeuronIDdictFromNameList(HFconnectionGraphObject):
-	for neuronID, neuronName in enumerate(HFconnectionGraphObject.neuronNamelist):
-		HFconnectionGraphObject.neuronIDdict[neuronName] = neuronID 
