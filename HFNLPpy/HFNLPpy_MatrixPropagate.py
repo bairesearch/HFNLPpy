@@ -24,6 +24,8 @@ import HFNLPpy_MatrixOperations
 from HFNLPpy_globalDefs import *
 from HFNLPpy_MatrixGlobalDefs import *
 from collections import Counter
+if(HFconnectionMatrixAlgorithmSplitDatabase):
+	import HFNLPpy_MatrixDatabase
 
 printVerbose = False
 printConnectionTargetActivations = False
@@ -72,7 +74,8 @@ def simulateBiologicalHFnetworkSequenceNodePropagateStandard(networkConceptNodeD
 		#connectionTargetNeuronSet.update(set(connectionTargetNeuronListTopKneurons))
 	if(foundClosest):
 		connectionTargetNeuronSet.update(list(dendriticBranchClosestTargetSet))
-	
+		addPredictedConceptNodesToHFconnectionGraphObject(HFconnectionGraphObject, sentenceConceptNodeList, list(connectionTargetNeuronSet))
+		
 	somaActivationFound = False
 	if(conceptNeuronTarget in connectionTargetNeuronSet):
 		somaActivationFound = True
@@ -86,3 +89,23 @@ def performListTopK(connectionTargetNeuronList, k):
 	if(debugAlgorithmMatrix):
 		print("connectionTargetNeuronListTopKkeys[0] = ", connectionTargetNeuronListTopKkeys[0].nodeName)
 	return connectionTargetNeuronListTopKkeys
+
+def addPredictedConceptNodesToHFconnectionGraphObject(HFconnectionGraphObject, sentenceConceptNodeList, predictedConceptNodeList):
+	if(HFconnectionMatrixAlgorithmSplitDatabase):
+		neuronIDdictNewlyAdded = {}
+		for conceptNodeIndex, conceptNode in enumerate(sentenceConceptNodeList):
+			neuronID = conceptNode.networkIndex
+			neuronIDdictNewlyAdded[conceptNode.nodeName] = neuronID	
+			neuronIDdictNewlyAdded = {}
+		for conceptNodeIndex, conceptNode in enumerate(predictedConceptNodeList):
+			#print("conceptNodeIndex = ", conceptNodeIndex)
+			if(not conceptNode.nodeName in HFconnectionGraphObject.neuronIDdict):
+				printe("addPredictedConceptNodesToHFconnectionGraphObject error: not conceptNode.nodeName in HFconnectionGraphObject.neuronIDdict; predicted concepts should be in neuronIDdict")				
+			else:
+				#load HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] into RAM
+				neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
+				#print("neuronID = ", neuronID)
+				#print("conceptNode.nodeName = ", conceptNode.nodeName)
+				if(conceptNode.nodeName not in neuronIDdictNewlyAdded):
+					#load a predicted neuron matrix column that is not in the current sentence
+					HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] = HFNLPpy_MatrixDatabase.loadMatrixDatabaseFile(HFconnectionGraphObject, neuronID)

@@ -42,6 +42,7 @@ if(useHFconnectionMatrix):
 		import HFNLPpy_ConnectionMatrixBasic
 	if(useHFconnectionMatrixAlgorithm):
 		import HFNLPpy_ConnectionMatrixAlgorithm
+	import HFNLPpy_ConnectionMatrixOperations
 if(linkSimilarConceptNodesBagOfWords):
 	import HFNLPpy_ConceptsMatrix
 	
@@ -59,7 +60,6 @@ elif(useAlgorithmMatrix):
 	import HFNLPpy_MatrixOperations
 	if(HFconnectionMatrixAlgorithmSplitDatabase):
 		import HFNLPpy_MatrixDatabase
-	import HFNLPpy_ConnectionMatrixOperations
 
 if(useDependencyParseTree):
 	import SPNLPpy_globalDefs

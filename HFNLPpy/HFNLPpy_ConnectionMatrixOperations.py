@@ -106,3 +106,4 @@ def writeGraphToCsv(graph, filePath):
 	with open(filePath, 'w') as f:
 		writer = csv.writer(f)
 		writer.writerows(connections)
+
