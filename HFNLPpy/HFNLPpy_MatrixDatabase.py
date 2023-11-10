@@ -80,9 +80,10 @@ def finaliseMatrixDatabaseSentence(HFconnectionGraphObject, sentenceConceptNodeL
 	#save all tensors to drive and clear all tensors from RAM
 	for conceptNode in sentenceConceptNodeList:
 		neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
-		saveMatrixDatabaseFile(HFconnectionGraphObject, neuronID, HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID])
-		#del HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID]	#TODO: resolve this issue - this inadvertently deletes other matrices within the list (at different indices)
-
+		if(HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] != None):	#ensure node has not already been deleted (in the case of replica nodes in sentence)
+			saveMatrixDatabaseFile(HFconnectionGraphObject, neuronID, HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID])
+			HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] = None
+	
 def finaliseMatrixDatabase(HFconnectionGraphObject):
 	#save all tensors to drive and clear all tensors from RAM
 	saveMatrixDatabaseFile(HFconnectionGraphObject, matrixDatabaseFileNameMin, HFconnectionGraphObject.HFconnectionGraphMatrixMin)

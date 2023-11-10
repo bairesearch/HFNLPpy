@@ -302,8 +302,6 @@ def addSentenceConceptNodesToHFconnectionGraphObject(sentenceConceptNodeList):
 				if(HFconnectionMatrixAlgorithmSplitDatabase):
 					#load HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] into RAM
 					neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
-					#print("neuronID = ", neuronID)
-					#print("conceptNode.nodeName = ", conceptNode.nodeName)
 					if(conceptNode.nodeName not in neuronIDdictNewlyAdded):
 						HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] = HFNLPpy_MatrixDatabase.loadMatrixDatabaseFile(HFconnectionGraphObject, neuronID)
 						
