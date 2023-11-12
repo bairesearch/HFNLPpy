@@ -40,12 +40,28 @@ def createConnectionGraphMatrixHolder():
 
 def connectionMatrixCalculateConnectionTargetSetWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, dendriticBranchIndex, secondDataIndex, secondDataIndexMax, weightStore, bidirectionalContext, matrixTensorDim4):
 	conceptNeuronContextVector = createContextVectorWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObject, secondDataIndex, secondDataIndexMax, weightStore, bidirectionalContext, matrixTensorDim4)	#len(HFconnectionGraphObject.neuronNamelist)
-	HFconnectionGraph = HFNLPpy_ConnectionMatrixAlgorithm.getConnectionGraph(HFconnectionGraphObject, conceptNeuronContextVector, dendriticBranchIndex, secondDataIndex, matrixTensorDim4)
-	if(HFconnectionMatrixAlgorithmSplit):
-		conceptNeuronContextVector = HFNLPpy_ConnectionMatrixAlgorithm.convertContextVectorSparseListToDense(conceptNeuronContextVector, matrixTensorDim4)
-	connectionTargetNeuronSet, connectionStrength, connectionIndex = connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject, HFconnectionGraph, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, matrixPropagateTopKconceptNodes, matrixTensorDim4)
+	validContextVector, connectionTargetNeuronSet, connectionStrength, connectionIndex = isValidContextVector(conceptNeuronContextVector, matrixTensorDim4)
+	if(validContextVector):
+		HFconnectionGraph = HFNLPpy_ConnectionMatrixAlgorithm.getConnectionGraph(HFconnectionGraphObject, conceptNeuronContextVector, dendriticBranchIndex, secondDataIndex, matrixTensorDim4)
+		if(HFconnectionMatrixAlgorithmSplit):
+			conceptNeuronContextVector = HFNLPpy_ConnectionMatrixAlgorithm.convertContextVectorSparseListToDense(conceptNeuronContextVector, matrixTensorDim4)
+		connectionTargetNeuronSet, connectionStrength, connectionIndex = connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject, HFconnectionGraph, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, matrixPropagateTopKconceptNodes, matrixTensorDim4)
 	return connectionTargetNeuronSet, connectionStrength, connectionIndex
 
+def isValidContextVector(conceptNeuronContextVector, matrixTensorDim4):
+	validContextVector = True
+	connectionTargetNeuronSet = set()
+	connectionStrength = 0
+	connectionIndex = -1
+	if(HFconnectionMatrixAlgorithmSplit):
+		if(matrixTensorDim4):
+			if(len(conceptNeuronContextVector[0].indices) == 0):
+				validContextVector = False
+		else:
+			if(len(conceptNeuronContextVector) == 0):
+				validContextVector = False
+	return validContextVector, connectionTargetNeuronSet, connectionStrength, connectionIndex
+	
 def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject, HFconnectionGraph, neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, k, matrixTensorDim4):
 	connectionTargetNeuronList = []
 	conceptNeuronContextVectorExtended = HFNLPpy_ConnectionMatrixAlgorithm.extendConceptNeuronContextVector(HFconnectionGraphObject, conceptNeuronContextVector, matrixTensorDim4)
@@ -265,15 +281,15 @@ def getSecondDataIndexMax(getContextSizeSource=False, wSource=None):
 			secondDataIndexMax = contextSizeMax
 	return secondDataIndexMax
 
-def updateDendriticBranchClosestValue(foundClosest, dendriticBranchClosestTargetSet, closestConnectionStrength, closestDendriticBranchIndex, targetSet, connectionStrength, dendriticBranchIndex, threshold=False, connectionStrengthNormalised=None):
+def updateDendriticBranchClosestValue(foundClosestBranchIndex, dendriticBranchClosestTargetSet, closestConnectionStrength, closestDendriticBranchIndex, targetSet, connectionStrength, dendriticBranchIndex, threshold=False, connectionStrengthNormalised=None):
 	if(connectionStrength > closestConnectionStrength):
 		if((not threshold) or (connectionStrengthNormalised > simulatedDendriticBranchesMinMatchStrength)):
-			foundClosest = True
+			foundClosestBranchIndex = True
 			if(dendriticBranchClosestTargetSet is not None):
 				dendriticBranchClosestTargetSet = targetSet
 			if(closestConnectionStrength is not None):
 				closestConnectionStrength = connectionStrength
 			if(closestDendriticBranchIndex is not None):
 				closestDendriticBranchIndex = dendriticBranchIndex
-	return foundClosest, dendriticBranchClosestTargetSet, closestConnectionStrength, closestDendriticBranchIndex
+	return foundClosestBranchIndex, dendriticBranchClosestTargetSet, closestConnectionStrength, closestDendriticBranchIndex
 	

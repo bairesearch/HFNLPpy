@@ -170,7 +170,7 @@ else:
 #### error ####
 def printe(str):
 	print(str)
-	exit()
+	exite
 
 def getHFconnectionMatrixBasicMaxConcepts(HFconnectionGraphObject):
 	return HFconnectionGraphObject.connectionMatrixMaxConcepts

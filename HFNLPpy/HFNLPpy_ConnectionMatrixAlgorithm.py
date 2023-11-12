@@ -171,10 +171,8 @@ if(HFconnectionMatrixAlgorithmSplit):
 				HFconnectionGraphContextSubset2 = getConnectionGraphContextSubset2(HFconnectionGraphObject, conceptNeuronContextVector2, firstDataIndex, secondDataIndex, matrixTensorDim4)
 				HFconnectionGraphContextSubset2List.append(HFconnectionGraphContextSubset2)
 			HFconnectionGraphContextSubset = pt.stack(HFconnectionGraphContextSubset2List, dim=1)
-			#print("1 HFconnectionGraphContextSubset.shape = ", HFconnectionGraphContextSubset.shape)
 		else:
 			HFconnectionGraphContextSubset = getConnectionGraphContextSubset2(HFconnectionGraphObject, conceptNeuronContextVector,  firstDataIndex, secondDataIndex, matrixTensorDim4)
-			#print("2 HFconnectionGraphContextSubset.shape = ", HFconnectionGraphContextSubset.shape)		
 		return HFconnectionGraphContextSubset
 	
 	def getConnectionGraphContextSubset2(HFconnectionGraphObject, conceptNeuronContextVector, firstDataIndex, secondDataIndex, matrixTensorDim4):
@@ -185,13 +183,15 @@ if(HFconnectionMatrixAlgorithmSplit):
 		for conceptNeuronContextVectorIndex in range(len(conceptNeuronContextVector.indices)):
 			contextVectorSourceNeuronID = conceptNeuronContextVector.indices[conceptNeuronContextVectorIndex]
 			if(contextVectorSourceNeuronID == HFcontextVectorSparseNull):
-				HFconnectionGraphContextIndex = pt.zeros_like(getConnectionGraphContextIndex(HFconnectionGraphObject, firstDataIndex, secondDataIndex, matrixTensorDim4, 0))
+				HFNLPpy_MatrixOperations.getSecondDataIndexMax()
+				HFconnectionGraphContextIndex = pt.zeros([numberOfIndependentDendriticBranches , HFconnectionGraphObject.connectionMatrixMaxConcepts])
+				if(HFconnectionMatrixAlgorithmGPU):
+					HFconnectionGraphContextIndex = HFconnectionGraphContextIndex.to(HFNLPpy_ConnectionMatrixOperations.device)
 			else:
 				HFconnectionGraphContextIndex = getConnectionGraphContextIndex(HFconnectionGraphObject, firstDataIndex, secondDataIndex, matrixTensorDim4, contextVectorSourceNeuronID)
 				HFconnectionGraphContextIndex = normaliseConnectionGraphContextIndex(HFconnectionGraphContextIndex, HFconnectionGraphObject, firstDataIndex, secondDataIndex, matrixTensorDim4, contextVectorSourceNeuronID)
 			HFconnectionGraphContextIndexList.append(HFconnectionGraphContextIndex)
 		HFconnectionGraphContextSubset = pt.stack(HFconnectionGraphContextIndexList, dim=-1)
-		#print("3 HFconnectionGraphContextSubset.shape = ", HFconnectionGraphContextSubset.shape)
 		return HFconnectionGraphContextSubset
 							
 	def getConnectionGraphContextIndex(HFconnectionGraphObject, firstDataIndex, secondDataIndex, matrixTensorDim4, contextVectorSourceNeuronID):

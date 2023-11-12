@@ -267,4 +267,4 @@ if(tokeniseSubwords):
 	
 def printe(str):
 	print(str)
-	exit()
+	exite
