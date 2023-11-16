@@ -76,13 +76,16 @@ def initialiseMatrixDatabase(HFconnectionGraphObject):
 		HFconnectionGraphObject.HFconnectionGraphMatrixMin = loadMatrixDatabaseFile(HFconnectionGraphObject, matrixDatabaseFileNameMin)
 		HFconnectionGraphObject.HFconnectionGraphMatrixMax = loadMatrixDatabaseFile(HFconnectionGraphObject, matrixDatabaseFileNameMax)
 
-def finaliseMatrixDatabaseSentence(HFconnectionGraphObject, sentenceConceptNodeList):
+def finaliseMatrixDatabaseSentence(HFconnectionGraphObject, sentenceConceptNodeList, neuronIDalreadySaved):
 	#save all tensors to drive and clear all tensors from RAM
 	for conceptNode in sentenceConceptNodeList:
-		neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
-		if(HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] != None):	#ensure node has not already been deleted (in the case of replica nodes in sentence)
-			saveMatrixDatabaseFile(HFconnectionGraphObject, neuronID, HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID])
-			HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] = None
+		if(conceptNode.nodeName not in neuronIDalreadySaved):
+			neuronIDalreadySaved[conceptNode.nodeName] = True
+			neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
+			print("save tensor: conceptNode = ", conceptNode.nodeName, ", neuronID = ", neuronID)
+			if(HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] != None):	#ensure node has not already been deleted (in the case of replica nodes in sentence)
+				saveMatrixDatabaseFile(HFconnectionGraphObject, neuronID, HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID])
+				HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] = None
 	
 def finaliseMatrixDatabase(HFconnectionGraphObject):
 	#save all tensors to drive and clear all tensors from RAM

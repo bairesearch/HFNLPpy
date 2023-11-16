@@ -76,19 +76,15 @@ else:
 	HFconnectionMatrixAlgorithmGPU = True	#store connection matrix and context vector in GPU
 	HFconnectionMatrixAlgorithmNormaliseStore = True	#True: store a normalised connection matrix in RAM (must recalculate entire normalised arrays: not computation or memory efficient)
 
-if(HFconnectionMatrixAlgorithmSplitDatabase):
-	HFconnectionMatrixBasicMaxConcepts = 100000
-	if(debugHFconnectionMatrix):
-		HFconnectionMatrixBasicMaxConceptsInArticle = 200
-	else:
-		HFconnectionMatrixBasicMaxConceptsInArticle = 1000
-else:
-	if(debugHFconnectionMatrix):
+
+if(debugHFconnectionMatrix):
+	if(HFconnectionMatrixAlgorithmSplit):
 		HFconnectionMatrixBasicMaxConcepts = 200	#200	#20	 #[Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]
-		HFconnectionMatrixBasicMaxConceptsInArticle = 200
-	else:
-		HFconnectionMatrixBasicMaxConcepts = 1000	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
-		HFconnectionMatrixBasicMaxConceptsInArticle = 1000
+	HFconnectionMatrixBasicMaxConceptsInArticle = 200
+else:
+	if(HFconnectionMatrixAlgorithmSplit):
+		HFconnectionMatrixBasicMaxConcepts = 10000	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
+	HFconnectionMatrixBasicMaxConceptsInArticle = 10000	#1000
 
 
 	
