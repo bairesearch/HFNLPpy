@@ -219,10 +219,16 @@ if(HFconnectionMatrixAlgorithmSplit):
 		else:
 			HFconnectionGraphMin = HFconnectionGraphObject.HFconnectionGraphMatrixMin[firstDataIndex][secondDataIndex]
 			HFconnectionGraphMax = HFconnectionGraphObject.HFconnectionGraphMatrixMax[firstDataIndex][secondDataIndex]
-		if(HFconnectionMatrixAlgorithmNormaliseSoftmax):
-			printe("normaliseConnectionGraphContextIndex does not support HFconnectionMatrixAlgorithmNormaliseSoftmax")
-		else:
+			
+		if(HFconnectionMatrixAlgorithmNormalise=="softmax"):
+			printe("normaliseConnectionGraphContextIndex does not support HFconnectionMatrixAlgorithmNormalise==softmax")
+		elif(HFconnectionMatrixAlgorithmNormalise=="tanh"):
+			HFconnectionGraphContextIndexNormalised = HFconnectionGraphContextIndex.tanh()
+		elif(HFconnectionMatrixAlgorithmNormalise=="xsech"):
+			HFconnectionGraphContextIndexNormalised = HFconnectionGraphContextIndex * 1/HFconnectionGraphContextIndex.cosh()		
+		elif(HFconnectionMatrixAlgorithmNormalise=="linear"):
 			HFconnectionGraphContextIndexNormalised = (HFconnectionGraphContextIndex - HFconnectionGraphMin) / (HFconnectionGraphMax - HFconnectionGraphMin + epsilon)
+			
 		return HFconnectionGraphContextIndexNormalised
 else:
 	def getConnectionGraphFull(HFconnectionGraphObject, firstDataIndex, secondDataIndex):
@@ -337,9 +343,13 @@ def normaliseBatchedTensor(HFconnectionGraph):
 			HFconnectionGraphNormalised = HFconnectionGraph
 		else:
 			#calculate a temporary normalised version of the HFconnectionGraph	#CHECKTHIS
-			if(HFconnectionMatrixAlgorithmNormaliseSoftmax):
+			if(HFconnectionMatrixAlgorithmNormalise=="softmax"):
 				HFconnectionGraphNormalised = pt.nn.functional.softmax(HFconnectionGraph, dim=1)
-			else:
+			elif(HFconnectionMatrixAlgorithmNormalise=="tanh"):
+				HFconnectionGraphNormalised = HFconnectionGraph.tanh()
+			elif(HFconnectionMatrixAlgorithmNormalise=="xsech"):
+				HFconnectionGraphNormalised = HFconnectionGraph * 1/HFconnectionGraph.cosh()		
+			elif(HFconnectionMatrixAlgorithmNormalise=="linear"):
 				if(HFconnectionMatrixAlgorithmSparse):
 					printe("normaliseBatchedTensor does not yet support HFconnectionMatrixAlgorithmSparse")
 				else:

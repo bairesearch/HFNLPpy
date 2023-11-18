@@ -134,9 +134,9 @@ HFconceptNeuronsAlgorithmMatrixFileName = "HFconceptNeuronsBasic"	#uses same fil
 HFconnectionMatrixAlgorithmMatrixExtensionName = ".csv"
 HFconceptNeuronsAlgorithmMatrixExtensionName = ".csv"
 
-HFconnectionMatrixAlgorithmNormaliseSoftmax = False	#optional	#use softmax function to normalise connections matrix
+HFconnectionMatrixAlgorithmNormalise = "linear"
 if(HFconnectionMatrixAlgorithmSplit):
-	HFconnectionMatrixAlgorithmNormaliseSoftmax = False	#split does not support softmax function for normalising connections matrix (must dynamically use min/max)
+	HFconnectionMatrixAlgorithmNormalise = "tanh"	#linear/tanh/xsech	#split does not support softmax function for normalising connections matrix (must dynamically use min/max)
 	HFreadSavedConnectionsMatrixAlgorithm = False	#split does not support standard matrix file i/o (only database matrix file i/o)
 	HFwriteSavedConnectionsMatrixAlgorithm = False	#split does not support standard matrix file i/o (only database matrix file i/o)
 	if(HFconnectionMatrixAlgorithmSplitDatabase):
@@ -146,6 +146,7 @@ if(HFconnectionMatrixAlgorithmSplit):
 		HFreadSavedConceptList = False		#split does not support standard matrix file i/o (only database matrix file i/o)
 		HFwriteSavedConceptList = False	#split does not support standard matrix file i/o (only database matrix file i/o)
 else:
+	HFconnectionMatrixAlgorithmNormalise = "tanh"	#linear/softmax/tanh/xsech
 	HFreadSavedConnectionsMatrixAlgorithm = False	#optional
 	HFwriteSavedConnectionsMatrixAlgorithm = False	#optional
 	HFreadSavedConceptList = False	#optional

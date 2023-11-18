@@ -56,7 +56,7 @@ def loadSentenceMatrixAlgorithmSplitMatrices(HFconnectionGraphObject, sentenceCo
 					HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID], _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID])
 					neuronIDdictNewlyAdded[conceptNode.nodeName] = True
 				else:
-					print("conceptNode.nodeName = ", conceptNode.nodeName)
+					#print("conceptNode.nodeName = ", conceptNode.nodeName)
 					if(HFconnectionMatrixAlgorithmSplitDatabase):
 						#load HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] into RAM
 						HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] = HFNLPpy_MatrixDatabase.loadMatrixDatabaseFile(HFconnectionGraphObject, neuronID)
