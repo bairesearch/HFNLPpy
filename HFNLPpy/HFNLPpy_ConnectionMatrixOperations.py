@@ -26,7 +26,19 @@ if(pt.cuda.is_available()):
 	device = pt.device("cuda")
 else:
 	device = pt.device("cpu")
-	
+
+def addSentenceConceptNodesToHFconnectionGraphObject(HFconnectionGraphObject, sentenceConceptNodeList):
+	if(useHFconnectionMatrix):
+		for conceptNodeIndex, conceptNode in enumerate(sentenceConceptNodeList):
+			addSentenceConceptNodeToHFconnectionGraphObject(HFconnectionGraphObject, conceptNode)
+			
+def addSentenceConceptNodeToHFconnectionGraphObject(HFconnectionGraphObject, conceptNode):
+	#print("conceptNodeIndex = ", conceptNodeIndex)
+	if(not conceptNode.nodeName in HFconnectionGraphObject.neuronIDdict):
+		HFconnectionGraphObject.neuronNamelist.append(conceptNode.nodeName)
+		neuronID = conceptNode.networkIndex
+		HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName] = neuronID
+		
 def getNetworkSize(HFconnectionGraphObject):
 	#networkSize = stored databaseSize (RAM HFconnectionNetwork size is slightly larger to accomodate for new concepts added in current sentence)
 	networkSize = len(HFconnectionGraphObject.neuronNamelist)	#or len(HFconnectionGraphObject.neuronIDdict)

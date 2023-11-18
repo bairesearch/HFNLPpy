@@ -45,22 +45,34 @@ import random
 
 printVerbose = False
 
+def addSentenceConceptNodeToHFconnectionGraphObject(HFconnectionGraphObject, conceptNode):
+	if(useHFconnectionMatrix):
+		neuronIDdictNewlyAdded = {}	#CHECKTHIS
+		neuronIDdictPrevious = HFconnectionGraphObject.neuronIDdict.copy()	#CHECKTHIS
+		HFNLPpy_ConnectionMatrixOperations.addSentenceConceptNodeToHFconnectionGraphObject(HFconnectionGraphObject, conceptNode)
+		if(HFconnectionMatrixAlgorithmSplit):
+			loadSentenceMatrixAlgorithmSplitMatrix(HFconnectionGraphObject, conceptNode, neuronIDdictPrevious, neuronIDdictNewlyAdded)
+
 #preconditions: assumes addSentenceConceptNodesToHFconnectionGraphObject has already been executed
 def loadSentenceMatrixAlgorithmSplitMatrices(HFconnectionGraphObject, sentenceConceptNodeList, neuronIDdictPrevious, neuronIDdictNewlyAdded):
 	if(HFconnectionMatrixAlgorithmSplit):
 		for conceptNodeIndex, conceptNode in enumerate(sentenceConceptNodeList):
-			if(conceptNode.nodeName not in neuronIDdictNewlyAdded):	#ignore repeated concepts in sentence
-				neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
-				if(not conceptNode.nodeName in neuronIDdictPrevious):
-					#dynamically initialise HFconnectionGraphMatrix when new concepts are declared
-					HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID], _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID])
-					neuronIDdictNewlyAdded[conceptNode.nodeName] = True
-				else:
-					#print("conceptNode.nodeName = ", conceptNode.nodeName)
-					if(HFconnectionMatrixAlgorithmSplitDatabase):
-						#load HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] into RAM
-						HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] = HFNLPpy_MatrixDatabase.loadMatrixDatabaseFile(HFconnectionGraphObject, neuronID)
-						
+			loadSentenceMatrixAlgorithmSplitMatrix(HFconnectionGraphObject, conceptNode, neuronIDdictPrevious, neuronIDdictNewlyAdded)
+
+def loadSentenceMatrixAlgorithmSplitMatrix(HFconnectionGraphObject, conceptNode, neuronIDdictPrevious, neuronIDdictNewlyAdded):
+	if(HFconnectionMatrixAlgorithmSplit):
+		if(conceptNode.nodeName not in neuronIDdictNewlyAdded):	#ignore repeated concepts in sentence
+			neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
+			if(not conceptNode.nodeName in neuronIDdictPrevious):
+				#dynamically initialise HFconnectionGraphMatrix when new concepts are declared
+				HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID], _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID])
+				neuronIDdictNewlyAdded[conceptNode.nodeName] = True
+			else:
+				#print("conceptNode.nodeName = ", conceptNode.nodeName)
+				if(HFconnectionMatrixAlgorithmSplitDatabase):
+					#load HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] into RAM
+					HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] = HFNLPpy_MatrixDatabase.loadMatrixDatabaseFile(HFconnectionGraphObject, neuronID)
+												
 def HFconnectionGraphMatrixHolderInitialisation(self):
 	if(HFconnectionMatrixAlgorithmSplit):
 		self.HFconnectionGraphMatrix = [None]*HFconnectionMatrixBasicMaxConcepts	#store a separate matrix column for each source neuronID context index in python list

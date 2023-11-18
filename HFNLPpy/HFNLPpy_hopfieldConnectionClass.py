@@ -31,6 +31,7 @@ class HopfieldConnection:
 		self.weight = 1.0	
 		
 		if(useAlgorithmLayeredSANI):
+			self.isSANIcompoundNode = False
 			self.SANIactivationState = False
 			self.weight = 0	#SANIassociationStrength
 			self.SANInodeAssigned = False

@@ -135,7 +135,7 @@ usePytorch = False
 if(useHFconnectionMatrixBasic):
 	HFreadSavedConnectionsMatrixBasic = False	#not available
 	HFwriteSavedConnectionsMatrixBasic = False	#not available
-	HFconnectionMatrixBasicNormaliseSoftmax = False	#use softmax function to normalise connections matrix
+	HFconnectionMatrixBasicNormalise = "linear"	#linear/softmax/tanh/xsech	#use softmax function to normalise connections matrix
 	usePytorch = True
 	HFconnectionMatrixBasicMaxConcepts = 1000	#200	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
 	HFconnectionMatrixBasicGPU = True
