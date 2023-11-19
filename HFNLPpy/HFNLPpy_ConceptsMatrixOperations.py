@@ -23,17 +23,18 @@ from HFNLPpy_globalDefs import *
 
 import torch.nn.functional as F
 import HFNLPpy_ConnectionMatrixBasic
+import HFNLPpy_ConnectionMatrixOperations
 import HFNLPpy_hopfieldOperations
 
 def retrieveSimilarConceptsBagOfWords(wSource, sentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSet, HFconnectionGraphObject=None):
 	for conceptNeuron in connectionTargetNeuronSet:
-		if(linkSimilarConceptNodesBagOfWordsContextual):
-			conceptNeuronContextVector = createContextVectorBasic(wSource, sentenceConceptNodeList, HFconnectionGraphObject, linkSimilarConceptNodesBagOfWordsDistanceMax, linkSimilarConceptNodesBagOfWordsWeightRetrieval, False)
-			connectionTargetNeuronSetExtended, _, _ = connectionMatrixCalculateConnectionTargetSetBasic(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphBasicNormalised, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, linkSimilarConceptNodesBagOfWordsTopK)
+		if(HFconnectionMatrixBasicContextual):
+			conceptNeuronContextVector = createContextVectorBasic(wSource, sentenceConceptNodeList, HFconnectionGraphObject, HFconnectionMatrixBasicDistanceMax, HFconnectionMatrixBasicWeightRetrieval, False)
+			connectionTargetNeuronSetExtended, _, _ = connectionMatrixCalculateConnectionTargetSetBasic(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphBasicNormalised, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, HFconnectionMatrixBasicTopK)
 		else:
 			conceptNeuronID = HFconnectionGraphObject.neuronIDdict[conceptNeuron.nodeName]
 			conceptNeuronContextVector = HFconnectionGraphObject.HFconnectionGraphNormalised[conceptNeuronID]
-			connectionTargetNeuronSetExtended, _, _ = connectionMatrixCalculateConnectionTargetSetBasic(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphBasicNormalised, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, linkSimilarConceptNodesBagOfWordsTopK)
+			connectionTargetNeuronSetExtended, _, _ = connectionMatrixCalculateConnectionTargetSetBasic(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphBasicNormalised, HFconnectionGraphObject.neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, HFconnectionMatrixBasicTopK)
 	return connectionTargetNeuronSetExtended
 
 def connectionMatrixCalculateConnectionTargetSetBasic(HFconnectionGraphObject, HFconnectionGraph, neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, k):
@@ -78,7 +79,7 @@ def createContextVectorBasic(w1, sentenceConceptNodeList, HFconnectionGraphObjec
 					neuronIDcontext = HFconnectionGraphObject.neuronIDdict[conceptNodeContext.nodeName]
 					contextConnectionVector[neuronIDcontext] = calculateContextVectorValue(weightStore, w1, w2)
 	if(HFconnectionMatrixBasicGPU):
-		contextConnectionVector = contextConnectionVector.to(HFNLPpy_ConnectionMatrixBasic.device)
+		contextConnectionVector = contextConnectionVector.to(HFNLPpy_ConnectionMatrixOperations.device)
 	return contextConnectionVector
 
 def calculateContextVectorValue(weightStore, w1, w2):
@@ -86,7 +87,7 @@ def calculateContextVectorValue(weightStore, w1, w2):
 		weight = 1.0/(abs(w1 - w2))
 		contextVectorValue = weight
 	else:
-		if(useHFconnectionMatrixBasicBool):
+		if(HFconnectionMatrixBasicBool):
 			contextVectorValue = True
 		else:
 			contextVectorValue = 1.0

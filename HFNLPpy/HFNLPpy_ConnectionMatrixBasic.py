@@ -29,7 +29,7 @@ import HFNLPpy_ConnectionMatrixOperations
 epsilon = 1e-8  # Small epsilon value
 
 def addContextConnectionsToGraphBasic(HFconnectionGraph, contextConnectionVector):
-	if(useHFconnectionMatrixBasicBool):
+	if(HFconnectionMatrixBasicBool):
 		HFconnectionGraph = pt.logical_and(HFconnectionGraph, contextConnectionVector)
 	else:
 		HFconnectionGraph += contextConnectionVector
@@ -56,6 +56,8 @@ def initialiseHFconnectionMatrixBasic(HFconnectionGraphObject, dendriticBranchIn
 	if(HFreadSavedConnectionsMatrixBasic):
 		HFconnectionGraph = readHFconnectionMatrixBasic(HFconnectionGraphObject, dendriticBranchIndex, contextSizeIndex)
 	else:
+		print("HFconnectionGraphObject.connectionMatrixMaxConcepts = ", HFconnectionGraphObject.connectionMatrixMaxConcepts)
+		print("HFconnectionsMatrixBasicType = ", HFconnectionsMatrixBasicType)
 		HFconnectionGraph = pt.zeros([HFconnectionGraphObject.connectionMatrixMaxConcepts, HFconnectionGraphObject.connectionMatrixMaxConcepts], dtype=HFconnectionsMatrixBasicType)
 	if(HFconnectionMatrixBasicGPU):
 		HFconnectionGraph = HFconnectionGraph.to(HFNLPpy_ConnectionMatrixOperations.device)
@@ -97,14 +99,13 @@ def generateHFconnectionMatrixBasicFileName():
 		
 def writeHFconnectionMatrixBasicWrapper(HFconnectionGraphObject):
 	if(HFwriteSavedConnectionsMatrixBasic):
-		if(linkSimilarConceptNodesBagOfWords):
-			writeHFconnectionMatrixBasic(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphBasic)
+		writeHFconnectionMatrixBasic(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphBasic)
 	if(HFwriteSavedConceptList):
 		HFNLPpy_ConnectionMatrixOperations.writeHFConceptList(HFconnectionGraphObject.neuronNamelist)
 
 def normaliseBatchedTensor(HFconnectionGraph):
 	HFconnectionGraph = HFconnectionGraph.float()
-	if(useHFconnectionMatrixBasicBool):	#OLD: if(not weightStore)
+	if(HFconnectionMatrixBasicBool):	#OLD: if(not weightStore)
 		HFconnectionGraphNormalised = HFconnectionGraph
 	else:
 		#calculate a temporary normalised version of the HFconnectionGraph	#CHECKTHIS

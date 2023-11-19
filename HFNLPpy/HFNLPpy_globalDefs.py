@@ -83,22 +83,28 @@ if(linkSimilarConceptNodes):
 		if(tokenWordnetSynonyms):
 			tokenWordnetSynonymsFromLemma = False
 	elif(linkSimilarConceptNodesBagOfWords):
-		linkSimilarConceptNodesBagOfWordsWeightStore = False	#optional		#recommended - weight matrix storage calculation by distance of current sentence context word
-		linkSimilarConceptNodesBagOfWordsWeightRetrieval = False	#optional	#recommended - weight matrix lookup calculation by distance of current sentence context word
-		linkSimilarConceptNodesBagOfWordsContextual = True	#optional #uses incontext knowledge of previous words to find synonyms
-		linkSimilarConceptNodesBagOfWordsBidirectional = False	#mandatory - !bidirectional lookup is required for next word prediction (causal) 
-		if(not linkSimilarConceptNodesBagOfWordsContextual):
-			linkSimilarConceptNodesBagOfWordsWeightStore = True	#required for next word prediction with !linkSimilarConceptNodesBagOfWordsContextual
-			linkSimilarConceptNodesBagOfWordsWeightRetrieval = True
-		linkSimilarConceptNodesBagOfWordsDistanceMax = 5 #max distance of context word
-		linkSimilarConceptNodesBagOfWordsTopK = 3	#CHECKTHIS
-		useHFconnectionMatrix = True
 		useHFconnectionMatrixBasic = True
-		useHFconnectionMatrixBasicBool = False #initialise (dependent var)
-		if(not linkSimilarConceptNodesBagOfWordsWeightStore and not linkSimilarConceptNodesBagOfWordsWeightRetrieval):
-			if(not useAlgorithmMatrix):	#useHFconnectionMatrixBasicBool is not supported by useAlgorithmMatrix
-				useHFconnectionMatrixBasicBool = True	
-			
+
+SANIwordVectorsBasic = False	#default: False
+if(SANIwordVectorsBasic):
+	useHFconnectionMatrixBasic = True
+	
+if(useHFconnectionMatrixBasic):
+	useHFconnectionMatrix = True
+	HFconnectionMatrixBasicWeightStore = False	#optional		#recommended - weight matrix storage calculation by distance of current sentence context word
+	HFconnectionMatrixBasicWeightRetrieval = False	#optional	#recommended - weight matrix lookup calculation by distance of current sentence context word
+	HFconnectionMatrixBasicContextual = True	#optional #uses incontext knowledge of previous words to find synonyms
+	HFconnectionMatrixBasicBidirectional = False	#mandatory - !bidirectional lookup is required for next word prediction (causal) 
+	if(not HFconnectionMatrixBasicContextual):
+		HFconnectionMatrixBasicWeightStore = True	#required for next word prediction with !HFconnectionMatrixBasicContextual
+		HFconnectionMatrixBasicWeightRetrieval = True
+	HFconnectionMatrixBasicDistanceMax = 5 #max distance of context word
+	HFconnectionMatrixBasicTopK = 3	#CHECKTHIS
+	HFconnectionMatrixBasicBool = False #initialise (dependent var)
+	if(not HFconnectionMatrixBasicWeightStore and not HFconnectionMatrixBasicWeightRetrieval):
+		if(not useAlgorithmMatrix):	#HFconnectionMatrixBasicBool is not supported by useAlgorithmMatrix
+			HFconnectionMatrixBasicBool = True	
+				
 useDependencyParseTree = False	#initialise (dependent var)
 if(useAlgorithmLayeredSANI):
 	useDependencyParseTree = False
@@ -133,8 +139,9 @@ HFconceptNeuronsBasicExtensionName = ".csv"
 
 usePytorch = False
 if(useHFconnectionMatrixBasic):
-	HFreadSavedConnectionsMatrixBasic = False	#not available
-	HFwriteSavedConnectionsMatrixBasic = False	#not available
+	HFreadSavedConnectionsMatrixBasic = False
+	HFwriteSavedConnectionsMatrixBasic = False
+	HFwriteSavedConceptList = False
 	HFconnectionMatrixBasicNormalise = "linear"	#linear/softmax/tanh/xsech	#use softmax function to normalise connections matrix
 	usePytorch = True
 	HFconnectionMatrixBasicMaxConcepts = 1000	#200	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
@@ -147,7 +154,7 @@ if(usePytorch):
 	if(simulatedDendriticBranchesInitialisation):
 		HFconnectionsMatrixBasicType = pt.float	
 	else:
-		if(useHFconnectionMatrixBasicBool):
+		if(HFconnectionMatrixBasicBool):
 			HFconnectionsMatrixBasicType = pt.bool
 		else:
 			HFconnectionsMatrixBasicType = pt.long

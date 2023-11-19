@@ -41,12 +41,11 @@ if(useHFconnectionMatrix):
 		import HFNLPpy_ConnectionMatrixPyG
 	if(useHFconnectionMatrixBasic):
 		import HFNLPpy_ConnectionMatrixBasic
+		import HFNLPpy_ConceptsMatrix
 	if(useHFconnectionMatrixAlgorithm):
 		import HFNLPpy_ConnectionMatrixAlgorithm
 	import HFNLPpy_ConnectionMatrixOperations
-if(linkSimilarConceptNodesBagOfWords):
-	import HFNLPpy_ConceptsMatrix
-	
+
 if(useAlgorithmScan):
 	#from HFNLPpy_ScanGlobalDefs import *	#not currently required
 	import HFNLPpy_Scan
@@ -79,7 +78,7 @@ class HFconnectionGraphClass:
 	def __init__(self):
 		if(useAlgorithmMatrix):
 			HFNLPpy_Matrix.HFconnectionGraphMatrixHolderInitialisation(self)
-		if(linkSimilarConceptNodesBagOfWords):
+		if(useHFconnectionMatrixBasic):
 			self.HFconnectionGraphBasic = None
 		if(useAlgorithmScan):
 			self.HFconnectionGraphPyG = None
@@ -216,7 +215,7 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 			trainSentence = False
 			
 	if(trainSentence):
-		if(linkSimilarConceptNodesBagOfWords):
+		if(useHFconnectionMatrixBasic):
 			HFNLPpy_ConceptsMatrix.addContextWordsToConnectionGraphLinkConcepts(tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject)
 		
 		#create Hopfield graph direct connections (for draw only)
