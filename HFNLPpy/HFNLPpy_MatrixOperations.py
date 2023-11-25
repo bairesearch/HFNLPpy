@@ -61,6 +61,34 @@ def isValidContextVector(conceptNeuronContextVector, matrixTensorDim4):
 			if(len(conceptNeuronContextVector) == 0):
 				validContextVector = False
 	return validContextVector, connectionTargetNeuronSet, connectionStrength, connectionIndex
+
+def SANImethodAddActivationAcrossSegments(array):
+	array = pt.sum(array, dim=1, keepdim=True)
+	return array
+	
+def SANImethodSupportSequentialActivationAcrossSegments(HFconnectionGraph, conceptNeuronContextVector):
+	activations = pt.zeros([HFconnectionGraph.shape[0], HFconnectionGraph.shape[1], HFconnectionGraph.shape[2], HFconnectionGraph.shape[3]]).to(HFNLPpy_ConnectionMatrixOperations.device)
+	conceptNeuronContextVectorSegmentPrevious = pt.zeros([HFconnectionGraph.shape[0], HFconnectionGraph.shape[2], HFconnectionGraph.shape[3]]).to(HFNLPpy_ConnectionMatrixOperations.device)
+	for sequentialSegmentIndex in range(numberOfBranchSequentialSegments):
+		#calculate current segment activations;
+		HFconnectionGraphSegment = HFconnectionGraph[:, sequentialSegmentIndex]
+		conceptNeuronContextVectorSegment = conceptNeuronContextVector[:, sequentialSegmentIndex] + conceptNeuronContextVectorSegmentPrevious
+		conceptNeuronContextVectorSegmentCumulative = conceptNeuronContextVectorSegment+ conceptNeuronContextVectorSegmentPrevious
+		activationsSegment = HFconnectionGraphSegment * conceptNeuronContextVectorSegmentCumulative
+		activations[:, sequentialSegmentIndex] = activationsSegment
+		
+		#only retain previously unactivated context if all activations for current segment are 0 (without this constraint the method is equivalent to addActivationAcrossSegments);
+			#alternate method; only bias based on num of previous active states for unique dendritic inputs
+		activationsSegmentOff =	(pt.sum(activationsSegment, dim=2) == 0).int().unsqueeze(dim=-1)
+		conceptNeuronContextVectorSegmentPrevious = conceptNeuronContextVectorSegmentPrevious *	activationsSegmentOff	#broadcast last dim
+	
+		#retain previously unactivated context, to be fed into next segment;
+		HFconnectionGraphSegmentOff = (HFconnectionGraphSegment == 0).int()
+		conceptNeuronContextVectorSegmentInactive = conceptNeuronContextVectorSegment * HFconnectionGraphSegmentOff
+		conceptNeuronContextVectorSegmentPrevious = conceptNeuronContextVectorSegmentPrevious + conceptNeuronContextVectorSegmentInactive
+		
+	activations = pt.sum(activations, dim=1, keepdim=True)
+	return activations
 	
 def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject, HFconnectionGraph, neuronNamelist, networkConceptNodeDict, conceptNeuronContextVector, k, matrixTensorDim4):
 	connectionTargetNeuronList = []
@@ -72,16 +100,18 @@ def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject, HFconn
 	#print("conceptNeuronContextVectorExtended.sum() = ", conceptNeuronContextVectorExtended.sum())
 	#print("HFconnectionGraph.shape = ", HFconnectionGraph.shape)
 	#print("HFconnectionGraph.sum() = ", HFconnectionGraph.sum())
-	mask = HFconnectionGraph * conceptNeuronContextVectorExtended
-	array = mask
+	activations = HFconnectionGraph * conceptNeuronContextVectorExtended
+	array = activations
 	
 	neuronIndexList = []
 	if(matrixTensorDim4):
-		if(algorithmMatrixSANImethodAddActivationAcrossSegments):
-			array = pt.sum(array, dim=1, keepdim=True)
-		elif(algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments):
-			printe("connectionMatrixCalculateConnectionTargetSet error: algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments not yet coded")
-				
+		if(algorithmMatrixSANImethod=="addActivationAcrossSegments"):
+			array = SANImethodAddActivationAcrossSegments(array)
+		elif(algorithmMatrixSANImethod=="supportSequentialActivationAcrossSegments"):
+			array = SANImethodSupportSequentialActivationAcrossSegments(HFconnectionGraph, conceptNeuronContextVectorExtended)
+		elif(algorithmMatrixSANImethod=="enforceSequentialActivationAcrossSegments"):
+			printe("connectionMatrixCalculateConnectionTargetSet error: algorithmMatrixSANImethod==enforceSequentialActivationAcrossSegments not coded")
+			
 		arraySummedTopK = performSumTopK(array, matrixPropagateTopKconceptNodes, 3)
 		arraySummedTopKindices = arraySummedTopK.indices
 		arraySummedTopK = performSumTopK(arraySummedTopK.values, matrixPropagateTopKsecondIndex, 2)
@@ -120,10 +150,12 @@ def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject, HFconn
 
 	
 def calculateSequentialSegmentActivation(connectionStrength):
-	if(algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments):
-		printe("calculateSequentialSegmentActivation error: algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments not coded")
-	else:
+	if(algorithmMatrixSANImethod=="addActivationAcrossSegments"):
 		activationValue = connectionStrength
+	elif(algorithmMatrixSANImethod=="supportSequentialActivationAcrossSegments"):
+		printe("calculateSequentialSegmentActivation error: algorithmMatrixSANImethod==supportSequentialActivationAcrossSegments not coded")
+	elif(algorithmMatrixSANImethod=="enforceSequentialActivationAcrossSegments"):
+		printe("connectionMatrixCalculateConnectionTargetSet error: algorithmMatrixSANImethod==enforceSequentialActivationAcrossSegments not coded")
 	return activationValue
 
 def performSumTopK(array, k, dim):

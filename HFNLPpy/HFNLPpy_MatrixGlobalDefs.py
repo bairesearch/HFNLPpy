@@ -31,8 +31,9 @@ debugHFconnectionMatrix = False
 algorithmMatrixSANI = True	#emulate DendriticSANIbiologicalSimulationSimple
 if(algorithmMatrixSANI):
 	#select algorithmMatrixSANI method (select one);
-	algorithmMatrixSANImethodAddActivationAcrossSegments = True	#default: True	#it is not necessary that previous segments be activated, but their activation will bias the selection of a particular dendritic branch
-	algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments = False	#not yet implemented (else sum sequential segment activations)
+	algorithmMatrixSANImethod = "addActivationAcrossSegments"	#default	#it is not necessary that previous segments be activated, but their activation will bias the selection of a particular dendritic branch
+	#algorithmMatrixSANImethod = "supportSequentialActivationAcrossSegments"	#retain previously unactivated context, to be fed into next segment
+	#algorithmMatrixSANImethod = "enforceSequentialActivationAcrossSegments"	#incomplete	#previous segments must be activated for current segment to be activated
 	#select sequentialSegmentContextEncoding method (select one);
 	sequentialSegmentContextEncodingAbsoluteLinear = False
 	if(sequentialSegmentContextEncodingAbsoluteLinear):
@@ -40,11 +41,13 @@ if(algorithmMatrixSANI):
 	sequentialSegmentContextEncodingRelativeLinear = True
 	sequentialSegmentContextEncodingRelativeExponential = False	#sequential segments capture input (past context tokens) at exponentially further distances
 	#sequentialSegmentContextEncodingRandom = False #encodings are partially randomised (note dendritic SANI implementation creates multiple semi-random encodings of past context in different dendritic branches) 
-	numberOfBranchSequentialSegments = 5
+	if(algorithmMatrixSANImethod=="supportSequentialActivationAcrossSegments"):
+		numberOfBranchSequentialSegments = 10	#SANI supports higher resolution sequential segments (up to max sequence resolution; x=1 [individual tokens])
+	elif(algorithmMatrixSANImethod=="addActivationAcrossSegments"):
+		numberOfBranchSequentialSegments = 5
 	normaliseConnectionStrengthWrtContextLength = False
 else:
-	algorithmMatrixSANImethodAddActivationAcrossSegments = False
-	algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments = False
+	algorithmMatrixSANImethod = "none"
 	algorithmMatrixSANImethodTopkActivationAcrossSegments = False
 	algorithmMatrixSANImethodAddActivationAcrossSegmentsOld = False
 	normaliseConnectionStrengthWrtContextLength = True	#optional	#orig:True	#CHECKTHIS
@@ -53,7 +56,7 @@ else:
 #algorithmMatrixTensorDim = 2	#default
 algorithmMatrixTensorDim = 4	#optional	#store context size array (and simulated dendritic branches) in pytorch tensor rather than python list	#requires high ram
 if(algorithmMatrixTensorDim != 4):
-	if(algorithmMatrixSANImethodAddActivationAcrossSegments or algorithmMatrixSANImethodEnforceSequentialActivationAcrossSegments):
+	if(algorithmMatrixSANImethod=="addActivationAcrossSegments" or algorithmMatrixSANImethod=="supportSequentialActivationAcrossSegments"):
 		algorithmMatrixTensorDim = 3 #mandatory
 HFconnectionMatrixAlgorithmSparse = False		#incomplete: requires hybrid dense-sparse tensor implementation such that tensor can still be indexed #reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)
 HFconnectionMatrixAlgorithmSplit = True		#store each column of connection matrix in separate array (or hard disk file) 	#currently in testing #reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)	#store each column of connection matrix in separate array (or hard drive file) - bring into memory on demand (depending on the precise activated columns of the contextVector being compared)
