@@ -111,9 +111,17 @@ else:
 #### topk selection ####
 selectActivatedTop = True	#mandatory (implied) select activated top k target neurons during propagation test
 if(selectActivatedTop):
-	matrixPropagateTopKconceptNodes = 1	#number of top k elements to save
+	if(algorithmMatrixTensorDim==4):
+		matrixPropagateTopCommonSegmentPredictions = False	#optional	#for each sequential segment, calculate top x (eg 10) predictions - take the predictions that are common across all segments and highest weighted
+	else:
+		matrixPropagateTopCommonSegmentPredictions = False #not yet implemented
 	matrixPropagateTopKcontextSize = 1	#number of top k elements to save
-	matrixPropagateTopKsequentialSegments = 1	#number of top k elements to save
+	if(matrixPropagateTopCommonSegmentPredictions):
+		matrixPropagateTopKconceptNodes = 10	#number of top k elements to save
+		matrixPropagateTopKsequentialSegments = 1	#number of top k elements to save
+	else:
+		matrixPropagateTopKconceptNodes = 1	#number of top k elements to save
+		matrixPropagateTopKsequentialSegments = 1	#number of top k elements to save
 	matrixPropagateTopKdendriticBranches = 1 	#number of top k elements to save
 	if(algorithmMatrixSANI):
 		matrixPropagateTopKsecondIndex = matrixPropagateTopKsequentialSegments

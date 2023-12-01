@@ -105,21 +105,28 @@ def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject, HFconn
 	
 	neuronIndexList = []
 	if(matrixTensorDim4):
-		if(algorithmMatrixSANImethod=="addActivationAcrossSegments"):
-			array = SANImethodAddActivationAcrossSegments(array)
-		elif(algorithmMatrixSANImethod=="supportSequentialActivationAcrossSegments"):
-			array = SANImethodSupportSequentialActivationAcrossSegments(HFconnectionGraph, conceptNeuronContextVectorExtended)
-		elif(algorithmMatrixSANImethod=="enforceSequentialActivationAcrossSegments"):
-			printe("connectionMatrixCalculateConnectionTargetSet error: algorithmMatrixSANImethod==enforceSequentialActivationAcrossSegments not coded")
-			
+		if(not matrixPropagateTopCommonSegmentPredictions):
+			if(algorithmMatrixSANImethod=="addActivationAcrossSegments"):
+				array = SANImethodAddActivationAcrossSegments(array)
+			elif(algorithmMatrixSANImethod=="supportSequentialActivationAcrossSegments"):
+				array = SANImethodSupportSequentialActivationAcrossSegments(HFconnectionGraph, conceptNeuronContextVectorExtended)
+			elif(algorithmMatrixSANImethod=="enforceSequentialActivationAcrossSegments"):
+				printe("connectionMatrixCalculateConnectionTargetSet error: algorithmMatrixSANImethod==enforceSequentialActivationAcrossSegments not coded")
+
 		arraySummedTopK = performSumTopK(array, matrixPropagateTopKconceptNodes, 3)
 		arraySummedTopKindices = arraySummedTopK.indices
-		arraySummedTopK = performSumTopK(arraySummedTopK.values, matrixPropagateTopKsecondIndex, 2)
-		if(simulatedDendriticBranches):
-			arraySummedTopKindices = arraySummedTopKindices.squeeze(-1).gather(dim=1, index=arraySummedTopK.indices)
+		arraySummedTopKvalues = arraySummedTopK.values
+		if(matrixPropagateTopCommonSegmentPredictions):
+			arraySummedTopKindices, arraySummedTopKvalues = getTopCommonSegmentPredictions(arraySummedTopKindices, arraySummedTopKvalues)
+		arraySummedTopK = performSumTopK(arraySummedTopKvalues, matrixPropagateTopKsecondIndex, 2)
+		if(matrixPropagateTopKconceptNodes > 1):
+			arraySummedTopKindices = multiIndex(arraySummedTopKindices, arraySummedTopK.indices, 3)		
 		else:
-			arraySummedTopKindices = arraySummedTopKindices[:, arraySummedTopK.indices]
-			
+			if(simulatedDendriticBranches):
+				arraySummedTopKindices = arraySummedTopKindices.squeeze(-1).gather(dim=1, index=arraySummedTopK.indices)
+			else:
+				arraySummedTopKindices = arraySummedTopKindices[:, arraySummedTopK.indices]
+		
 		arraySummedTopK = performSumTopK(arraySummedTopK.values, matrixPropagateTopKdendriticBranches, 1)
 		for i in range(len(arraySummedTopK.values)):
 			value = arraySummedTopK.values[i]
@@ -133,11 +140,12 @@ def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject, HFconn
 				neuronIndexList.append(arraySummedTopK.indices[i])
 	
 	for i in neuronIndexList:
+		#print("i = ", i)
 		conceptName = neuronNamelist[i]
 		conceptNeuron, conceptInDict = HFNLPpy_hopfieldOperations.convertLemmaToConcept(networkConceptNodeDict, conceptName)
 		if(conceptInDict):
 			connectionTargetNeuronList.append(conceptNeuron)
-	connectionTargetNeuronSet = set(connectionTargetNeuronList)	
+	connectionTargetNeuronSet = set(connectionTargetNeuronList)
 	
 	if(matrixTensorDim4):
 		connectionIndex = arraySummedTopK.indices[0]	#only valid for matrixPropagateTopKdendriticBranches=1
@@ -148,7 +156,70 @@ def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject, HFconn
 		
 	return connectionTargetNeuronSet, connectionStrength, connectionIndex
 
+def multiIndex(data, index, numberDimensions):
+	#precondition: index tensor dim = data tensor dim - 1, where each cell in index tensor is an index
+	if(numberDimensions == 4):
+		indexedData = data[torch.arange(data.size(0)).unsqueeze(1).unsqueeze(2), pt.arange(data.size(1)).unsqueeze(1), pt.arange(data.size(2)), index]
+	elif(numberDimensions == 3):
+		indexedData = data[pt.arange(data.size(0)).unsqueeze(1), pt.arange(data.size(1)), index]
+	else:
+		printe("multiIndex error: numberDimensions != 4  has not been coded")
+	return indexedData
 	
+def getTopCommonSegmentPredictions(arraySummedTopKindices, arraySummedTopKvalues):
+	#print("arraySummedTopKvalues = ", arraySummedTopKvalues)
+	#print("arraySummedTopKindices = ", arraySummedTopKindices)
+	
+	#arraySummedTopKindices/arraySummedTopKvalues shape = numberOfIndependentDendriticBranches, numberOfBranchSequentialSegments, matrixPropagateTopKconceptNodes
+	#only take predictions that are common across all segments
+	arraySummedTopKvaluesList = []
+	for i in range(matrixPropagateTopKconceptNodes):
+		#print("i = ", i)
+		
+		#for every index in first sequential segment, calculate the total value for this index
+		arraySummedTopKindex = arraySummedTopKindices[:, 0, i]	#only consider indices from first segment (0)
+		arraySummedTopKindex = arraySummedTopKindex.unsqueeze(1).unsqueeze(2)
+		arraySummedTopKindex = arraySummedTopKindex.repeat(1, numberOfBranchSequentialSegments, matrixPropagateTopKconceptNodes)	#len(HFconnectionGraphObject.neuronNamelist)	
+		arraySummedTopKindexSel = (arraySummedTopKindices == arraySummedTopKindex)
+		arraySummedTopKindexMask = pt.sum(arraySummedTopKindexSel, dim=2)	#along matrixPropagateTopKconceptNodes	#not necessary as arraySummedTopKindices should be unique for each sequential segment: (pt.sum(arraySummedTopKindexSel, dim=2) > 0).int()
+		arraySummedTopKindexMask = pt.sum(arraySummedTopKindexMask, dim=1)	#along sequential segments
+		arraySummedTopKindexMaskCommon = (arraySummedTopKindexMask >= numberOfBranchSequentialSegments) 	#temp: (arraySummedTopKindexMask >= 0)
+			
+		#print("arraySummedTopKindices = ", arraySummedTopKindices)
+		#print("arraySummedTopKvalues = ", arraySummedTopKvalues)
+		#print("arraySummedTopKindex = ", arraySummedTopKindex)
+		#print("arraySummedTopKindexSel = ", arraySummedTopKindexSel)
+		#print("arraySummedTopKindexMask = ", arraySummedTopKindexMask)
+		#print("arraySummedTopKindexMaskCommon = ", arraySummedTopKindexMaskCommon)
+		
+		arraySummedTopKindexMaskCommon = arraySummedTopKindexMaskCommon.unsqueeze(1).unsqueeze(2)
+		arraySummedTopKindexMaskCommon = arraySummedTopKindexMaskCommon.repeat(1, numberOfBranchSequentialSegments, matrixPropagateTopKconceptNodes)
+		arraySummedTopKindexSelCommon = pt.logical_and(arraySummedTopKindexSel, arraySummedTopKindexMaskCommon)
+
+		#print("arraySummedTopKindexMaskCommon = ", arraySummedTopKindexMaskCommon)
+		#print("arraySummedTopKindexSelCommon = ", arraySummedTopKindexSelCommon)
+		
+		arraySummedTopKindexSelCommonValues = arraySummedTopKvalues * arraySummedTopKindexSelCommon.float()
+		arraySummedTopKindexSelCommonValues = pt.sum(arraySummedTopKindexSelCommonValues, dim=2)	#along matrixPropagateTopKconceptNodes
+		if(algorithmMatrixSANImethod=="addActivationAcrossSegments"):
+			arraySummedTopKindexSelCommonValues = pt.sum(arraySummedTopKindexSelCommonValues, dim=1, keepdims=True)	#along sequential segments
+		elif(algorithmMatrixSANImethod=="supportSequentialActivationAcrossSegments"):
+			printe("matrixPropagateTopCommonSegmentPredictions+supportSequentialActivationAcrossSegments not currently supported")
+		elif(algorithmMatrixSANImethod=="enforceSequentialActivationAcrossSegments"):
+			printe("connectionMatrixCalculateConnectionTargetSet error: algorithmMatrixSANImethod==enforceSequentialActivationAcrossSegments not coded")
+		arraySummedTopKvaluesList.append(arraySummedTopKindexSelCommonValues)
+		
+		#print("arraySummedTopKindexSelCommonValues = ", arraySummedTopKindexSelCommonValues)
+		
+	arraySummedTopKvalues = pt.stack(arraySummedTopKvaluesList, dim=2)	#shape = numberOfIndependentDendriticBranches, matrixPropagateTopKconceptNodes
+	arraySummedTopKindices = arraySummedTopKindices[:, 0]	#use indices from first segment (0)	#shape = numberOfIndependentDendriticBranches, matrixPropagateTopKconceptNodes
+	arraySummedTopKindices = arraySummedTopKindices.unsqueeze(1)	#restore blank segment dimension
+	
+	#print("arraySummedTopKvalues = ", arraySummedTopKvalues)
+	#print("arraySummedTopKindices = ", arraySummedTopKindices)
+	
+	return arraySummedTopKindices, arraySummedTopKvalues
+				
 def calculateSequentialSegmentActivation(connectionStrength):
 	if(algorithmMatrixSANImethod=="addActivationAcrossSegments"):
 		activationValue = connectionStrength

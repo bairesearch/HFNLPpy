@@ -19,19 +19,6 @@ pip install nltk spacy==2.3.7
 python3 -m spacy download en_core_web_md
 pip install benepar
 
-	# Installation:
-	conda create -n pytorchsenv
-	source activate pytorchsenv
-	conda install pytorch torchvision torchaudio pytorch-cuda=11.6 -c pytorch -c nvidia
-	pip install tensorflow
-	pip install networkx
-	pip install matplotlib==2.2.3
-	pip install yattag
-	pip install torch_geometric
-	pip install nltk spacy
-	python3 -m spacy download en_core_web_md
-	pip install benepar
-
 # Usage:
 source activate anntf2
 python3 HFNLPpy_main.py
