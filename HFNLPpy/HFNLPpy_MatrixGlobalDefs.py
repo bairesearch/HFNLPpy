@@ -117,8 +117,10 @@ if(selectActivatedTop):
 		matrixPropagateTopCommonSegmentPredictions = False #not yet implemented
 	matrixPropagateTopKcontextSize = 1	#number of top k elements to save
 	if(matrixPropagateTopCommonSegmentPredictions):
-		matrixPropagateTopKconceptNodes = 10	#number of top k elements to save
+		matrixPropagateTopCommonSegmentPredictionsVectorised = False	#requires more GPU memory (*matrixPropagateTopKconceptNodes)
+		matrixPropagateTopKconceptNodes = 10	#100	#number of top k elements to save
 		matrixPropagateTopKsequentialSegments = 1	#number of top k elements to save
+		matrixPropagateTopCommonSegmentPredictionsRequired = numberOfBranchSequentialSegments-0	#default: numberOfBranchSequentialSegments
 	else:
 		matrixPropagateTopKconceptNodes = 1	#number of top k elements to save
 		matrixPropagateTopKsequentialSegments = 1	#number of top k elements to save

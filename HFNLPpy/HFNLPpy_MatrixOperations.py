@@ -165,8 +165,26 @@ def multiIndex(data, index, numberDimensions):
 	else:
 		printe("multiIndex error: numberDimensions != 4  has not been coded")
 	return indexedData
-	
+
 def getTopCommonSegmentPredictions(arraySummedTopKindices, arraySummedTopKvalues):
+	if(matrixPropagateTopCommonSegmentPredictionsVectorised):
+		return getTopCommonSegmentPredictionsVectorised(arraySummedTopKindices, arraySummedTopKvalues)
+	else:
+		return getTopCommonSegmentPredictionsStandard(arraySummedTopKindices, arraySummedTopKvalues)
+
+def getTopCommonSegmentPredictionsVectorised(arraySummedTopKindices, arraySummedTopKvalues):
+	#for every index in first sequential segment, calculate the total value for this index
+	arraySummedTopKindex = pt.permute(arraySummedTopKindices, (2, 0, 1))	#only consider indices from first segment (0)
+	arraySummedTopKindex = arraySummedTopKindex[:, :, 0]	#only consider indices from first segment (0)
+	arraySummedTopKvaluesBatch = getTopCommonSegmentPredictionsBatch(arraySummedTopKindices, arraySummedTopKvalues, arraySummedTopKindex, 1)
+
+	arraySummedTopKvalues = pt.permute(arraySummedTopKvaluesBatch, (1, 2, 0)) #shape = numberOfIndependentDendriticBranches, 1, matrixPropagateTopKconceptNodes
+	arraySummedTopKindices = arraySummedTopKindices[:, 0]	#use indices from first segment (0)	#shape = numberOfIndependentDendriticBranches, matrixPropagateTopKconceptNodes
+	arraySummedTopKindices = arraySummedTopKindices.unsqueeze(1)	#restore blank segment dimension
+	
+	return arraySummedTopKindices, arraySummedTopKvalues
+	
+def getTopCommonSegmentPredictionsStandard(arraySummedTopKindices, arraySummedTopKvalues):
 	#print("arraySummedTopKvalues = ", arraySummedTopKvalues)
 	#print("arraySummedTopKindices = ", arraySummedTopKindices)
 	
@@ -175,43 +193,12 @@ def getTopCommonSegmentPredictions(arraySummedTopKindices, arraySummedTopKvalues
 	arraySummedTopKvaluesList = []
 	for i in range(matrixPropagateTopKconceptNodes):
 		#print("i = ", i)
-		
 		#for every index in first sequential segment, calculate the total value for this index
 		arraySummedTopKindex = arraySummedTopKindices[:, 0, i]	#only consider indices from first segment (0)
-		arraySummedTopKindex = arraySummedTopKindex.unsqueeze(1).unsqueeze(2)
-		arraySummedTopKindex = arraySummedTopKindex.repeat(1, numberOfBranchSequentialSegments, matrixPropagateTopKconceptNodes)	#len(HFconnectionGraphObject.neuronNamelist)	
-		arraySummedTopKindexSel = (arraySummedTopKindices == arraySummedTopKindex)
-		arraySummedTopKindexMask = pt.sum(arraySummedTopKindexSel, dim=2)	#along matrixPropagateTopKconceptNodes	#not necessary as arraySummedTopKindices should be unique for each sequential segment: (pt.sum(arraySummedTopKindexSel, dim=2) > 0).int()
-		arraySummedTopKindexMask = pt.sum(arraySummedTopKindexMask, dim=1)	#along sequential segments
-		arraySummedTopKindexMaskCommon = (arraySummedTopKindexMask >= numberOfBranchSequentialSegments) 	#temp: (arraySummedTopKindexMask >= 0)
-			
-		#print("arraySummedTopKindices = ", arraySummedTopKindices)
-		#print("arraySummedTopKvalues = ", arraySummedTopKvalues)
-		#print("arraySummedTopKindex = ", arraySummedTopKindex)
-		#print("arraySummedTopKindexSel = ", arraySummedTopKindexSel)
-		#print("arraySummedTopKindexMask = ", arraySummedTopKindexMask)
-		#print("arraySummedTopKindexMaskCommon = ", arraySummedTopKindexMaskCommon)
-		
-		arraySummedTopKindexMaskCommon = arraySummedTopKindexMaskCommon.unsqueeze(1).unsqueeze(2)
-		arraySummedTopKindexMaskCommon = arraySummedTopKindexMaskCommon.repeat(1, numberOfBranchSequentialSegments, matrixPropagateTopKconceptNodes)
-		arraySummedTopKindexSelCommon = pt.logical_and(arraySummedTopKindexSel, arraySummedTopKindexMaskCommon)
-
-		#print("arraySummedTopKindexMaskCommon = ", arraySummedTopKindexMaskCommon)
-		#print("arraySummedTopKindexSelCommon = ", arraySummedTopKindexSelCommon)
-		
-		arraySummedTopKindexSelCommonValues = arraySummedTopKvalues * arraySummedTopKindexSelCommon.float()
-		arraySummedTopKindexSelCommonValues = pt.sum(arraySummedTopKindexSelCommonValues, dim=2)	#along matrixPropagateTopKconceptNodes
-		if(algorithmMatrixSANImethod=="addActivationAcrossSegments"):
-			arraySummedTopKindexSelCommonValues = pt.sum(arraySummedTopKindexSelCommonValues, dim=1, keepdims=True)	#along sequential segments
-		elif(algorithmMatrixSANImethod=="supportSequentialActivationAcrossSegments"):
-			printe("matrixPropagateTopCommonSegmentPredictions+supportSequentialActivationAcrossSegments not currently supported")
-		elif(algorithmMatrixSANImethod=="enforceSequentialActivationAcrossSegments"):
-			printe("connectionMatrixCalculateConnectionTargetSet error: algorithmMatrixSANImethod==enforceSequentialActivationAcrossSegments not coded")
+		arraySummedTopKindexSelCommonValues = getTopCommonSegmentPredictionsBatch(arraySummedTopKindices, arraySummedTopKvalues, arraySummedTopKindex, 0)
 		arraySummedTopKvaluesList.append(arraySummedTopKindexSelCommonValues)
 		
-		#print("arraySummedTopKindexSelCommonValues = ", arraySummedTopKindexSelCommonValues)
-		
-	arraySummedTopKvalues = pt.stack(arraySummedTopKvaluesList, dim=2)	#shape = numberOfIndependentDendriticBranches, matrixPropagateTopKconceptNodes
+	arraySummedTopKvalues = pt.stack(arraySummedTopKvaluesList, dim=2)	#shape = numberOfIndependentDendriticBranches, 1, matrixPropagateTopKconceptNodes
 	arraySummedTopKindices = arraySummedTopKindices[:, 0]	#use indices from first segment (0)	#shape = numberOfIndependentDendriticBranches, matrixPropagateTopKconceptNodes
 	arraySummedTopKindices = arraySummedTopKindices.unsqueeze(1)	#restore blank segment dimension
 	
@@ -219,7 +206,52 @@ def getTopCommonSegmentPredictions(arraySummedTopKindices, arraySummedTopKvalues
 	#print("arraySummedTopKindices = ", arraySummedTopKindices)
 	
 	return arraySummedTopKindices, arraySummedTopKvalues
-				
+
+def getTopCommonSegmentPredictionsBatch(arraySummedTopKindices, arraySummedTopKvalues, arraySummedTopKindex, batchDims):
+	#arraySummedTopKindices/arraySummedTopKvalues shape = numberOfIndependentDendriticBranches, numberOfBranchSequentialSegments, matrixPropagateTopKconceptNodes
+	if(batchDims==1):
+		arraySummedTopKindices = arraySummedTopKindices.unsqueeze(0)	#.repeat(matrixPropagateTopKconceptNodes, 1, 1, 1) - not necessary with broadcasting
+		arraySummedTopKvalues = arraySummedTopKvalues.unsqueeze(0)	#.repeat(matrixPropagateTopKconceptNodes, 1, 1, 1) - not necessary with broadcasting
+
+	arraySummedTopKindex = arraySummedTopKindex.unsqueeze(batchDims+1).unsqueeze(batchDims+2)
+	if(batchDims==1):
+		arraySummedTopKindex = arraySummedTopKindex.repeat(batchDims, 1, numberOfBranchSequentialSegments, matrixPropagateTopKconceptNodes)	#len(HFconnectionGraphObject.neuronNamelist)	
+	else:
+		arraySummedTopKindex = arraySummedTopKindex.repeat(1, numberOfBranchSequentialSegments, matrixPropagateTopKconceptNodes)	#len(HFconnectionGraphObject.neuronNamelist)	
+	arraySummedTopKindexSel = (arraySummedTopKindices == arraySummedTopKindex)
+	arraySummedTopKindexMask = pt.sum(arraySummedTopKindexSel, dim=batchDims+2)	#along matrixPropagateTopKconceptNodes	#not necessary as arraySummedTopKindices should be unique for each sequential segment: (pt.sum(arraySummedTopKindexSel, dim=2) > 0).int()
+	arraySummedTopKindexMask = pt.sum(arraySummedTopKindexMask, dim=batchDims+1)	#along sequential segments
+	arraySummedTopKindexMaskCommon = (arraySummedTopKindexMask >= matrixPropagateTopCommonSegmentPredictionsRequired) 	#temp: (arraySummedTopKindexMask >= 0)
+
+	#print("arraySummedTopKindices = ", arraySummedTopKindices)
+	#print("arraySummedTopKvalues = ", arraySummedTopKvalues)
+	#print("arraySummedTopKindex = ", arraySummedTopKindex)
+	#print("arraySummedTopKindexSel = ", arraySummedTopKindexSel)
+	#print("arraySummedTopKindexMask = ", arraySummedTopKindexMask)
+	#print("arraySummedTopKindexMaskCommon = ", arraySummedTopKindexMaskCommon)
+
+	arraySummedTopKindexMaskCommon = arraySummedTopKindexMaskCommon.unsqueeze(batchDims+1).unsqueeze(batchDims+2)
+	if(batchDims==1):
+		arraySummedTopKindexMaskCommon = arraySummedTopKindexMaskCommon.repeat(1, 1, numberOfBranchSequentialSegments, matrixPropagateTopKconceptNodes)
+	else:
+		arraySummedTopKindexMaskCommon = arraySummedTopKindexMaskCommon.repeat(1, numberOfBranchSequentialSegments, matrixPropagateTopKconceptNodes)
+	arraySummedTopKindexSelCommon = pt.logical_and(arraySummedTopKindexSel, arraySummedTopKindexMaskCommon)
+
+	#print("arraySummedTopKindexMaskCommon = ", arraySummedTopKindexMaskCommon)
+	#print("arraySummedTopKindexSelCommon = ", arraySummedTopKindexSelCommon)
+
+	arraySummedTopKindexSelCommonValues = arraySummedTopKvalues * arraySummedTopKindexSelCommon.float()
+	arraySummedTopKindexSelCommonValues = pt.sum(arraySummedTopKindexSelCommonValues, dim=batchDims+2)	#along matrixPropagateTopKconceptNodes
+	if(algorithmMatrixSANImethod=="addActivationAcrossSegments"):
+		arraySummedTopKindexSelCommonValues = pt.sum(arraySummedTopKindexSelCommonValues, dim=batchDims+1, keepdims=True)	#along sequential segments
+	elif(algorithmMatrixSANImethod=="supportSequentialActivationAcrossSegments"):
+		printe("matrixPropagateTopCommonSegmentPredictions+supportSequentialActivationAcrossSegments not currently supported")
+	elif(algorithmMatrixSANImethod=="enforceSequentialActivationAcrossSegments"):
+		printe("connectionMatrixCalculateConnectionTargetSet error: algorithmMatrixSANImethod==enforceSequentialActivationAcrossSegments not coded")
+		
+	return arraySummedTopKindexSelCommonValues
+	
+	
 def calculateSequentialSegmentActivation(connectionStrength):
 	if(algorithmMatrixSANImethod=="addActivationAcrossSegments"):
 		activationValue = connectionStrength
