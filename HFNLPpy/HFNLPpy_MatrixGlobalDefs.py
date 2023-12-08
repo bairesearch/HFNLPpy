@@ -35,16 +35,22 @@ if(algorithmMatrixSANI):
 	#algorithmMatrixSANImethod = "supportSequentialActivationAcrossSegments"	#retain previously unactivated context, to be fed into next segment
 	#algorithmMatrixSANImethod = "enforceSequentialActivationAcrossSegments"	#incomplete	#previous segments must be activated for current segment to be activated
 	#select sequentialSegmentContextEncoding method (select one);
-	sequentialSegmentContextEncodingAbsoluteLinear = False
-	if(sequentialSegmentContextEncodingAbsoluteLinear):
-		sequentialSegmentContextEncodingAbsoluteLinearSize = 1	#number of tokens per segment
-	sequentialSegmentContextEncodingRelativeLinear = True
-	sequentialSegmentContextEncodingRelativeExponential = False	#sequential segments capture input (past context tokens) at exponentially further distances
+	#sequentialSegmentContextEncoding = "linear"
+	sequentialSegmentContextEncoding = "relativeLinear"
+	#sequentialSegmentContextEncoding = "relativeExponential"	#sequential segments capture input (past context tokens) at exponentially further distances
+	if(sequentialSegmentContextEncoding=="linear"):
+		sequentialSegmentContextEncodingSize = 1	#1	#lower value: engram (prediction) more robust but less generalisable	#number of tokens per segment
+		sequentialSegmentContextEncodingMaxLength = 30	#maximum length of engram across all sequential segments
 	#sequentialSegmentContextEncodingRandom = False #encodings are partially randomised (note dendritic SANI implementation creates multiple semi-random encodings of past context in different dendritic branches) 
 	if(algorithmMatrixSANImethod=="supportSequentialActivationAcrossSegments"):
 		numberOfBranchSequentialSegments = 10	#SANI supports higher resolution sequential segments (up to max sequence resolution; x=1 [individual tokens])
 	elif(algorithmMatrixSANImethod=="addActivationAcrossSegments"):
-		numberOfBranchSequentialSegments = 5
+		if(sequentialSegmentContextEncoding=="linear"):
+			numberOfBranchSequentialSegments = sequentialSegmentContextEncodingMaxLength//sequentialSegmentContextEncodingSize
+		elif(sequentialSegmentContextEncoding=="relativeLinear"):
+			numberOfBranchSequentialSegments = 5
+		elif(sequentialSegmentContextEncoding=="relativeExponential"):
+			numberOfBranchSequentialSegments = 5
 	normaliseConnectionStrengthWrtContextLength = False
 else:
 	algorithmMatrixSANImethod = "none"

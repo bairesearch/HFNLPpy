@@ -295,21 +295,20 @@ def createContextVectorsSANI(w1, sentenceConceptNodeList, HFconnectionGraphObjec
 	return contextConnectionVector
 	
 def createContextVectorSANI1(w1, sentenceConceptNodeList, HFconnectionGraphObject, sequentialSegmentIndex, weightStore):
-	if(sequentialSegmentContextEncodingRelativeExponential):
+	if(sequentialSegmentContextEncoding=="relativeExponential"):
 		expRange = createExponentialRange(0, w1, numberOfBranchSequentialSegments)
 	contextSequenceLength = w1
 	validSequentialSegment = True
-	if(sequentialSegmentContextEncodingAbsoluteLinear):
-		contextSequenceSegmentLength = w1/numberOfBranchSequentialSegments
-		w2Min = w1-(numberOfBranchSequentialSegments*sequentialSegmentContextEncodingAbsoluteLinearSize)+(sequentialSegmentIndex*sequentialSegmentContextEncodingAbsoluteLinearSize)
-		w2Max = w2Min+(sequentialSegmentIndex*sequentialSegmentContextEncodingAbsoluteLinearSize)
+	if(sequentialSegmentContextEncoding=="linear"):
+		w2Min = w1-(numberOfBranchSequentialSegments*sequentialSegmentContextEncodingSize)+(sequentialSegmentIndex*sequentialSegmentContextEncodingSize)
+		w2Max = w2Min+sequentialSegmentContextEncodingSize
 		if(w2Min < 0):
 			validSequentialSegment = False
-	elif(sequentialSegmentContextEncodingRelativeLinear):
+	elif(sequentialSegmentContextEncoding=="relativeLinear"):
 		contextSequenceSegmentLength = w1/numberOfBranchSequentialSegments
 		w2Min = sequentialSegmentIndex*contextSequenceSegmentLength
 		w2Max = w2Min + contextSequenceSegmentLength
-	elif(sequentialSegmentContextEncodingRelativeExponential):
+	elif(sequentialSegmentContextEncoding=="relativeExponential"):
 		w2Min = sum(expRange[0:sequentialSegmentIndex+1])
 		w2Max = sum(expRange[0:sequentialSegmentIndex+2])
 	w2Min = int(w2Min)
@@ -317,8 +316,8 @@ def createContextVectorSANI1(w1, sentenceConceptNodeList, HFconnectionGraphObjec
 	if(validSequentialSegment):
 		contextConnectionVector = createContextVectorSANI(w1, sentenceConceptNodeList, HFconnectionGraphObject, w2Min, w2Max, weightStore)	#len(HFconnectionGraphObject.neuronNamelist)
 	else:
-		emptyTensor = pt.zeros(HFconnectionGraphObject.connectionMatrixMaxConcepts)
-		contextConnectionVector = emptyTensor
+		contextConnectionVector = createContextVectorSANIempty(w1, sentenceConceptNodeList, HFconnectionGraphObject, w2Min, w2Max, weightStore)	#len(HFconnectionGraphObject.neuronNamelist)
+		#contextConnectionVector = pt.zeros(HFconnectionGraphObject.connectionMatrixMaxConcepts)
 	return contextConnectionVector
 	
 def createExponentialRange(minVal, maxVal, size):
@@ -390,6 +389,11 @@ def createContextVectorSANI(w1, sentenceConceptNodeList, HFconnectionGraphObject
 					contextConnectionVector[neuronIDcontext] = calculateContextVectorValue(weightStore, w1, w2)
 	return contextConnectionVector
 
+def createContextVectorSANIempty(w1, sentenceConceptNodeList, HFconnectionGraphObject, w2Min, w2Max, weightStore):
+	contextLength = w1	#len(sentenceConceptNodeList) [too large]	#int(w2Max-w2Min) [not possible as will vary across secondDataIndex]	#contextSizeMax [too large]
+	contextConnectionVector = HFNLPpy_ConnectionMatrixAlgorithm.createContextVectorTensor(HFconnectionGraphObject, contextLength)
+	return contextConnectionVector
+	
 def calculateContextVectorValue(weightStore, w1, w2):
 	if(weightStore):
 		weight = 1.0/(abs(w1 - w2))
