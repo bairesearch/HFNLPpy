@@ -148,5 +148,9 @@ def processingSimple(articles, tokenizer):
 	
 
 if __name__ == "__main__":
-	trainSequentialInput(trainMultipleFiles=trainMultipleFiles)
+	if(debugCalculateExecutionTime):
+		import cProfile
+		cProfile.run("trainSequentialInput(trainMultipleFiles=trainMultipleFiles)", sort="cumulative")
+	else:
+		trainSequentialInput(trainMultipleFiles=trainMultipleFiles)
 

@@ -28,6 +28,9 @@ useAlgorithmScan = False
 useAlgorithmArtificial = False	#default
 useAlgorithmDendriticPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
 	
+#development parameters
+debugUseSmallSequentialInputDataset = True
+debugCalculateExecutionTime = False
 
 #### tokenise subwords ####
 convertLemmasToLowercase = True #required to ensure that capitalised start of sentence words are always converted to the same lemmas (irrespective of inconsistent propernoun detection)
@@ -225,10 +228,6 @@ if(enforceMinimumEncodedSequenceLength):
 
 #HFNLP algorithm selection;
 algorithmHFNLP = "generateHopfieldNetwork"
-
-#debug parameters
-debugUseSmallSequentialInputDataset = True
-
 
 NLPsequentialInputTypeTokeniseWords = False	#perform spacy tokenization later in pipeline
 
