@@ -224,8 +224,8 @@ if(HFconnectionMatrixAlgorithmSplit):
 			printe("normaliseConnectionGraphContextIndex does not support HFconnectionMatrixAlgorithmNormalise==softmax")
 		elif(HFconnectionMatrixAlgorithmNormalise=="tanh"):
 			HFconnectionGraphContextIndexNormalised = HFconnectionGraphContextIndex.tanh()
-		elif(HFconnectionMatrixAlgorithmNormalise=="xsech"):
-			HFconnectionGraphContextIndexNormalised = HFconnectionGraphContextIndex * 1/HFconnectionGraphContextIndex.cosh()		
+		#elif(HFconnectionMatrixAlgorithmNormalise=="xsech"):
+		#	HFconnectionGraphContextIndexNormalised = HFconnectionGraphContextIndex * 1/HFconnectionGraphContextIndex.cosh()		
 		elif(HFconnectionMatrixAlgorithmNormalise=="linear"):
 			HFconnectionGraphContextIndexNormalised = (HFconnectionGraphContextIndex - HFconnectionGraphMin) / (HFconnectionGraphMax - HFconnectionGraphMin + epsilon)
 			
@@ -347,8 +347,8 @@ def normaliseBatchedTensor(HFconnectionGraph):
 				HFconnectionGraphNormalised = pt.nn.functional.softmax(HFconnectionGraph, dim=1)
 			elif(HFconnectionMatrixAlgorithmNormalise=="tanh"):
 				HFconnectionGraphNormalised = HFconnectionGraph.tanh()
-			elif(HFconnectionMatrixAlgorithmNormalise=="xsech"):
-				HFconnectionGraphNormalised = HFconnectionGraph * 1/HFconnectionGraph.cosh()		
+			#elif(HFconnectionMatrixAlgorithmNormalise=="xsech"):
+			#	HFconnectionGraphNormalised = HFconnectionGraph * 1/HFconnectionGraph.cosh()		
 			elif(HFconnectionMatrixAlgorithmNormalise=="linear"):
 				if(HFconnectionMatrixAlgorithmSparse):
 					printe("normaliseBatchedTensor does not yet support HFconnectionMatrixAlgorithmSparse")

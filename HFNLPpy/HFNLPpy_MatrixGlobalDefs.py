@@ -35,9 +35,7 @@ if(algorithmMatrixSANI):
 	#algorithmMatrixSANImethod = "supportSequentialActivationAcrossSegments"	#retain previously unactivated context, to be fed into next segment
 	#algorithmMatrixSANImethod = "enforceSequentialActivationAcrossSegments"	#incomplete	#previous segments must be activated for current segment to be activated
 	#select sequentialSegmentContextEncoding method (select one);
-	sequentialSegmentContextEncoding = "linear"
-	#sequentialSegmentContextEncoding = "relativeLinear"
-	#sequentialSegmentContextEncoding = "relativeExponential"	#sequential segments capture input (past context tokens) at exponentially further distances
+	sequentialSegmentContextEncoding = "linear"	#select: linear/relativeLinear/relativeExponential #relativeExponential: sequential segments capture input (past context tokens) at exponentially further distances
 	if(sequentialSegmentContextEncoding=="linear"):
 		sequentialSegmentContextEncodingSize = 1	#1	#lower value: engram (prediction) more robust but less generalisable	#number of tokens per segment
 		sequentialSegmentContextEncodingMaxLength = 30	#maximum length of engram across all sequential segments
@@ -102,7 +100,7 @@ else:
 				HFconnectionMatrixBasicMaxConcepts = 100000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
 			HFconnectionMatrixBasicMaxConceptsInArticle = 100000
 		else:
-			printe("!debugUseSmallSequentialInputDataset requires HFconnectionMatrixAlgorithmSplitDatabase")
+			print("error: !debugUseSmallSequentialInputDataset requires HFconnectionMatrixAlgorithmSplitDatabase")
 	
 if(HFconnectionMatrixAlgorithmContextVectorSparse):
 	HFcontextVectorSparseNull = -1
@@ -162,7 +160,7 @@ HFconceptNeuronsAlgorithmMatrixExtensionName = ".csv"
 
 HFconnectionMatrixAlgorithmNormalise = "linear"
 if(HFconnectionMatrixAlgorithmSplit):
-	HFconnectionMatrixAlgorithmNormalise = "linear"	#"tanh"	#linear/tanh/xsech	#split does not support softmax function for normalising connections matrix (must dynamically use min/max; ie "linear")
+	HFconnectionMatrixAlgorithmNormalise = "tanh"	#"tanh"	#select: linear/tanh	#split does not support softmax function for normalising connections matrix (must dynamically use min/max; ie "linear")
 	HFreadSavedConnectionsMatrixAlgorithm = False	#split does not support standard matrix file i/o (only database matrix file i/o)
 	HFwriteSavedConnectionsMatrixAlgorithm = False	#split does not support standard matrix file i/o (only database matrix file i/o)
 	if(HFconnectionMatrixAlgorithmSplitDatabase):
@@ -172,7 +170,7 @@ if(HFconnectionMatrixAlgorithmSplit):
 		HFreadSavedConceptList = False		#split does not support standard matrix file i/o (only database matrix file i/o)
 		HFwriteSavedConceptList = False	#split does not support standard matrix file i/o (only database matrix file i/o)
 else:
-	HFconnectionMatrixAlgorithmNormalise = "linear"	#"tanh"	#linear/softmax/tanh/xsech
+	HFconnectionMatrixAlgorithmNormalise = "tanh"	#"tanh"	#select: linear/softmax/tanh
 	HFreadSavedConnectionsMatrixAlgorithm = False	#optional
 	HFwriteSavedConnectionsMatrixAlgorithm = False	#optional
 	HFreadSavedConceptList = False	#optional

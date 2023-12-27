@@ -103,12 +103,24 @@ def generateHopfieldGraphNetwork(articles, tokenizer):
 			HFNLPpy_MatrixDatabase.initialiseMatrixDatabase(HFconnectionGraphObject)
 		regenerateGraphNodes()
 
-	if(seedHFnetworkSubsequence):
+	if(seedHFnetworkSubsequenceType=="lastSentence"):
 		verifySeedSentenceIsReplicant(articles, numberOfSentences)
 
+	trainSentence = True
 	for sentenceIndex, sentence in enumerate(articles):
-		generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences, tokenizer)	
+		if(seedHFnetworkSubsequenceType=="lastSentence"):
+			if(sentenceIndex == numberOfSentences-1):
+				trainSentence = False
+		generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences, tokenizer, trainSentence)
 		
+	if(seedHFnetworkSubsequenceType=="all"):
+		trainSentence = False
+		for sentenceIndex, sentence in enumerate(articles):
+			generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences, tokenizer, trainSentence)
+		print("feedPredictionSuccesses = ", HFNLPpy_Matrix.feedPredictionSuccesses)
+		print("feedPredictionErrors = ", HFNLPpy_Matrix.feedPredictionErrors)
+		print("feedPredictionSuccessRate = ", HFNLPpy_Matrix.feedPredictionSuccesses/(HFNLPpy_Matrix.feedPredictionSuccesses+HFNLPpy_Matrix.feedPredictionErrors))
+	
 	if(useHFconnectionMatrix):
 		if(useHFconnectionMatrixBasic):
 			HFNLPpy_ConnectionMatrixBasic.writeHFconnectionMatrixBasicWrapper(HFconnectionGraphObject)
@@ -117,15 +129,15 @@ def generateHopfieldGraphNetwork(articles, tokenizer):
 		if(HFconnectionMatrixAlgorithmSplitDatabase):
 			HFNLPpy_MatrixDatabase.finaliseMatrixDatabase(HFconnectionGraphObject)
 
-def generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences, tokenizer):
+def generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences, tokenizer, trainSentence):
 	print("\n\ngenerateHopfieldGraphSentenceString: sentenceIndex = ", sentenceIndex, "; ", sentence)
 
 	tokenisedSentence = tokeniseSentence(sentence, tokenizer)
 	sentenceLength = len(tokenisedSentence)
 	#print("sentenceLength = ", sentenceLength)
-	
+			
 	if(sentenceLength > 1):
-		return generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSentences)
+		return generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSentences, trainSentence)
  
 def regenerateGraphNodes():
 	#regenerates graph nodes from a saved list
@@ -189,7 +201,7 @@ def generateHopfieldGraphSentenceNodes(tokenisedSentence, sentenceIndex, sentenc
 				print("create new conceptNode; ", conceptNode.nodeName)
 		sentenceConceptNodeList.append(conceptNode)
 		
-def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSentences):	
+def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSentences, trainSentence):	
 	activationTime = calculateActivationTime(sentenceIndex)
 			
 	sentenceConceptNodeList = []
@@ -208,11 +220,6 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 	addSentenceConceptNodesToHFconnectionGraphObject(sentenceConceptNodeList, neuronIDdictNewlyAdded)
 	if(HFconnectionMatrixAlgorithmSplitDatabase and useAlgorithmLayeredSANI):
 		sentenceConceptNodeListOrig = sentenceConceptNodeList.copy()
-	
-	trainSentence = True
-	if(sentenceIndex == numberOfSentences-1):
-		if(seedHFnetworkSubsequence):
-			trainSentence = False
 			
 	if(trainSentence):
 		if(useHFconnectionMatrixBasic):

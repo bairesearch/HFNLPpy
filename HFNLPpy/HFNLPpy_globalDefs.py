@@ -145,7 +145,7 @@ if(useHFconnectionMatrixBasic):
 	HFreadSavedConnectionsMatrixBasic = False
 	HFwriteSavedConnectionsMatrixBasic = False
 	HFwriteSavedConceptList = False
-	HFconnectionMatrixBasicNormalise = "linear"	#linear/softmax/tanh/xsech	#use softmax function to normalise connections matrix
+	HFconnectionMatrixBasicNormalise = "linear"	#linear/softmax/tanh	#use softmax function to normalise connections matrix
 	usePytorch = True
 	HFconnectionMatrixBasicMaxConcepts = 1000	#200	#1000	#default:100000	#maximum number of concepts to store	#size of HFconnectionMatrix = HFconnectionMatrixBasicMaxConcepts^2	#CHECKTHIS (should be <= number words in dic)
 	HFconnectionMatrixBasicGPU = True
@@ -214,7 +214,9 @@ if(biologicalSimulationTestHarness):
 
 #### seed HF network with subsequence ####
 seedHFnetworkSubsequence = True #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
+seedHFnetworkSubsequenceType = "none"
 if(seedHFnetworkSubsequence):
+	seedHFnetworkSubsequenceType = "all"	#options: all/lastSentence
 	#seedHFnetworkSubsequence currently requires !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
 	seedHFnetworkSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
 	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons

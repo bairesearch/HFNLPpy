@@ -113,8 +113,8 @@ def normaliseBatchedTensor(HFconnectionGraph):
 			HFconnectionGraphNormalised = pt.nn.functional.softmax(HFconnectionGraph, dim=1)
 		elif(HFconnectionMatrixBasicNormalise=="tanh"):
 			HFconnectionGraphNormalised = HFconnectionGraph.tanh()
-		elif(HFconnectionMatrixBasicNormalise=="xsech"):
-			HFconnectionGraphNormalised = HFconnectionGraph * 1/HFconnectionGraph.cosh()	
+		#elif(HFconnectionMatrixBasicNormalise=="xsech"):
+		#	HFconnectionGraphNormalised = HFconnectionGraph * 1/HFconnectionGraph.cosh()	
 		elif(HFconnectionMatrixBasicNormalise=="linear"):
 			min_vals, _ = pt.min(HFconnectionGraph, dim=-1, keepdim=True)
 			max_vals, _ = pt.max(HFconnectionGraph, dim=-1, keepdim=True)

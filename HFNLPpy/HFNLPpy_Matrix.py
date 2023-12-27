@@ -45,6 +45,10 @@ import random
 
 printVerbose = False
 
+if(seedHFnetworkSubsequenceType=="all"):
+	feedPredictionErrors = 0
+	feedPredictionSuccesses = 0
+
 def addSentenceConceptNodeToHFconnectionGraphObject(HFconnectionGraphObject, conceptNode):
 	if(useHFconnectionMatrix):
 		neuronIDdictNewlyAdded = {}	#CHECKTHIS
@@ -169,9 +173,15 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 			if(somaActivationFound):
 				#if(printVerbose):
 				print("somaActivationFound")
+				if(seedHFnetworkSubsequenceType=="all"):
+					global feedPredictionSuccesses
+					feedPredictionSuccesses += 1
 			else:
 				#if(printVerbose):
 				print("!somaActivationFound: HFNLP algorithm error detected")
+				if(seedHFnetworkSubsequenceType=="all"):
+					global feedPredictionErrors
+					feedPredictionErrors += 1
 		else:
 			print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
 			
