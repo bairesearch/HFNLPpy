@@ -66,18 +66,18 @@ def addContextConnectionsToGraph(HFconnectionGraph, contextConnectionVector):
 def extendConceptNeuronContextVector(HFconnectionGraphObject, conceptNeuronContextVector, matrixTensorDim4):
 	if(matrixTensorDim4):
 		conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVector, dim=1)
-		conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(1, HFconnectionGraphObject.connectionMatrixMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	
+		conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(1, HFconnectionGraphObject.connectionMatrixMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	#repeat across number of target neuron candidates in database
 		conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVectorExtended, dim=0)
 	else:
 		conceptNeuronContextVectorExtended = pt.unsqueeze(conceptNeuronContextVector, dim=0)
-		conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(HFconnectionGraphObject.connectionMatrixMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	
+		conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(HFconnectionGraphObject.connectionMatrixMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	#repeat across number of target neuron candidates in database
 	return conceptNeuronContextVectorExtended
 	
-def initialiseHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, dendriticBranchIndex="", contextSizeIndex=""):
-	if(HFreadSavedConnectionsMatrixAlgorithm):
+def initialiseHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, readSavedConnectionsMatrixAlgorithm, connectionMatrixAlgorithmSplit, dendriticBranchIndex="", contextSizeIndex=""):
+	if(readSavedConnectionsMatrixAlgorithm):
 		HFconnectionGraph = readHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, dendriticBranchIndex, contextSizeIndex)
 	else:
-		HFconnectionGraph = createHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject)
+		HFconnectionGraph = createHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, connectionMatrixAlgorithmSplit)
 	return HFconnectionGraph
 	
 def readHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, dendriticBranchIndex="", secondDataIndex=""):
@@ -117,9 +117,9 @@ def padHFconnectionGraph(HFconnectionGraphObject, HFconnectionGraphSourceIndex):
 		printe("padHFconnectionGraph error: illegal algorithmMatrixTensorDim")
 	return HFconnectionGraphSourceIndexPadded
 	
-def createHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject):
+def createHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, connectionMatrixAlgorithmSplit):
 	secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax()
-	if(HFconnectionMatrixAlgorithmSplit):
+	if(connectionMatrixAlgorithmSplit):
 		#create connection matrix columns only (for a single source context neuron ID);
 		if(algorithmMatrixTensorDim == 4):
 			tensorShape = (numberOfIndependentDendriticBranches, secondDataIndexMax, HFconnectionGraphObject.connectionMatrixMaxConcepts)
@@ -277,6 +277,29 @@ def createContextVectorTensor(HFconnectionGraphObject, contextSize):
 	return contextConnectionVector
 	
 def createEmptyTensor(tensorShape, sparse):
+	if(sparse):
+		tensorDims = len(tensorShape)
+		valuesTensor = pt.empty(0, dtype=HFconnectionsMatrixAlgorithmType)
+		indicesTensor = pt.empty((tensorDims, 0), dtype=pt.int64)
+		emptyTensor = pt.sparse_coo_tensor(indicesTensor, valuesTensor, tensorShape)
+	else:
+		emptyTensor = pt.zeros(tensorShape, dtype=HFconnectionsMatrixAlgorithmType)
+	return emptyTensor
+
+def createContextInputTensor(HFconnectionGraphObject):	#tensor representing single input
+	contextInputLength = 1
+	if(HFconnectionMatrixAlgorithmContextVectorSparse):
+		#print("contextInputLength = ", contextInputLength)
+		#print("HFconnectionsMatrixAlgorithmType = ", HFconnectionsMatrixAlgorithmType)
+		valuesTensor = pt.zeros(contextInputLength, dtype=HFconnectionsMatrixAlgorithmType)
+		indicesTensor = pt.ones(contextInputLength, dtype=pt.int64) * HFcontextVectorSparseNull
+		contextConnectionScalar = ContextVectorTensorSparse(contextInputLength, indicesTensor, valuesTensor)
+	else:
+		contextConnectionScalar = pt.zeros(contextInputLength, dtype=HFconnectionsMatrixAlgorithmType)
+	return contextConnectionScalar
+	
+def createEmptyInputTensor(sparse):
+	tensorShape = (1)
 	if(sparse):
 		tensorDims = len(tensorShape)
 		valuesTensor = pt.empty(0, dtype=HFconnectionsMatrixAlgorithmType)

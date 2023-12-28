@@ -128,7 +128,7 @@ else:
 
 #### propagation algorithm (dendrite activation) ####
 
-reversePropagationOrder = True		#optional	#True: original implementation
+reversePropagationOrder = True		#optional	#True: original implementation	#for each current predicted neuron repropagate all prior context activations
 if(emulateVectorisedComputationOrder):
 	emulateVectorisedComputationOrderReversed = reversePropagationOrder	#initialise (dependent var)
 

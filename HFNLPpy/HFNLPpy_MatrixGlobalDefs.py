@@ -27,22 +27,36 @@ import numpy as np
 debugAlgorithmMatrix = False
 debugHFconnectionMatrix = False
 
+#### Propagation order ####
+algorithmMatrixPropagationOrder = "propagateReverseLookup"	#select: propagateForward/propagateReverseLookup #propagateForward is required for complete sequentially activated input support (aligns with original useAlgorithmDendriticSANI:!reversePropagationOrder prediction implementation)	propagateReverseLookup: for each neuron in sequence; complete computation is performed for every next word prediction target neuron candidate 
+
 #### SANI ####
 algorithmMatrixSANI = True	#emulate DendriticSANIbiologicalSimulationSimple
 if(algorithmMatrixSANI):
 	#select algorithmMatrixSANI method (select one);
-	algorithmMatrixSANImethod = "addActivationAcrossSegments"	#default	#it is not necessary that previous segments be activated, but their activation will bias the selection of a particular dendritic branch
-	#algorithmMatrixSANImethod = "supportSequentialActivationAcrossSegments"	#retain previously unactivated context, to be fed into next segment
-	#algorithmMatrixSANImethod = "enforceSequentialActivationAcrossSegments"	#incomplete	#previous segments must be activated for current segment to be activated
+	if(algorithmMatrixPropagationOrder == "propagateForward"):
+		algorithmMatrixSANImethod = "posthocSANI"	#for debug only (propagateReverseLookup:posthocSANI implementation emulation)
+		#algorithmMatrixSANImethod = "completeSANI"
+	else:
+		algorithmMatrixSANImethod = "posthocSANI"	#mandatory
+	if(algorithmMatrixSANImethod == "completeSANI"):	#incomplete
+		algorithmMatrixSANImethodPosthoc = "getLastSequentialSegmentActivation"	#default for completeSANI
+		#algorithmMatrixSANImethodPosthoc = "addActivationAcrossSegments"	#for debug only (posthocSANI implementation emulation)
+		#activationRepolarisationTime = 1	#calibrate	#in number of sequential segments (propagation distance)
+		#activationPropagationTimeMax = 3	#max propagation time between sequential segments
+	else:
+		algorithmMatrixSANImethodPosthoc = "addActivationAcrossSegments"	#default	#it is not necessary that previous segments be activated, but their activation will bias the selection of a particular dendritic branch
+		#algorithmMatrixSANImethodPosthoc = "supportSequentialActivationAcrossSegments"	#incomplete	#retain previously unactivated context, to be fed into next segment
+		#algorithmMatrixSANImethodPosthoc = "enforceSequentialActivationAcrossSegments"	#incomplete		#previous segments must be activated for current segment to be activated
 	#select sequentialSegmentContextEncoding method (select one);
 	sequentialSegmentContextEncoding = "linear"	#select: linear/relativeLinear/relativeExponential #relativeExponential: sequential segments capture input (past context tokens) at exponentially further distances
 	if(sequentialSegmentContextEncoding=="linear"):
 		sequentialSegmentContextEncodingSize = 1	#1	#lower value: engram (prediction) more robust but less generalisable	#number of tokens per segment
 		sequentialSegmentContextEncodingMaxLength = 30	#maximum length of engram across all sequential segments
 	#sequentialSegmentContextEncodingRandom = False #encodings are partially randomised (note dendritic SANI implementation creates multiple semi-random encodings of past context in different dendritic branches) 
-	if(algorithmMatrixSANImethod=="supportSequentialActivationAcrossSegments"):
+	if(algorithmMatrixSANImethodPosthoc=="supportSequentialActivationAcrossSegments"):
 		numberOfBranchSequentialSegments = 10	#SANI supports higher resolution sequential segments (up to max sequence resolution; x=1 [individual tokens])
-	elif(algorithmMatrixSANImethod=="addActivationAcrossSegments"):
+	elif(algorithmMatrixSANImethodPosthoc=="addActivationAcrossSegments"):
 		if(sequentialSegmentContextEncoding=="linear"):
 			numberOfBranchSequentialSegments = sequentialSegmentContextEncodingMaxLength//sequentialSegmentContextEncodingSize
 		elif(sequentialSegmentContextEncoding=="relativeLinear"):
@@ -51,7 +65,7 @@ if(algorithmMatrixSANI):
 			numberOfBranchSequentialSegments = 5
 	normaliseConnectionStrengthWrtContextLength = False
 else:
-	algorithmMatrixSANImethod = "none"
+	algorithmMatrixSANImethodPosthoc = "none"
 	algorithmMatrixSANImethodTopkActivationAcrossSegments = False
 	algorithmMatrixSANImethodAddActivationAcrossSegmentsOld = False
 	normaliseConnectionStrengthWrtContextLength = True	#optional	#orig:True	#CHECKTHIS
@@ -60,10 +74,14 @@ else:
 #algorithmMatrixTensorDim = 2	#default
 algorithmMatrixTensorDim = 4	#optional	#store context size array (and simulated dendritic branches) in pytorch tensor rather than python list	#requires high ram
 if(algorithmMatrixTensorDim != 4):
-	if(algorithmMatrixSANImethod=="addActivationAcrossSegments" or algorithmMatrixSANImethod=="supportSequentialActivationAcrossSegments"):
+	if(algorithmMatrixSANImethodPosthoc=="addActivationAcrossSegments" or algorithmMatrixSANImethodPosthoc=="supportSequentialActivationAcrossSegments"):
 		algorithmMatrixTensorDim = 3 #mandatory
+
 HFconnectionMatrixAlgorithmSparse = False		#incomplete: requires hybrid dense-sparse tensor implementation such that tensor can still be indexed #reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)
 HFconnectionMatrixAlgorithmSplit = True		#store each column of connection matrix in separate array (or hard disk file) 	#currently in testing #reduces ram requirements (especially for large HFconnectionMatrixBasicMaxConcepts)	#store each column of connection matrix in separate array (or hard drive file) - bring into memory on demand (depending on the precise activated columns of the contextVector being compared)
+
+if(algorithmMatrixSANImethod == "completeSANI"):
+	assert (algorithmMatrixTensorDim == 4)	#algorithmMatrixSANImethod==completeSANI currently requires algorithmMatrixTensorDim=4 such that the code can be simplified
 
 if(HFconnectionMatrixAlgorithmSplit):
 	HFconnectionMatrixAlgorithmSplitDatabase = False	#optional	#store each column of connection matrix in separate hard drive file and bring into RAM at start of sentence
@@ -84,6 +102,24 @@ else:
 	HFconnectionMatrixAlgorithmNormaliseStore = True	#True: store a normalised connection matrix in RAM (must recalculate entire normalised arrays: not computation or memory efficient)
 
 
+if(HFconnectionMatrixAlgorithmContextVectorSparse):
+	HFcontextVectorSparseNull = -1
+	
+#### simulated dendritic branches ####
+simulatedDendriticBranches = False	#independent dendritic branches
+HFconnectionMatrixAlgorithmMinValue = 0
+if(simulatedDendriticBranches):
+	simulatedDendriticBranchesMinMatchStrength = 1.0	#minimum branch match strength for comparison before randomise selection of new branch to write	#CHECKTHIS
+	simulatedDendriticBranchesInitialisation = False #incomplete #perform random initialisation to break symmetry (required to select more than 1 dendritic branch)
+	if(simulatedDendriticBranchesInitialisation):
+		simulatedDendriticBranchesInitialisationWeight = 0.01	#only apply a very small randomisation magnitude to break symmetry
+		HFconnectionMatrixAlgorithmMinValue = simulatedDendriticBranchesInitialisationWeight
+	numberOfIndependentDendriticBranches = 10
+else: 
+	numberOfIndependentDendriticBranches = 1
+	simulatedDendriticBranchesInitialisation = False
+
+#### max database size selection ####
 if(debugHFconnectionMatrix):
 	if(HFconnectionMatrixAlgorithmSplit):
 		HFconnectionMatrixBasicMaxConcepts = 200	#200	#20	 #[Xdataset4PartSmall0000.xml.verifyOldSentenceSomaActivationFound0]
@@ -102,23 +138,7 @@ else:
 		else:
 			print("error: !debugUseSmallSequentialInputDataset requires HFconnectionMatrixAlgorithmSplitDatabase")
 	
-if(HFconnectionMatrixAlgorithmContextVectorSparse):
-	HFcontextVectorSparseNull = -1
 	
-#### simulated dendritic branches ####
-simulatedDendriticBranches = False	#independent dendritic branches
-HFconnectionMatrixAlgorithmMinValue = 0
-if(simulatedDendriticBranches):
-	simulatedDendriticBranchesMinMatchStrength = 1.0	#minimum branch match strength for comparison before randomise selection of new branch to write	#CHECKTHIS
-	simulatedDendriticBranchesInitialisation = False #incomplete #perform random initialisation to break symmetry (required to select more than 1 dendritic branch)
-	if(simulatedDendriticBranchesInitialisation):
-		simulatedDendriticBranchesInitialisationWeight = 0.01	#only apply a very small randomisation magnitude to break symmetry
-		HFconnectionMatrixAlgorithmMinValue = simulatedDendriticBranchesInitialisationWeight
-	numberOfIndependentDendriticBranches = 10
-else: 
-	numberOfIndependentDendriticBranches = 1
-	simulatedDendriticBranchesInitialisation = False
-
 #### topk selection ####
 selectActivatedTop = True	#mandatory (implied) select activated top k target neurons during propagation test
 if(selectActivatedTop):
