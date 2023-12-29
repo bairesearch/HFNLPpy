@@ -73,11 +73,11 @@ def extendConceptNeuronContextVector(HFconnectionGraphObject, conceptNeuronConte
 		conceptNeuronContextVectorExtended = conceptNeuronContextVectorExtended.repeat(HFconnectionGraphObject.connectionMatrixMaxConcepts, 1)	#len(HFconnectionGraphObject.neuronNamelist)	#repeat across number of target neuron candidates in database
 	return conceptNeuronContextVectorExtended
 	
-def initialiseHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, readSavedConnectionsMatrixAlgorithm, connectionMatrixAlgorithmSplit, dendriticBranchIndex="", contextSizeIndex=""):
+def initialiseHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, readSavedConnectionsMatrixAlgorithm, connectionMatrixAlgorithmSplit, dtype, dendriticBranchIndex="", contextSizeIndex=""):
 	if(readSavedConnectionsMatrixAlgorithm):
 		HFconnectionGraph = readHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, dendriticBranchIndex, contextSizeIndex)
 	else:
-		HFconnectionGraph = createHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, connectionMatrixAlgorithmSplit)
+		HFconnectionGraph = createHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, connectionMatrixAlgorithmSplit, dtype)
 	return HFconnectionGraph
 	
 def readHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, dendriticBranchIndex="", secondDataIndex=""):
@@ -117,7 +117,7 @@ def padHFconnectionGraph(HFconnectionGraphObject, HFconnectionGraphSourceIndex):
 		printe("padHFconnectionGraph error: illegal algorithmMatrixTensorDim")
 	return HFconnectionGraphSourceIndexPadded
 	
-def createHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, connectionMatrixAlgorithmSplit):
+def createHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, connectionMatrixAlgorithmSplit, dtype):
 	secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax()
 	if(connectionMatrixAlgorithmSplit):
 		#create connection matrix columns only (for a single source context neuron ID);
@@ -139,18 +139,18 @@ def createHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, connectionM
 		else:
 			printe("createHFconnectionMatrixAlgorithmMatrix error: invalid algorithmMatrixTensorDim")
 	if(simulatedDendriticBranchesInitialisation):
-		HFconnectionGraph = createRandomisedTensor(tensorShape)
+		HFconnectionGraph = createRandomisedTensor(tensorShape, dtype)
 	else:
-		HFconnectionGraph = createEmptyTensor(tensorShape, HFconnectionMatrixAlgorithmSparse)
+		HFconnectionGraph = createEmptyTensor(tensorShape, HFconnectionMatrixAlgorithmSparse, dtype)
 	if(HFconnectionMatrixAlgorithmGPU):
 		HFconnectionGraph = HFconnectionGraph.to(HFNLPpy_ConnectionMatrixOperations.device)
 	return HFconnectionGraph
 		
-def createRandomisedTensor(tensorShape):
+def createRandomisedTensor(tensorShape, dtype=HFconnectionsMatrixAlgorithmType):
 	if(HFconnectionMatrixAlgorithmSparse):
 		printe("HFconnectionMatrixAlgorithmSparse:simulatedDendriticBranchesInitialisation not currently supported")
 	else:
-		emptyTensor = pt.rand(tensorShape, dtype=HFconnectionsMatrixAlgorithmType)*simulatedDendriticBranchesInitialisationWeight
+		emptyTensor = pt.rand(tensorShape, dtype=dtype)*simulatedDendriticBranchesInitialisationWeight
 	return emptyTensor
 
 def getConnectionGraph(HFconnectionGraphObject, conceptNeuronContextVector, firstDataIndex, secondDataIndex, matrixTensorDim4):
@@ -276,14 +276,14 @@ def createContextVectorTensor(HFconnectionGraphObject, contextSize):
 		contextConnectionVector = pt.zeros(contextVectorLength, dtype=HFconnectionsMatrixAlgorithmType)
 	return contextConnectionVector
 	
-def createEmptyTensor(tensorShape, sparse):
+def createEmptyTensor(tensorShape, sparse, dtype=HFconnectionsMatrixAlgorithmType):
 	if(sparse):
 		tensorDims = len(tensorShape)
-		valuesTensor = pt.empty(0, dtype=HFconnectionsMatrixAlgorithmType)
+		valuesTensor = pt.empty(0, dtype=dtype)
 		indicesTensor = pt.empty((tensorDims, 0), dtype=pt.int64)
 		emptyTensor = pt.sparse_coo_tensor(indicesTensor, valuesTensor, tensorShape)
 	else:
-		emptyTensor = pt.zeros(tensorShape, dtype=HFconnectionsMatrixAlgorithmType)
+		emptyTensor = pt.zeros(tensorShape, dtype=dtype)
 	return emptyTensor
 
 def createContextInputTensor(HFconnectionGraphObject):	#tensor representing single input

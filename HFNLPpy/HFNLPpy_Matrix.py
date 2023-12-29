@@ -69,7 +69,7 @@ def loadSentenceMatrixAlgorithmSplitMatrix(HFconnectionGraphObject, conceptNode,
 			neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
 			if(not conceptNode.nodeName in neuronIDdictPrevious):
 				#dynamically initialise HFconnectionGraphMatrix when new concepts are declared
-				HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID], _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID], HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore)
+				HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID], _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID], HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore, HFconnectionsMatrixAlgorithmType)
 				neuronIDdictNewlyAdded[conceptNode.nodeName] = True
 			else:
 				#print("conceptNode.nodeName = ", conceptNode.nodeName)
@@ -84,7 +84,7 @@ def HFconnectionGraphMatrixHolderInitialisation(self):
 			self.HFconnectionGraphMatrix[sourceNeuronID] = HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolder()
 		self.HFconnectionGraphMatrixMin = HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolder()	#for dynamic normalisation (on demand)
 		self.HFconnectionGraphMatrixMax = HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolder()	#for dynamic normalisation (on demand)
-		if(HFconnectionMatrixAlgorithmSplitDatabase): 
+		if(HFconnectionMatrixAlgorithmSplitDatabase):
 			print("HFconnectionGraphMatrixHolderInitialisation warning: !HFconnectionMatrixAlgorithmSplitDatabase requires check")
 	else:
 		self.HFconnectionGraphMatrix = HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolder()
@@ -94,8 +94,8 @@ def HFconnectionGraphMatrixHolderInitialisation(self):
 def initialiseHFconnectionMatrixAlgorithmWrapper(HFconnectionGraphObject):
 	HFNLPpy_ConnectionMatrixOperations.initialiseNeuronNameList(HFconnectionGraphObject)
 	if(HFconnectionMatrixAlgorithmSplit):
-		HFconnectionGraphObject.HFconnectionGraphMatrixMin, _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrixMin, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore)
-		HFconnectionGraphObject.HFconnectionGraphMatrixMax, _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrixMax, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore)
+		HFconnectionGraphObject.HFconnectionGraphMatrixMin, _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrixMin, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore, HFconnectionsMatrixAlgorithmType)
+		HFconnectionGraphObject.HFconnectionGraphMatrixMax, _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrixMax, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore, HFconnectionsMatrixAlgorithmType)
 		''' 
 		#uses too much RAM (instead dynamically initialise HFconnectionGraphMatrix when new concepts are declared) - see addSentenceConceptNodesToHFconnectionGraphObject
 		if(HFconnectionMatrixAlgorithmSplitRAM):
@@ -103,29 +103,29 @@ def initialiseHFconnectionMatrixAlgorithmWrapper(HFconnectionGraphObject):
 				HFconnectionGraphObject.HFconnectionGraphMatrix[sourceNeuronID], _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore)
 		'''
 	else:
-		HFconnectionGraphObject.HFconnectionGraphMatrix, HFconnectionGraphObject.HFconnectionGraphMatrixNormalised = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore)
+		HFconnectionGraphObject.HFconnectionGraphMatrix, HFconnectionGraphObject.HFconnectionGraphMatrixNormalised = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore, HFconnectionsMatrixAlgorithmType)
 	if(algorithmMatrixPropagationOrder=="propagateForward"):
-		HFconnectionGraphObject.HFconnectionGraphActivationsLevel, _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, None, False, True, False)
-		HFconnectionGraphObject.HFconnectionGraphActivationsTime, _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, None, False, True, False)
+		HFconnectionGraphObject.HFconnectionGraphActivationsLevel, _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, None, False, True, False, pt.float)
+		HFconnectionGraphObject.HFconnectionGraphActivationsTime, _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, None, False, True, False, pt.long)
 
 
-def initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphMatrix, readSavedConnectionsMatrixAlgorithm, connectionMatrixAlgorithmSplit, connectionMatrixAlgorithmNormaliseStore):
+def initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphMatrix, readSavedConnectionsMatrixAlgorithm, connectionMatrixAlgorithmSplit, connectionMatrixAlgorithmNormaliseStore, dtype):
 	if(not connectionMatrixAlgorithmNormaliseStore):
 		HFconnectionGraphMatrixNormalised=None
 	if(algorithmMatrixTensorDim==4):
-		HFconnectionGraphMatrix = HFNLPpy_ConnectionMatrixAlgorithm.initialiseHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, readSavedConnectionsMatrixAlgorithm, connectionMatrixAlgorithmSplit)
+		HFconnectionGraphMatrix = HFNLPpy_ConnectionMatrixAlgorithm.initialiseHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, readSavedConnectionsMatrixAlgorithm, connectionMatrixAlgorithmSplit, dtype)
 		if(connectionMatrixAlgorithmNormaliseStore):
 			HFconnectionGraphMatrixNormalised = HFNLPpy_ConnectionMatrixAlgorithm.normaliseBatchedTensor(HFconnectionGraphMatrix)
 	else:
 		secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax()
 		for dendriticBranchIndex in range(numberOfIndependentDendriticBranches):
 			if(algorithmMatrixTensorDim==3):
-				HFconnectionGraphMatrix[dendriticBranchIndex] = HFNLPpy_ConnectionMatrixAlgorithm.initialiseHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, readSavedConnectionsMatrixAlgorithm, connectionMatrixAlgorithmSplit, HFNLPpy_ConnectionMatrixAlgorithm.createIndexStringDendriticBranch(dendriticBranchIndex))
+				HFconnectionGraphMatrix[dendriticBranchIndex] = HFNLPpy_ConnectionMatrixAlgorithm.initialiseHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, readSavedConnectionsMatrixAlgorithm, connectionMatrixAlgorithmSplit, dtype, HFNLPpy_ConnectionMatrixAlgorithm.createIndexStringDendriticBranch(dendriticBranchIndex))
 				if(connectionMatrixAlgorithmNormaliseStore):
 					HFconnectionGraphMatrixNormalised[dendriticBranchIndex] = HFNLPpy_ConnectionMatrixAlgorithm.normaliseBatchedTensor(HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex])
 			else:
 				for secondDataIndex in range(secondDataIndexMax):
-					HFconnectionGraphMatrix[dendriticBranchIndex][secondDataIndex] = HFNLPpy_ConnectionMatrixAlgorithm.initialiseHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, readSavedConnectionsMatrixAlgorithm, connectionMatrixAlgorithmSplit, HFNLPpy_ConnectionMatrixAlgorithm.createIndexStringDendriticBranch(dendriticBranchIndex), HFNLPpy_ConnectionMatrixAlgorithm.createIndexStringSecondDataIndex(secondDataIndex))
+					HFconnectionGraphMatrix[dendriticBranchIndex][secondDataIndex] = HFNLPpy_ConnectionMatrixAlgorithm.initialiseHFconnectionMatrixAlgorithmMatrix(HFconnectionGraphObject, readSavedConnectionsMatrixAlgorithm, connectionMatrixAlgorithmSplit, dtype, HFNLPpy_ConnectionMatrixAlgorithm.createIndexStringDendriticBranch(dendriticBranchIndex), HFNLPpy_ConnectionMatrixAlgorithm.createIndexStringSecondDataIndex(secondDataIndex))
 					if(connectionMatrixAlgorithmNormaliseStore):
 						HFconnectionGraphMatrixNormalised[dendriticBranchIndex][secondDataIndex] = HFNLPpy_ConnectionMatrixAlgorithm.normaliseBatchedTensor(HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex][secondDataIndex])
 	return HFconnectionGraphMatrix, HFconnectionGraphMatrixNormalised

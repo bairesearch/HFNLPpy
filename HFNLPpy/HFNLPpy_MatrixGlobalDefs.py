@@ -28,22 +28,24 @@ debugAlgorithmMatrix = False
 debugHFconnectionMatrix = False
 
 #### Propagation order ####
-algorithmMatrixPropagationOrder = "propagateReverseLookup"	#select: propagateForward/propagateReverseLookup #propagateForward is required for complete sequentially activated input support (aligns with original useAlgorithmDendriticSANI:!reversePropagationOrder prediction implementation)	propagateReverseLookup: for each neuron in sequence; complete computation is performed for every next word prediction target neuron candidate 
+algorithmMatrixPropagationOrder = "propagateReverseLookup"	#select: propagateForward/propagateReverseLookup #propagateForward is required for complete sequentially activated input support (aligns with HFNLPpy_DendriticSANI:useAlgorithmDendriticSANI:!reversePropagationOrder prediction implementation)	#propagateReverseLookup (orig implementation): for each neuron in sequence; complete computation is performed for every next word prediction target neuron candidate 
 
 #### SANI ####
 algorithmMatrixSANI = True	#emulate DendriticSANIbiologicalSimulationSimple
 if(algorithmMatrixSANI):
 	#select algorithmMatrixSANI method (select one);
 	if(algorithmMatrixPropagationOrder == "propagateForward"):
-		algorithmMatrixSANImethod = "posthocSANI"	#for debug only (propagateReverseLookup:posthocSANI implementation emulation)
-		#algorithmMatrixSANImethod = "completeSANI"
+		algorithmMatrixSANImethod = "completeSANI"	
+		#algorithmMatrixSANImethod = "posthocSANI"	#depreciated #for debug only (propagateReverseLookup:posthocSANI implementation emulation)
 	else:
 		algorithmMatrixSANImethod = "posthocSANI"	#mandatory
 	if(algorithmMatrixSANImethod == "completeSANI"):	#incomplete
+		#increase input activation based on presense and proximity of prior segment activations
 		algorithmMatrixSANImethodPosthoc = "getLastSequentialSegmentActivation"	#default for completeSANI
 		#algorithmMatrixSANImethodPosthoc = "addActivationAcrossSegments"	#for debug only (posthocSANI implementation emulation)
 		#activationRepolarisationTime = 1	#calibrate	#in number of sequential segments (propagation distance)
 		#activationPropagationTimeMax = 3	#max propagation time between sequential segments
+		activationDecayType = "linear"	#select: linear/exponential	#activation decay along segments
 	else:
 		algorithmMatrixSANImethodPosthoc = "addActivationAcrossSegments"	#default	#it is not necessary that previous segments be activated, but their activation will bias the selection of a particular dendritic branch
 		#algorithmMatrixSANImethodPosthoc = "supportSequentialActivationAcrossSegments"	#incomplete	#retain previously unactivated context, to be fed into next segment
@@ -63,6 +65,8 @@ if(algorithmMatrixSANI):
 			numberOfBranchSequentialSegments = 5
 		elif(sequentialSegmentContextEncoding=="relativeExponential"):
 			numberOfBranchSequentialSegments = 5
+	elif(algorithmMatrixSANImethodPosthoc=="getLastSequentialSegmentActivation"):
+		numberOfBranchSequentialSegments = 5
 	normaliseConnectionStrengthWrtContextLength = False
 else:
 	algorithmMatrixSANImethodPosthoc = "none"

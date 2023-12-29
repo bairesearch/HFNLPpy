@@ -68,12 +68,28 @@ def isValidContextVector(conceptNeuronContextVector, matrixTensorDim4):
 
 if(algorithmMatrixSANImethod=="completeSANI"):
 	def SANImethodUpdateActivationsIntegrate(HFconnectionGraphObject, activationsNew):
-		activationTime = HFconnectionGraphObject.activationTime
-		HFconnectionGraphObject.HFconnectionGraphActivationsLevel = activationsLevel	#overwrite stored activations
-		HFconnectionGraphObject.HFconnectionGraphActivationsTime = activationsTime	#overwrite stored activations
-		
-		
+		activationsLevelPrevious = HFconnectionGraphObject.HFconnectionGraphActivationsLevel.unsqueeze(-1)
+		activationsLevel = activationsLevelPrevious
+		#activationTime = HFconnectionGraphObject.activationTime
+		#numberOfSegments = activationsNew.shape[1]
+		for i in range(numberOfBranchSequentialSegments):
+			if(i > 0):
+				priorActivation = activationsLevelPrevious[:, 0:i]
+				if(activationDecayType=="linear"):
+					space = createLinearSpace(0, 1, i)
+				elif(activationDecayType=="exponential"):
+					space = createExponentialSpace(0, 1, i)
+				space = space.unsqueeze(0).unsqueeze(-1).unsqueeze(-1)
+				priorActivationProximityBiased = priorActivation * space
+				priorActivationProximityBiased = pt.sum(priorActivationProximityBiased, dim=1)
+				activationsLevelUpdates = activationsNew[:, i] + priorActivationProximityBiased
+			else:
+				activationsLevelUpdates = activationsNew[:, i]
+			activationsLevel[:, i] = activationsLevelPrevious[:, i] + activationsLevelUpdates
+		HFconnectionGraphObject.HFconnectionGraphActivationsLevel = activationsLevel.squeeze(-1)	#overwrite stored activations
+		#HFconnectionGraphObject.HFconnectionGraphActivationsTime = activationsTime	#overwrite stored activations
 		return activationsLevel
+'''
 elif(algorithmMatrixSANImethod=="posthocSANI"):
 	def SANImethodUpdateActivationsAdd(HFconnectionGraphObject, activationsNew):
 		activationsLevelPrevious = HFconnectionGraphObject.HFconnectionGraphActivationsLevel.unsqueeze(-1)
@@ -81,7 +97,8 @@ elif(algorithmMatrixSANImethod=="posthocSANI"):
 		activationsLevel = pt.sum(activationsLevel, dim=-1, keepdims=True)	#sum along input dimension
 		HFconnectionGraphObject.HFconnectionGraphActivationsLevel = activationsLevel.squeeze(-1)	#overwrite stored activations
 		return activationsLevel
-			
+'''
+		
 if(algorithmMatrixSANImethodPosthoc=="addActivationAcrossSegments"):
 	def SANImethodAddActivationAcrossSegments(array):
 		array = pt.sum(array, dim=1, keepdim=True)
@@ -113,7 +130,7 @@ elif(algorithmMatrixSANImethodPosthoc=="supportSequentialActivationAcrossSegment
 elif(algorithmMatrixSANImethodPosthoc=="enforceSequentialActivationAcrossSegments"):
 	#incomplete
 	pass
-elif(algorithmMatrixSANImethodPosthoc == "propagateForward"):
+elif(algorithmMatrixSANImethodPosthoc == "getLastSequentialSegmentActivation"):
 	def SANImethodGetLastSegmentActivation(array):
 		array = array[:, -1]	#select last segment
 		array = array.unsqueeze(dim=1)
@@ -131,8 +148,11 @@ def connectionMatrixCalculateConnectionTargetSet(HFconnectionGraphObject, HFconn
 		activationsNew = HFconnectionGraph * conceptNeuronContextVectorExtended
 		if(algorithmMatrixSANImethod=="completeSANI"):
 			activations = SANImethodUpdateActivationsIntegrate(HFconnectionGraphObject, activationsNew)
+			#print("activations.sum() = ", activations.sum())
+		'''
 		elif(algorithmMatrixSANImethod=="posthocSANI"):
 			activations = SANImethodUpdateActivationsAdd(HFconnectionGraphObject, activationsNew)
+		'''
 	else:
 		activations = HFconnectionGraph * conceptNeuronContextVectorExtended
 	#activations shape: [numberOfIndependentDendriticBranches, numberOfBranchSequentialSegments, connectionMatrixMaxConcepts[target], sentencePriorContextSize[source]]
@@ -336,8 +356,7 @@ if(algorithmMatrixPropagationOrder == "propagateForward"):
 		return contextConnectionVector
 
 	def createContextVectorSANIForward(w1, sentenceConceptNodeList, HFconnectionGraphObject, weightStore):
-		#contextLength = 1
-		contextLength = w1	#len(sentenceConceptNodeList) [too large]	#int(w2Max-w2Min) [not possible as will vary across secondDataIndex]	#contextSizeMax [too large]
+		contextLength = 1
 		contextConnectionVector = HFNLPpy_ConnectionMatrixAlgorithm.createContextVectorTensor(HFconnectionGraphObject, contextLength)
 		conceptNodeContext = sentenceConceptNodeList[w1]	#CHECKTHIS
 		neuronIDcontext = HFconnectionGraphObject.neuronIDdict[conceptNodeContext.nodeName]
@@ -403,15 +422,18 @@ def createContextVectorSANI1(w1, sentenceConceptNodeList, HFconnectionGraphObjec
 		#contextConnectionVector = pt.zeros(HFconnectionGraphObject.connectionMatrixMaxConcepts)
 	return contextConnectionVector
 
-
-def createExponentialRange(minVal, maxVal, size):
+#if decay; go from maxVal to minVal
+def createExponentialRange(minVal, maxVal, size, decay=True):
 	#rate = s / (maxVal - minVal)
 	#expRange = [random.expovariate(rate) + minVal for _ in range(s)]
 	expRange = []
 	val_range = maxVal - minVal
 	for i in range(s):
 		rate = 1 / (val_range - (i * val_range / s))
-		exponential_factor = 1 + random.expovariate(rate)
+		if(decay):
+			exponential_factor = 1 + random.expovariate(rate)
+		else:
+			exponential_factor = random.expovariate(rate)
 		if i == 0:
 			value = minVal
 		else:
@@ -419,7 +441,19 @@ def createExponentialRange(minVal, maxVal, size):
 		value = max(minVal, min(maxVal, value))
 		exponential_values.append(value)
 	return expRange
-			
+
+def createLinearSpace(minVal, maxVal, size):
+	space = pt.linspace(minVal, maxVal, size)
+	if(HFconnectionMatrixAlgorithmGPU):
+		space = space.to(HFNLPpy_ConnectionMatrixOperations.device)
+	return space
+	
+def createExponentialSpace(minVal, maxVal, size):
+	space = pt.logspace(torch.log10(minVal), torch.log10(maxVal), size)
+	if(HFconnectionMatrixAlgorithmGPU):
+		space = space.to(HFNLPpy_ConnectionMatrixOperations.device)
+	return space
+	
 def createContextVectors(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextSizeMaxSource, weightStore, bidirectionalContext):
 	contextConnectionVectorList = []
 	for contextSizeIndex in range(contextSizeMaxSource):
