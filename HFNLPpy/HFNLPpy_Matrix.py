@@ -104,10 +104,12 @@ def initialiseHFconnectionMatrixAlgorithmWrapper(HFconnectionGraphObject):
 		'''
 	else:
 		HFconnectionGraphObject.HFconnectionGraphMatrix, HFconnectionGraphObject.HFconnectionGraphMatrixNormalised = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore, HFconnectionsMatrixAlgorithmType)
+	initialiseHFconnectionMatrixWrapperAlgorithmMatrixActivationRecord(HFconnectionGraphObject)
+
+def initialiseHFconnectionMatrixWrapperAlgorithmMatrixActivationRecord(HFconnectionGraphObject):
 	if(algorithmMatrixPropagationOrder=="propagateForward"):
 		HFconnectionGraphObject.HFconnectionGraphActivationsLevel, _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, None, False, True, False, pt.float)
 		HFconnectionGraphObject.HFconnectionGraphActivationsTime, _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, None, False, True, False, pt.long)
-
 
 def initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphMatrix, readSavedConnectionsMatrixAlgorithm, connectionMatrixAlgorithmSplit, connectionMatrixAlgorithmNormaliseStore, dtype):
 	if(not connectionMatrixAlgorithmNormaliseStore):
@@ -133,7 +135,9 @@ def initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, 
 def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceConceptNodeList, numberOfSentences, HFconnectionGraphObject):
 	
 	targetSentenceConceptNodeList = seedSentenceConceptNodeList
-	
+
+	initialiseHFconnectionMatrixWrapperAlgorithmMatrixActivationRecord(HFconnectionGraphObject)
+
 	connectionTargetNeuronSet = set()	#for posthoc network deactivation
 	if(not seedHFnetworkSubsequenceBasic):
 		conceptNeuronSourceList = []
@@ -191,7 +195,7 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 					feedPredictionErrors += 1
 		else:
 			print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
-			
+
 
 
 def simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet, HFconnectionGraphObject):
