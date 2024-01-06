@@ -196,7 +196,10 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 		else:
 			print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
 
-
+	if(HFconnectionMatrixAlgorithmSplitDatabase):
+		neuronIDalreadySaved = {}
+		connectionTargetNeuronList = list(connectionTargetNeuronSet)
+		HFNLPpy_MatrixDatabase.finaliseMatrixDatabaseSentence(HFconnectionGraphObject, connectionTargetNeuronList, neuronIDalreadySaved)
 
 def simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet, HFconnectionGraphObject):
 	#print("simulateBiologicalHFnetworkSequenceNodePropagateForward: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName)	
