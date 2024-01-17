@@ -75,19 +75,22 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 		conceptNeuronTarget = targetSentenceConceptNodeList[wTarget]
 		
 		if(seedHFnetworkSubsequenceBasic):
-			print("\nseedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", seedSource = ", conceptNeuronSource.nodeName)
+			if(printPredictions):
+				print("\nseedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", seedSource = ", conceptNeuronSource.nodeName)
 			activationTime = calculateActivationTimeSequence(wSource)
 			somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet)
 		else:
 			connectionTargetNeuronSetLocal = set()
 			activationTime = calculateActivationTimeSequence(wSource)
 			if(wSource < seedHFnetworkSubsequenceLength):
-				print("\nseedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", seedSource = ", conceptNeuronSource.nodeName)
+				if(printPredictions):
+					print("\nseedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", seedSource = ", conceptNeuronSource.nodeName)
 				somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagateForward(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSetLocal)
 			else:
-				print("")
-				for feedSource in conceptNeuronSourceList:
-					print("feedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", feedSource = ", feedSource.nodeName)
+				if(printPredictions):
+					print("")
+					for feedSource in conceptNeuronSourceList:
+						print("feedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", feedSource = ", feedSource.nodeName)
 				somaActivationFound = simulateBiologicalHFnetworkSequenceNodesPropagateForward(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSourceList, connectionTargetNeuronSetLocal)
 			
 			connectionTargetNeuronSetLocalFiltered = selectActivatedNeurons(wSource, targetSentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSetLocal, HFconnectionGraphObject)
@@ -106,15 +109,14 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 				expectPredictiveSequenceToBeFound = True
 		else:
 			expectPredictiveSequenceToBeFound = True
-		if(expectPredictiveSequenceToBeFound):
-			if(somaActivationFound):
-				#if(printVerbose):
-				print("somaActivationFound")
+		if(printPredictions):
+			if(expectPredictiveSequenceToBeFound):
+				if(somaActivationFound):
+					print("somaActivationFound")
+				else:
+					print("!somaActivationFound: HFNLP algorithm error detected")
 			else:
-				#if(printVerbose):
-				print("!somaActivationFound: HFNLP algorithm error detected")
-		else:
-			print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
+				print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
 			
 	resetConnectionTargetNeurons(connectionTargetNeuronSet, False)
 

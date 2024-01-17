@@ -50,7 +50,8 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, networkSize, sentenceIndex, 
 		sourceNeuronID = neuronIDdict[conceptNeuronSource.nodeName]
 		targetNeuronID = neuronIDdict[conceptNeuronTarget.nodeName]
 
-		print("seedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", sourceNeuronID = ", sourceNeuronID, ", targetNeuronID = ", targetNeuronID)
+		if(printPredictions):
+			print("seedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", sourceNeuronID = ", sourceNeuronID, ", targetNeuronID = ", targetNeuronID)
 
 		connectionTargetNeuronIDset = set()
 		connectionTargetNeuronIDsetFiltered = set()
@@ -84,15 +85,14 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, networkSize, sentenceIndex, 
 				expectPredictiveSequenceToBeFound = True
 		else:
 			expectPredictiveSequenceToBeFound = True
-		if(expectPredictiveSequenceToBeFound):
-			if(somaActivationFound):
-				#if(printVerbose):
-				print("somaActivationFound")
+		if(printPredictions):
+			if(expectPredictiveSequenceToBeFound):
+				if(somaActivationFound):
+					print("somaActivationFound")
+				else:
+					print("!somaActivationFound: HFNLP algorithm error detected")
 			else:
-				#if(printVerbose):
-				print("!somaActivationFound: HFNLP algorithm error detected")
-		else:
-			print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
+				print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
 				
 def simulateBiologicalHFnetworkSequencePropagateForward(sentenceIndex, HFconnectionGraph, num_time_steps, connectionTargetNeuronIDset, connectionTargetNeuronIDsetFiltered):
 	if(vectoriseComputation):

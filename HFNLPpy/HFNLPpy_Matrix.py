@@ -141,6 +141,9 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 	connectionTargetNeuronSet = set()	#for posthoc network deactivation
 	if(not seedHFnetworkSubsequenceBasic):
 		conceptNeuronSourceList = []
+	if(printPredictionsSentence):
+		predictedSentenceConceptNodeList = []
+		predictedSentenceConceptNodeList.append(seedSentenceConceptNodeList[0])
 
 	for wSource in range(len(targetSentenceConceptNodeList)-1):
 		wTarget = wSource+1
@@ -151,28 +154,39 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 			HFconnectionGraphObject.activationTime = wSource
 		
 		if(seedHFnetworkSubsequenceBasic):
-			print("\nseedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", seedSource = ", conceptNeuronSource.nodeName)
+			if(printPredictions):
+				print("\nseedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", seedSource = ", conceptNeuronSource.nodeName)
 			activationTime = calculateActivationTimeSequence(wSource)
 			somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet, HFconnectionGraphObject)
+			if(printPredictionsSentence):
+				predictedSentenceConceptNodeList.append(conceptNeuronTarget)
 		else:
 			connectionTargetNeuronSetLocal = set()
 			activationTime = None
 			if(wSource < seedHFnetworkSubsequenceLength):
-				print("\nseedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", seedSource = ", conceptNeuronSource.nodeName)
+				if(printPredictions):
+					print("\nseedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", seedSource = ", conceptNeuronSource.nodeName)
 				somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSetLocal, HFconnectionGraphObject)
 			else:
-				print("")
-				for feedSource in conceptNeuronSourceList:
-					print("feedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", feedSource = ", feedSource.nodeName)
+				if(printPredictions):
+					print("")
+					for feedSource in conceptNeuronSourceList:
+						print("feedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", feedSource = ", feedSource.nodeName)
 				somaActivationFound = simulateBiologicalHFnetworkSequenceNodesPropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSourceList, connectionTargetNeuronSetLocal, HFconnectionGraphObject)
 			
 			connectionTargetNeuronSetLocalFiltered = selectActivatedNeurons(wSource, targetSentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSetLocal, HFconnectionGraphObject)
 				
 			conceptNeuronSourceList.clear()
 			for connectionTargetNeuron in connectionTargetNeuronSetLocalFiltered:
-				print("\tconceptNeuronSourceList.append connectionTargetNeuron = ", connectionTargetNeuron.nodeName)
+				if(printPredictions):
+					print("\tconceptNeuronSourceList.append connectionTargetNeuron = ", connectionTargetNeuron.nodeName)
 				conceptNeuronSourceList.append(connectionTargetNeuron)
 			connectionTargetNeuronSet = connectionTargetNeuronSet.union(connectionTargetNeuronSetLocal)
+			if(printPredictionsSentence):
+				if(wSource < seedHFnetworkSubsequenceLength):
+					predictedSentenceConceptNodeList.append(conceptNeuronTarget)
+				else:
+					predictedSentenceConceptNodeList.append(list(connectionTargetNeuronSetLocalFiltered)[0])	#only print first prediction per word index
 
 		expectPredictiveSequenceToBeFound = False
 		if(enforceMinimumEncodedSequenceLength):
@@ -182,20 +196,30 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 			expectPredictiveSequenceToBeFound = True
 		if(expectPredictiveSequenceToBeFound):
 			if(somaActivationFound):
-				#if(printVerbose):
-				print("somaActivationFound")
+				if(printPredictions):
+					print("somaActivationFound")
 				if(seedHFnetworkSubsequenceType=="all"):
 					global feedPredictionSuccesses
 					feedPredictionSuccesses += 1
 			else:
-				#if(printVerbose):
-				print("!somaActivationFound: HFNLP algorithm error detected")
+				if(printPredictions):
+					print("!somaActivationFound: HFNLP algorithm error detected")
 				if(seedHFnetworkSubsequenceType=="all"):
 					global feedPredictionErrors
 					feedPredictionErrors += 1
 		else:
-			print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
+			if(printPredictions):
+				print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
 
+	if(printPredictionsSentence):
+		targetSentenceText = ""
+		predictedSentenceText = ""
+		for wSource, conceptNeuronTarget in enumerate(targetSentenceConceptNodeList):
+			targetSentenceText = targetSentenceText + " " + conceptNeuronTarget.nodeName
+			predictedSentenceText = predictedSentenceText + " " + predictedSentenceConceptNodeList[wSource].nodeName
+		print("targetSentenceText    = ", targetSentenceText)
+		print("predictedSentenceText = ", predictedSentenceText)
+			
 	if(HFconnectionMatrixAlgorithmSplitDatabase):
 		neuronIDalreadySaved = {}
 		connectionTargetNeuronList = list(connectionTargetNeuronSet)

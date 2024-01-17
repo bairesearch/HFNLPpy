@@ -163,7 +163,7 @@ def regenerateGraphNodes():
 			conceptNode.SANIlayerIndex = 0
 		'''
 		addNodeToGraph(conceptNode)
-		if(printVerbose):
+		if(printNodeCreation):
 			print("create new conceptNode; ", conceptNode.nodeName)
 
 def generateHopfieldGraphSentenceNodes(tokenisedSentence, sentenceIndex, sentenceConceptNodeList):
@@ -180,7 +180,7 @@ def generateHopfieldGraphSentenceNodes(tokenisedSentence, sentenceIndex, sentenc
 			#set sentence artificial vars (for sentence graph only, do not generalise to network graph);
 			conceptNode.w = w
 			conceptNode.sentenceIndex = sentenceIndex
-			if(printVerbose):
+			if(printNodeExisting):
 				print("graphNodeExists; ", conceptNode.nodeName)
 		else:
 			#primary vars;
@@ -197,7 +197,7 @@ def generateHopfieldGraphSentenceNodes(tokenisedSentence, sentenceIndex, sentenc
 				getTokenSynonyms(conceptNode, token)
 
 			addNodeToGraph(conceptNode)
-			if(printVerbose):
+			if(printNodeCreation):
 				print("create new conceptNode; ", conceptNode.nodeName)
 		sentenceConceptNodeList.append(conceptNode)
 		

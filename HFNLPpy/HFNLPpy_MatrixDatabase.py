@@ -21,6 +21,7 @@ import numpy as np
 import torch as pt
 import torch.nn.functional as F
 
+from HFNLPpy_globalDefs import printDatabaseAccess
 from HFNLPpy_MatrixGlobalDefs import *
 import HFNLPpy_ConnectionMatrixBasic
 from HFNLPpy_MatrixOperations import getSecondDataIndexMax
@@ -82,7 +83,8 @@ def finaliseMatrixDatabaseSentence(HFconnectionGraphObject, sentenceConceptNodeL
 		if(conceptNode.nodeName not in neuronIDalreadySaved):
 			neuronIDalreadySaved[conceptNode.nodeName] = True
 			neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
-			print("save tensor: conceptNode = ", conceptNode.nodeName, ", neuronID = ", neuronID)
+			if(printDatabaseAccess):
+				print("save tensor: conceptNode = ", conceptNode.nodeName, ", neuronID = ", neuronID)
 			if(HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] != None):	#ensure node has not already been deleted (in the case of replica nodes in sentence)
 				saveMatrixDatabaseFile(HFconnectionGraphObject, neuronID, HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID])
 				HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] = None

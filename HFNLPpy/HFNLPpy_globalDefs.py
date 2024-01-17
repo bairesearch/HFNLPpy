@@ -18,6 +18,15 @@ HFNLP - global defs
 """
 
 printVerbose = True
+printNodeCreation = True
+printNodeExisting = True
+printPredictions = True
+printDatabaseAccess = True
+printPredictionsSentence = True	#print full expected/predicted sentences
+if(printPredictionsSentence):
+	printPredictions = False
+	printNodeExisting = False
+	printDatabaseAccess = False
 
 #select SANIHFNLP algorithm;
 useAlgorithmLayeredSANI = False
