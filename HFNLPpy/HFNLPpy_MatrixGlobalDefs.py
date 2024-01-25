@@ -52,19 +52,19 @@ if(algorithmMatrixSANI):
 		#algorithmMatrixSANImethodPosthoc = "enforceSequentialActivationAcrossSegments"	#incomplete		#previous segments must be activated for current segment to be activated
 	#select sequentialSegmentContextEncoding method (select one);
 	sequentialSegmentContextEncoding = "linear"	#select: linear/relativeLinear/relativeExponential #relativeExponential: sequential segments capture input (past context tokens) at exponentially further distances
-	if(sequentialSegmentContextEncoding=="linear"):
-		sequentialSegmentContextEncodingSize = 1	#1	#lower value: engram (prediction) more robust but less generalisable	#number of tokens per segment
-		sequentialSegmentContextEncodingMaxLength = 30	#maximum length of engram across all sequential segments
 	#sequentialSegmentContextEncodingRandom = False #encodings are partially randomised (note dendritic SANI implementation creates multiple semi-random encodings of past context in different dendritic branches) 
 	if(algorithmMatrixSANImethodPosthoc=="supportSequentialActivationAcrossSegments"):
 		numberOfBranchSequentialSegments = 10	#SANI supports higher resolution sequential segments (up to max sequence resolution; x=1 [individual tokens])
 	elif(algorithmMatrixSANImethodPosthoc=="addActivationAcrossSegments"):
 		if(sequentialSegmentContextEncoding=="linear"):
+			sequentialSegmentContextEncodingSize = 1	#1	#lower value: engram (prediction) more robust but less generalisable	#number of tokens per segment
+			sequentialSegmentContextEncodingMaxLength = 30	#maximum length of engram across all sequential segments
 			numberOfBranchSequentialSegments = sequentialSegmentContextEncodingMaxLength//sequentialSegmentContextEncodingSize
 		elif(sequentialSegmentContextEncoding=="relativeLinear"):
 			numberOfBranchSequentialSegments = 5
 		elif(sequentialSegmentContextEncoding=="relativeExponential"):
 			numberOfBranchSequentialSegments = 5
+			sequentialSegmentContextEncodingMaxLength = 30	#maximum length of engram across all sequential segments
 	elif(algorithmMatrixSANImethodPosthoc=="getLastSequentialSegmentActivation"):
 		numberOfBranchSequentialSegments = 5
 	normaliseConnectionStrengthWrtContextLength = False

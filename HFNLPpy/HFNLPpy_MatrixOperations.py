@@ -27,6 +27,8 @@ import HFNLPpy_ConnectionMatrixAlgorithm
 import HFNLPpy_hopfieldOperations
 import HFNLPpy_ConnectionMatrixOperations
 
+import random
+
 def createConnectionGraphMatrixHolder():
 	if(algorithmMatrixTensorDim==4):
 		HFconnectionGraphMatrix = None
@@ -397,8 +399,6 @@ def createContextVectorsSANI(w1, sentenceConceptNodeList, HFconnectionGraphObjec
 	return contextConnectionVector
 
 def createContextVectorSANI1(w1, sentenceConceptNodeList, HFconnectionGraphObject, sequentialSegmentIndex, weightStore):
-	if(sequentialSegmentContextEncoding=="relativeExponential"):
-		expRange = createExponentialRange(0, w1, numberOfBranchSequentialSegments)
 	contextSequenceLength = w1
 	validSequentialSegment = True
 	if(sequentialSegmentContextEncoding=="linear"):
@@ -411,36 +411,48 @@ def createContextVectorSANI1(w1, sentenceConceptNodeList, HFconnectionGraphObjec
 		w2Min = sequentialSegmentIndex*contextSequenceSegmentLength
 		w2Max = w2Min + contextSequenceSegmentLength
 	elif(sequentialSegmentContextEncoding=="relativeExponential"):
-		w2Min = sum(expRange[0:sequentialSegmentIndex+1])
-		w2Max = sum(expRange[0:sequentialSegmentIndex+2])
+		#createExponentialRange(0, w1, numberOfBranchSequentialSegments)
+		#w2Min = sum(expRange[0:sequentialSegmentIndex+1])
+		#w2Max = sum(expRange[0:sequentialSegmentIndex+2])
+		expRange = createExponentialRange(0, sequentialSegmentContextEncodingMaxLength, numberOfBranchSequentialSegments+1, decay_rate=4)
+		#print("expRange = ", expRange)
+		expRange = [number-sequentialSegmentContextEncodingMaxLength+w1 for number in expRange]
+		#print("expRange = ", expRange)
+		w2Min = expRange[sequentialSegmentIndex]
+		w2Max = expRange[sequentialSegmentIndex+1]
+		if(w2Min < 0):
+			validSequentialSegment = False
 	w2Min = int(w2Min)
 	w2Max = int(w2Max)
+	#print("w2Min = ", w2Min)
+	#print("w2Max = ", w2Max)
+	#print("sequentialSegmentIndex = ", sequentialSegmentIndex)
+	#print("w1 = ", w1)
 	if(validSequentialSegment):
 		contextConnectionVector = createContextVectorSANI(w1, sentenceConceptNodeList, HFconnectionGraphObject, w2Min, w2Max, weightStore)	#len(HFconnectionGraphObject.neuronNamelist)
 	else:
-		contextConnectionVector = createContextVectorSANIempty(w1, sentenceConceptNodeList, HFconnectionGraphObject, w2Min, w2Max, weightStore)	#len(HFconnectionGraphObject.neuronNamelist)
+		contextConnectionVector = createContextVectorSANIempty(w1, sentenceConceptNodeList, HFconnectionGraphObject)	#len(HFconnectionGraphObject.neuronNamelist)
 		#contextConnectionVector = pt.zeros(HFconnectionGraphObject.connectionMatrixMaxConcepts)
 	return contextConnectionVector
 
 #if decay; go from maxVal to minVal
-def createExponentialRange(minVal, maxVal, size, decay=True):
-	#rate = s / (maxVal - minVal)
-	#expRange = [random.expovariate(rate) + minVal for _ in range(s)]
-	expRange = []
-	val_range = maxVal - minVal
-	for i in range(s):
-		rate = 1 / (val_range - (i * val_range / s))
-		if(decay):
-			exponential_factor = 1 + random.expovariate(rate)
-		else:
-			exponential_factor = random.expovariate(rate)
-		if i == 0:
-			value = minVal
-		else:
-			value = exponential_values[i - 1] * exponential_factor
-		value = max(minVal, min(maxVal, value))
-		exponential_values.append(value)
-	return expRange
+def createExponentialRange(minVal, maxVal, s, decay_rate=5):
+    # Generate s numbers between 0 and 1
+    uniform_samples = np.linspace(0, 1, s)
+
+    # Apply the exponential decay function to the uniform samples with the specified decay rate
+    exponential_samples = (1 - np.exp(-decay_rate * uniform_samples))
+
+    # Normalize the samples to have a minimum of 0 and a maximum of 1
+    normalized_samples = (exponential_samples - np.min(exponential_samples)) / (np.max(exponential_samples) - np.min(exponential_samples))
+
+    # Scale the samples to be between minVal and maxVal
+    scaled_samples = normalized_samples * (maxVal - minVal) + minVal
+
+    # Convert the samples to integers
+    expRange = np.round(scaled_samples).astype(int)
+
+    return expRange
 
 def createLinearSpace(minVal, maxVal, size):
 	space = pt.linspace(minVal, maxVal, size)
@@ -507,7 +519,7 @@ def createContextVectorSANI(w1, sentenceConceptNodeList, HFconnectionGraphObject
 					contextConnectionVector[neuronIDcontext] = calculateContextVectorValue(weightStore, w1, w2)
 	return contextConnectionVector
 
-def createContextVectorSANIempty(w1, sentenceConceptNodeList, HFconnectionGraphObject, w2Min, w2Max, weightStore):
+def createContextVectorSANIempty(w1, sentenceConceptNodeList, HFconnectionGraphObject):
 	contextLength = w1	#len(sentenceConceptNodeList) [too large]	#int(w2Max-w2Min) [not possible as will vary across secondDataIndex]	#contextSizeMax [too large]
 	contextConnectionVector = HFNLPpy_ConnectionMatrixAlgorithm.createContextVectorTensor(HFconnectionGraphObject, contextLength)
 	return contextConnectionVector
