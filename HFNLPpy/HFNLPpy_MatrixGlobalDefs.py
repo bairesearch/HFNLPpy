@@ -1,7 +1,7 @@
 """HFNLPpy_MatrixGlobalDefs.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022-2023 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2024 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -22,7 +22,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 import numpy as np
-
+import sys
 
 debugAlgorithmMatrix = False
 debugHFconnectionMatrix = False
@@ -113,16 +113,22 @@ if(HFconnectionMatrixAlgorithmContextVectorSparse):
 simulatedDendriticBranches = False	#independent dendritic branches
 HFconnectionMatrixAlgorithmMinValue = 0
 if(simulatedDendriticBranches):
-	simulatedDendriticBranchesMinMatchStrength = 1.0	#minimum branch match strength for comparison before randomise selection of new branch to write	#CHECKTHIS
-	simulatedDendriticBranchesInitialisation = False #incomplete #perform random initialisation to break symmetry (required to select more than 1 dendritic branch)
-	if(simulatedDendriticBranchesInitialisation):
-		simulatedDendriticBranchesInitialisationWeight = 0.01	#only apply a very small randomisation magnitude to break symmetry
-		HFconnectionMatrixAlgorithmMinValue = simulatedDendriticBranchesInitialisationWeight
+	simulatedDendriticBranchesIndependentProximalContext = True
+	if(simulatedDendriticBranchesIndependentProximalContext):
+		simulatedDendriticBranchesIndependentProximalContextNeuronIDmissing = -1
+		simulatedDendriticBranchesInitialisation = False
+	else:
+		simulatedDendriticBranchesMinMatchStrength = 1.0	#minimum branch match strength for comparison before randomise selection of new branch to write	#CHECKTHIS
+		simulatedDendriticBranchesInitialisation = False #incomplete #perform random initialisation to break symmetry (required to select more than 1 dendritic branch)
+		if(simulatedDendriticBranchesInitialisation):
+			simulatedDendriticBranchesInitialisationWeight = 0.01	#only apply a very small randomisation magnitude to break symmetry
+			HFconnectionMatrixAlgorithmMinValue = simulatedDendriticBranchesInitialisationWeight
 	numberOfIndependentDendriticBranches = 10
 else: 
 	numberOfIndependentDendriticBranches = 1
 	simulatedDendriticBranchesInitialisation = False
-
+	simulatedDendriticBranchesIndependentProximalContext = False
+	
 #### max database size selection ####
 if(debugHFconnectionMatrix):
 	if(HFconnectionMatrixAlgorithmSplit):
@@ -214,8 +220,7 @@ else:
 	
 #### error ####
 def printe(str):
-	print(str)
-	exite
+	sys.exit(str)
 
 def getHFconnectionMatrixBasicMaxConcepts(HFconnectionGraphObject):
 	return HFconnectionGraphObject.connectionMatrixMaxConcepts

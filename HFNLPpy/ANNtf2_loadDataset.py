@@ -79,7 +79,7 @@ ANNtf load dataset
 		disable GIA_PREPROCESSOR_POS_TAGGER_DATABASE_NEURAL_NETWORK_EXTERNAL_TRAIN_SINGLE_BATCH_ONLY and set GIA_PREPROCESSOR_POS_TAGGER_GENERATE_DATABASE_DOC_XML_OUTPUT_START_FILE accordingly (or use batch script with GIA_PREPROCESSOR_POS_TAGGER_DATABASE_NEURAL_NETWORK_EXTERNAL_TRAIN_SINGLE_BATCH_ONLY)
 		enable GIA_PREPROCESSOR_POS_TAGGER_SEQUENCE: GIA_PREPROCESSOR_POS_TAGGER_DATABASE_TRAIN_AMBIGUOUS_PERMUTATIONS
 	make --makefile=makefile.GIAwithANNgeneratePOStaggerDatabase.UB16
-	./GIAgeneratePOStaggerDatabase.exe -dbpostaggerfolder "/home/rich/source/GIAPOStaggerDatabase" -lrp -lrpfolder "/home/rich/source/source/LRPdata" -wikiDumpFolder "/home/rich/soft/wiki/output" (-wikiDumpFileBatchIndex X)
+	./GIAgeneratePOStaggerDatabase.exe -dbpostaggerfolder "/home/user/source/GIAPOStaggerDatabase" -lrp -lrpfolder "/home/user/source/source/LRPdata" -wikiDumpFolder "/home/user/soft/wiki/output" (-wikiDumpFileBatchIndex X)
 	this creates XtrainBatchXXXX.dat and YtrainBatchXXXX.dat
 	```
 ## Dataset type 2 example - SmallDataset (trainBatchXXXX.dat - aka SmallDataset.data): 
@@ -112,7 +112,7 @@ ANNtf load dataset
 		disable GIA_PREPROCESSOR_POS_TAGGER_DATABASE_NEURAL_NETWORK_EXTERNAL_TRAIN_SINGLE_BATCH_ONLY and set GIA_PREPROCESSOR_POS_TAGGER_GENERATE_DATABASE_DOC_XML_OUTPUT_START_FILE accordingly (or use batch script with GIA_PREPROCESSOR_POS_TAGGER_DATABASE_NEURAL_NETWORK_EXTERNAL_TRAIN_SINGLE_BATCH_ONLY)
 		enable GIA_PREPROCESSOR_POS_TAGGER_SENTENCE: GIA_PREPROCESSOR_POS_TAGGER_GENERATE_DATABASE_RAW
 	make --makefile=makefile.GIAwithANNgeneratePOStaggerDatabase.UB16
-	./GIAgeneratePOStaggerDatabase.exe -dbpostaggerfolder "/home/rich/source/GIAPOStaggerDatabase" -lrp -lrpfolder "/home/rich/source/source/LRPdata" -wikiDumpFolder "/home/rich/soft/wiki/output" (-wikiDumpFileBatchIndex X)
+	./GIAgeneratePOStaggerDatabase.exe -dbpostaggerfolder "/home/user/source/GIAPOStaggerDatabase" -lrp -lrpfolder "/home/user/source/source/LRPdata" -wikiDumpFolder "/home/user/soft/wiki/output" (-wikiDumpFileBatchIndex X)
 	this creates XtrainBatchXXXX.dat
 	```
 ## Dataset type 4 example - free text (XtrainBatchXXXX.dat)
