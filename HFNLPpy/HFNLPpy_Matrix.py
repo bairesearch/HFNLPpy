@@ -152,37 +152,36 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 		predictedSentenceConceptNodeList = []
 		predictedSentenceConceptNodeList.append(seedSentenceConceptNodeList[0])
 
-	for wSource in range(len(targetSentenceConceptNodeList)-1):
+	
+	numberSourceNeurons = len(targetSentenceConceptNodeList)-1
+	for wSource in range(numberSourceNeurons):
+		
+		#forward predictions (if reversePredictions: predict future candidates);
+		if(reversePredictions):	#predictFutureCandidates
+			numberTargetNeurons = len(targetSentenceConceptNodeList)-wSource-1
+		else:
+			numberTargetNeurons = 1
+		connectionTargetNeuronSetLocalForward = set()
+		for wTarget in range(wSource+1, wSource+1+numberTargetNeurons):
+			somaActivationFound, connectionTargetNeuronSetLocalForwardTarget = performPredictions(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, conceptNeuronSourceList, wTarget, wSource, connectionTargetNeuronSet, HFconnectionGraphObject, False)
+			connectionTargetNeuronSetLocalForward = connectionTargetNeuronSetLocalForward.union(connectionTargetNeuronSetLocalForwardTarget)
+		
+		#forward+reverse predictions;
 		wTarget = wSource+1
-		conceptNeuronSource = targetSentenceConceptNodeList[wSource]
 		conceptNeuronTarget = targetSentenceConceptNodeList[wTarget]
-		
-		if(algorithmMatrixSANImethod=="completeSANI"):
-			HFconnectionGraphObject.activationTime = wSource
-		
+		if(reversePredictions):
+			connectionTargetNeuronSetLocal = set()
+			somaActivationFound, connectionTargetNeuronSetLocalTarget = performPredictions(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, conceptNeuronSourceList, wTarget, wSource, connectionTargetNeuronSetLocalForward, HFconnectionGraphObject, True)
+			connectionTargetNeuronSetLocal = connectionTargetNeuronSetLocal.union(connectionTargetNeuronSetLocalTarget)
+		else:
+			connectionTargetNeuronSetLocal = connectionTargetNeuronSetLocalForward
+				
 		if(seedHFnetworkSubsequenceBasic):
-			if(printPredictions):
-				print("\nseedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", seedSource = ", conceptNeuronSource.nodeName)
-			activationTime = calculateActivationTimeSequence(wSource)
-			somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet, HFconnectionGraphObject)
+			connectionTargetNeuronSet = connectionTargetNeuronSetLocal
 			if(printPredictionsSentence):
 				predictedSentenceConceptNodeList.append(conceptNeuronTarget)
 		else:
-			connectionTargetNeuronSetLocal = set()
-			activationTime = None
-			if(wSource < seedHFnetworkSubsequenceLength):
-				if(printPredictions):
-					print("\nseedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", seedSource = ", conceptNeuronSource.nodeName)
-				somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSetLocal, HFconnectionGraphObject)
-			else:
-				if(printPredictions):
-					print("")
-					for feedSource in conceptNeuronSourceList:
-						print("feedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", feedSource = ", feedSource.nodeName)
-				somaActivationFound = simulateBiologicalHFnetworkSequenceNodesPropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSourceList, connectionTargetNeuronSetLocal, HFconnectionGraphObject)
-			
 			connectionTargetNeuronSetLocalFiltered = selectActivatedNeurons(wSource, targetSentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSetLocal, HFconnectionGraphObject)
-				
 			conceptNeuronSourceList.clear()
 			for connectionTargetNeuron in connectionTargetNeuronSetLocalFiltered:
 				if(printPredictions):
@@ -232,13 +231,44 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 		connectionTargetNeuronList = list(connectionTargetNeuronSet)
 		HFNLPpy_MatrixDatabase.finaliseMatrixDatabaseSentence(HFconnectionGraphObject, connectionTargetNeuronList, neuronIDalreadySaved)
 
-def simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSource, connectionTargetNeuronSet, HFconnectionGraphObject):
+def performPredictions(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, conceptNeuronSourceList, wTarget, wSource, connectionTargetNeuronSetLocal, HFconnectionGraphObject, useReversePredictions):
+	#print("wSource = ", wSource)
+	#print("wTarget = ", wTarget)
+	
+	conceptNeuronSource = targetSentenceConceptNodeList[wSource]
+	conceptNeuronTarget = targetSentenceConceptNodeList[wTarget]
+
+	if(algorithmMatrixSANImethod=="completeSANI"):
+		HFconnectionGraphObject.activationTime = wSource
+					
+	connectionTargetNeuronSetLocal = set()
+	if(seedHFnetworkSubsequenceBasic):
+		if(printPredictions):
+			print("\nseedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", seedSource = ", conceptNeuronSource.nodeName)
+		activationTime = calculateActivationTimeSequence(wSource)
+		somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, activationTime, wTarget, conceptNeuronTarget, wSource, conceptNeuronSource, connectionTargetNeuronSetLocal, HFconnectionGraphObject, useReversePredictions)
+		connectionTargetNeuronSetLocal = connectionTargetNeuronSet
+	else:
+		activationTime = None
+		if(wSource < seedHFnetworkSubsequenceLength):
+			if(printPredictions):
+				print("\nseedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", seedSource = ", conceptNeuronSource.nodeName)
+			somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, activationTime, wTarget, conceptNeuronTarget, wSource, conceptNeuronSource, connectionTargetNeuronSetLocal, HFconnectionGraphObject, useReversePredictions)
+		else:
+			if(printPredictions):
+				print("")
+				for feedSource in conceptNeuronSourceList:
+					print("feedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", feedSource = ", feedSource.nodeName)
+			somaActivationFound = simulateBiologicalHFnetworkSequenceNodesPropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, activationTime, wTarget, conceptNeuronTarget, wSource, conceptNeuronSourceList, connectionTargetNeuronSetLocal, HFconnectionGraphObject, useReversePredictions)
+	return somaActivationFound, connectionTargetNeuronSetLocal
+			
+def simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget, conceptNeuronTarget, wSource, conceptNeuronSource, connectionTargetNeuronSet, HFconnectionGraphObject, useReversePredictions):
 	#print("simulateBiologicalHFnetworkSequenceNodePropagateForward: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName)	
-	somaActivationFound = HFNLPpy_MatrixPropagate.simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, HFconnectionGraphObject)
+	somaActivationFound = HFNLPpy_MatrixPropagate.simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, HFconnectionGraphObject, useReversePredictions)
 	return somaActivationFound
 
-def simulateBiologicalHFnetworkSequenceNodesPropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, wTarget, conceptNeuronTarget, activationTime, wSource, conceptNeuronSourceList, connectionTargetNeuronSet, HFconnectionGraphObject):
-	somaActivationFound = HFNLPpy_MatrixPropagate.simulateBiologicalHFnetworkSequenceNodesPropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, HFconnectionGraphObject)
+def simulateBiologicalHFnetworkSequenceNodesPropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget, conceptNeuronTarget, wSource, conceptNeuronSourceList, connectionTargetNeuronSet, HFconnectionGraphObject, useReversePredictions):
+	somaActivationFound = HFNLPpy_MatrixPropagate.simulateBiologicalHFnetworkSequenceNodesPropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, HFconnectionGraphObject, useReversePredictions)
 	return somaActivationFound
 
 '''

@@ -7,20 +7,33 @@ Richard Bruce Baxter - Copyright (c) 2022-2024 Baxter AI (baxterai.com)
 MIT License
 
 # Installation:
-conda create -n anntf2 python=3.7
-source activate anntf2
-pip install tensorflow
+
+source activate pytorchsenv
+python ANNpt_main.py
 pip install networkx
-pip install matplotlib==2.2.3
+pip install matplotlib
 pip install yattag
 pip install torch
 pip install torch_geometric
-pip install nltk spacy==2.3.7
+pip install nltk spacy
 python3 -m spacy download en_core_web_md
 pip install benepar
+	
+	conda create -n anntf2 python=3.7
+	source activate anntf2
+	pip install tensorflow
+	pip install networkx
+	pip install matplotlib==2.2.3
+	pip install yattag
+	pip install torch
+	pip install torch_geometric
+	pip install nltk spacy==2.3.7
+	python3 -m spacy download en_core_web_md
+	pip install benepar
 
 # Usage:
-source activate anntf2
+source activate pytorchsenv
+	source activate anntf2
 python3 HFNLPpy_main.py
 
 # Description:
@@ -36,7 +49,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from nltk.tokenize import word_tokenize
 from collections import Counter, defaultdict
 
-import tensorflow as tf
+#import tensorflow as tf
 import numpy as np
 
 import sys

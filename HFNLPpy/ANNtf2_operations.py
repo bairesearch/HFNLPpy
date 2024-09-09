@@ -17,7 +17,7 @@ ANNtf operations
 
 """
 
-import tensorflow as tf
+#import tensorflow as tf
 import numpy as np
 import ANNtf2_globalDefs
 import math

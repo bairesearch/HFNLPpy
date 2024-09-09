@@ -27,8 +27,14 @@ import sys
 debugAlgorithmMatrix = False
 debugHFconnectionMatrix = False
 
+
 #### Propagation order ####
 algorithmMatrixPropagationOrder = "propagateReverseLookup"	#select: propagateForward/propagateReverseLookup #propagateForward is required for complete sequentially activated input support (aligns with HFNLPpy_DendriticSANI:useAlgorithmDendriticSANI:!reversePropagationOrder prediction implementation)	#propagateReverseLookup (orig implementation): for each neuron in sequence; complete computation is performed for every next word prediction target neuron candidate 
+
+####  reverse predictions (future candidate predictions) ####
+reversePredictions = False	#use reverse predictions from future candidate predictions (distal dendrites only)
+if(reversePredictions):
+	assert algorithmMatrixPropagationOrder=="propagateReverseLookup"	#only implementation currently coded
 
 #### SANI ####
 algorithmMatrixSANI = True	#emulate DendriticSANIbiologicalSimulationSimple
