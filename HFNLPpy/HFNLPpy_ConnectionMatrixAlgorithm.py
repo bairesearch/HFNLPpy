@@ -409,3 +409,20 @@ def writeGraphToCsv(graph, filePath):
 		printe("HFNLPpy_ConnectionMatrixAlgorithm:writeGraphToCsv error: HFwriteSavedConnectionsMatrixAlgorithm/HFreadSavedConnectionsMatrixAlgorithm currently requires algorithmMatrixTensorDim=2 or algorithmMatrixTensorDim=4 such that the file i/o code can be simplified")
 		
 	HFNLPpy_ConnectionMatrixOperations.writeGraphToCsv(graph, filePath)
+
+def updateSynapsesMemoryForget(HFconnectionGraph, sentenceConceptNodeList, connectionMatrixAlgorithmSplit):
+	if(connectionMatrixAlgorithmSplit):
+		#forget every synapse in every neuron in sentence
+		for w1, sentence in enumerate(sentenceConceptNodeList):
+			if(forgetSynapsesUncorrelated):
+				HFconnectionGraph[w1][HFconnectionGraph[w1]<=forgetSynapsesUncorrelatedThreshold] = pt.clamp(HFconnectionGraph[w1][HFconnectionGraph[w1]<=forgetSynapsesUncorrelatedThreshold] - forgetSynapsesRate, min=0)
+				#print("HFconnectionGraph[w1] = ", HFconnectionGraph[w1])
+			else:
+				HFconnectionGraph[w1] = pt.clamp(HFconnectionGraph[w1] - forgetSynapsesRate, min=0)
+	else:
+		#forget every synapse in network
+		if(forgetSynapsesUncorrelated):
+			HFconnectionGraph[HFconnectionGraph<forgetSynapsesUncorrelatedThreshold] = pt.clamp(HFconnectionGraph[HFconnectionGraph<forgetSynapsesUncorrelatedThreshold] - forgetSynapsesRate, min=0)
+		else:
+			HFconnectionGraph[:] = pt.clamp(HFconnectionGraph[:] - forgetSynapsesRate, min=0)
+	

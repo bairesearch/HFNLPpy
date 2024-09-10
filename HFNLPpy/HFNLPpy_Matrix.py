@@ -395,3 +395,16 @@ def retrieveSimilarConcepts(wSource, sentenceConceptNodeList, networkConceptNode
 		connectionTargetNeuronSetExtended = HFNLPpy_ConceptsMatrixOperations.retrieveSimilarConceptsBagOfWords(wSource, sentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSet, HFconnectionGraphObject)
 
 	return connectionTargetNeuronSetExtended
+
+def updateSynapsesMemoryForget(HFconnectionGraphObject, sentenceConceptNodeList):
+	if(forgetSynapses):
+		if(algorithmMatrixTensorDim==4):
+			HFNLPpy_ConnectionMatrixAlgorithm.updateSynapsesMemoryForget(HFconnectionGraphObject.HFconnectionGraphMatrix, sentenceConceptNodeList, HFconnectionMatrixAlgorithmSplit)
+		else:
+			secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax()
+			for dendriticBranchIndex in range(numberOfIndependentDendriticBranches):
+				if(algorithmMatrixTensorDim==3):
+					HFNLPpy_ConnectionMatrixAlgorithm.updateSynapsesMemoryForget(HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex], sentenceConceptNodeList, HFconnectionMatrixAlgorithmSplit)
+				else:
+					for secondDataIndex in range(secondDataIndexMax):
+						 HFNLPpy_ConnectionMatrixAlgorithm.updateSynapsesMemoryForget(HFconnectionGraphObject.HFconnectionGraphMatrix[dendriticBranchIndex][secondDataIndex], sentenceConceptNodeList, HFconnectionMatrixAlgorithmSplit)

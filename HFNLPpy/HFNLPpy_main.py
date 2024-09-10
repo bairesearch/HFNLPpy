@@ -33,8 +33,10 @@ pip install benepar
 
 # Usage:
 source activate pytorchsenv
-	source activate anntf2
 python3 HFNLPpy_main.py
+
+	source activate anntf2
+	python3 HFNLPpy_main.py
 
 # Description:
 HFNLP - hopfield natural language processing

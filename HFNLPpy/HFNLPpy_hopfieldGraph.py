@@ -282,12 +282,14 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 			HFNLPpy_Matrix.seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceConceptNodeList, numberOfSentences, HFconnectionGraphObject)	
 		else:
 			printe("HFNLPpy_hopfieldGraph:generateHopfieldGraphSentence error: !trainSentence requires useAlgorithmScan or useAlgorithmDendriticSANI")
-
-	if(HFconnectionMatrixAlgorithmSplitDatabase):
-		neuronIDalreadySaved = {}
-		HFNLPpy_MatrixDatabase.finaliseMatrixDatabaseSentence(HFconnectionGraphObject, sentenceConceptNodeList, neuronIDalreadySaved)
-		if(useAlgorithmLayeredSANI):
-			HFNLPpy_MatrixDatabase.finaliseMatrixDatabaseSentence(HFconnectionGraphObject, sentenceConceptNodeListOrig, neuronIDalreadySaved)	#add original sentence nodes that have not been merged into SANI nodes (required for future sentences)
+	
+	if(useHFconnectionMatrix):
+		HFNLPpy_Matrix.updateSynapsesMemoryForget(HFconnectionGraphObject, sentenceConceptNodeList)
+		if(HFconnectionMatrixAlgorithmSplitDatabase):
+			neuronIDalreadySaved = {}
+			HFNLPpy_MatrixDatabase.finaliseMatrixDatabaseSentence(HFconnectionGraphObject, sentenceConceptNodeList, neuronIDalreadySaved)
+			if(useAlgorithmLayeredSANI):
+				HFNLPpy_MatrixDatabase.finaliseMatrixDatabaseSentence(HFconnectionGraphObject, sentenceConceptNodeListOrig, neuronIDalreadySaved)	#add original sentence nodes that have not been merged into SANI nodes (required for future sentences)
 			
 	if(drawHopfieldGraph):
 		if(drawHopfieldGraphSentence):

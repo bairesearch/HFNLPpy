@@ -27,6 +27,14 @@ import sys
 debugAlgorithmMatrix = False
 debugHFconnectionMatrix = False
 
+#### Dynamic memory ####
+forgetSynapses = True #reduce weight of (low weighted) synapses over time
+if(forgetSynapses):
+	forgetSynapsesUncorrelated = True	#only forget uncorrelated synapses
+	if(forgetSynapsesUncorrelated):
+		forgetSynapsesUncorrelatedThreshold = 1.0	#only forget uncorrelated (low weighted) synapses
+	forgetSynapsesRate = 0.01	#forget weighted synapses every x word in article
+temporarilyWeightInContextAssociations = False #temporarily weight recent associations between words
 
 #### Propagation order ####
 algorithmMatrixPropagationOrder = "propagateReverseLookup"	#select: propagateForward/propagateReverseLookup #propagateForward is required for complete sequentially activated input support (aligns with HFNLPpy_DendriticSANI:useAlgorithmDendriticSANI:!reversePropagationOrder prediction implementation)	#propagateReverseLookup (orig implementation): for each neuron in sequence; complete computation is performed for every next word prediction target neuron candidate 
@@ -124,10 +132,13 @@ if(simulatedDendriticBranches):
 		simulatedDendriticBranchesIndependentProximalContextNeuronIDmissing = -1
 		simulatedDendriticBranchesInitialisation = False
 	else:
-		simulatedDendriticBranchesMinMatchStrength = 1.0	#minimum branch match strength for comparison before randomise selection of new branch to write	#CHECKTHIS
+		if(forgetSynapses):
+			simulatedDendriticBranchesMinMatchStrength = forgetSynapsesRate
+		else:
+			simulatedDendriticBranchesMinMatchStrength = 1.0	#minimum branch match strength for comparison before randomise selection of new branch to write	#CHECKTHIS
 		simulatedDendriticBranchesInitialisation = False #incomplete #perform random initialisation to break symmetry (required to select more than 1 dendritic branch)
 		if(simulatedDendriticBranchesInitialisation):
-			simulatedDendriticBranchesInitialisationWeight = 0.01	#only apply a very small randomisation magnitude to break symmetry
+			simulatedDendriticBranchesInitialisationWeight = 0.01	#only apply a very small randomisation magnitude to break symmetry	#forgetSynapses: CHECKTHIS
 			HFconnectionMatrixAlgorithmMinValue = simulatedDendriticBranchesInitialisationWeight
 	numberOfIndependentDendriticBranches = 10
 else: 
@@ -215,12 +226,15 @@ else:
 useHFconnectionMatrixAlgorithmBool = False
 import torch as pt
 if(simulatedDendriticBranchesInitialisation):
-	HFconnectionsMatrixAlgorithmType = pt.float	
+	HFconnectionsMatrixAlgorithmType = pt.float
 else:
 	if(useHFconnectionMatrixAlgorithmBool):
 		HFconnectionsMatrixAlgorithmType = pt.bool
 	else:
-		HFconnectionsMatrixAlgorithmType = pt.long
+		if(forgetSynapses):
+			HFconnectionsMatrixAlgorithmType = pt.float
+		else:
+			HFconnectionsMatrixAlgorithmType = pt.long
 		#print("HFconnectionsMatrixAlgorithmType = ", HFconnectionsMatrixAlgorithmType)
 			
 	
