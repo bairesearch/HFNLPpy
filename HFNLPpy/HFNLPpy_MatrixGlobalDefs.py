@@ -28,13 +28,25 @@ debugAlgorithmMatrix = False
 debugHFconnectionMatrix = False
 
 #### Dynamic memory ####
-forgetSynapses = True #reduce weight of (low weighted) synapses over time
+weightEnduranceTypeDefaultAdd = 0
+#HFconnectionMatrixTime = False
+forgetSynapses = False #reduce weight of (low weighted) synapses over time
 if(forgetSynapses):
 	forgetSynapsesUncorrelated = True	#only forget uncorrelated synapses
+	forgetSynapsesNonlinear = False	#FUTURE
+	#if(forgetSynapsesNonlinear):
+		#HFconnectionMatrixTime = True
+		#HFconnectionsMatrixTimeType = pt.long
 	if(forgetSynapsesUncorrelated):
 		forgetSynapsesUncorrelatedThreshold = 1.0	#only forget uncorrelated (low weighted) synapses
 	forgetSynapsesRate = 0.01	#forget weighted synapses every x word in article
 temporarilyWeightInContextAssociations = False #temporarily weight recent associations between words
+if(temporarilyWeightInContextAssociations):	
+	#HFconnectionMatrixInContextAssociations = True
+	#HFconnectionsMatrixInContextAssociationsType = pt.float
+	temporarilyWeightInContextAssociationsStrength = 2	#bias multiplier of incontext associations
+	weightEnduranceTypeInContextAdd = 1
+	weightEnduranceTypeInContextSubtract = 2
 
 #### Propagation order ####
 algorithmMatrixPropagationOrder = "propagateReverseLookup"	#select: propagateForward/propagateReverseLookup #propagateForward is required for complete sequentially activated input support (aligns with HFNLPpy_DendriticSANI:useAlgorithmDendriticSANI:!reversePropagationOrder prediction implementation)	#propagateReverseLookup (orig implementation): for each neuron in sequence; complete computation is performed for every next word prediction target neuron candidate 
@@ -42,6 +54,8 @@ algorithmMatrixPropagationOrder = "propagateReverseLookup"	#select: propagateFor
 ####  reverse predictions (future candidate predictions) ####
 reversePredictions = False	#use reverse predictions from future candidate predictions (distal dendrites only)
 if(reversePredictions):
+	assert algorithmMatrixPropagationOrder=="propagateReverseLookup"	#only implementation currently coded
+if(temporarilyWeightInContextAssociations):	
 	assert algorithmMatrixPropagationOrder=="propagateReverseLookup"	#only implementation currently coded
 
 #### SANI ####
@@ -83,6 +97,7 @@ if(algorithmMatrixSANI):
 		numberOfBranchSequentialSegments = 5
 	normaliseConnectionStrengthWrtContextLength = False
 else:
+	algorithmMatrixSANImethod = "none"
 	algorithmMatrixSANImethodPosthoc = "none"
 	algorithmMatrixSANImethodTopkActivationAcrossSegments = False
 	algorithmMatrixSANImethodAddActivationAcrossSegmentsOld = False
@@ -222,21 +237,23 @@ else:
 	HFwriteSavedConnectionsMatrixAlgorithm = False	#optional
 	HFreadSavedConceptList = False	#optional
 	HFwriteSavedConceptList = False	#optional
-				
+
 useHFconnectionMatrixAlgorithmBool = False
 import torch as pt
 if(simulatedDendriticBranchesInitialisation):
-	HFconnectionsMatrixAlgorithmType = pt.float
+	HFconnectionsMatrixAlgorithmType = pt.float	
 else:
-	if(useHFconnectionMatrixAlgorithmBool):
-		HFconnectionsMatrixAlgorithmType = pt.bool
+	if(temporarilyWeightInContextAssociations):
+		HFconnectionsMatrixAlgorithmType = pt.float	#or pt.long
+	elif(forgetSynapses):
+		HFconnectionsMatrixAlgorithmType = pt.float
 	else:
-		if(forgetSynapses):
-			HFconnectionsMatrixAlgorithmType = pt.float
+		if(useHFconnectionMatrixAlgorithmBool):
+			HFconnectionsMatrixAlgorithmType = pt.bool
 		else:
 			HFconnectionsMatrixAlgorithmType = pt.long
 		#print("HFconnectionsMatrixAlgorithmType = ", HFconnectionsMatrixAlgorithmType)
-			
+
 	
 #### error ####
 def printe(str):

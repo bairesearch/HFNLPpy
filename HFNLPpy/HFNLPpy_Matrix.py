@@ -76,20 +76,36 @@ def loadSentenceMatrixAlgorithmSplitMatrix(HFconnectionGraphObject, conceptNode,
 				if(HFconnectionMatrixAlgorithmSplitDatabase):
 					#load HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] into RAM
 					HFconnectionGraphObject.HFconnectionGraphMatrix[neuronID] = HFNLPpy_MatrixDatabase.loadMatrixDatabaseFile(HFconnectionGraphObject, neuronID)
-												
+			'''
+			if(HFconnectionMatrixTime):
+				HFconnectionGraphObject.HFconnectionGraphMatrixTime[neuronID] = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrixTime[neuronID], False, HFconnectionMatrixAlgorithmSplit, False, HFconnectionsMatrixTimeType)
+			if(HFconnectionMatrixInContextAssociations):
+				HFconnectionGraphObject.HFconnectionGraphMatrixInContextAssociations[neuronID] = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrixInContextAssociations[neuronID], False, HFconnectionMatrixAlgorithmSplit, False, HFconnectionsMatrixInContextAssociationsType)
+			'''
+									
 def HFconnectionGraphMatrixHolderInitialisation(self):
 	if(HFconnectionMatrixAlgorithmSplit):
-		self.HFconnectionGraphMatrix = [None]*HFconnectionMatrixBasicMaxConcepts	#store a separate matrix column for each source neuronID context index in python list
-		for sourceNeuronID in range(HFconnectionMatrixBasicMaxConcepts):
-			self.HFconnectionGraphMatrix[sourceNeuronID] = HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolder()
+		self.HFconnectionGraphMatrix = HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolderSplit()
 		self.HFconnectionGraphMatrixMin = HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolder()	#for dynamic normalisation (on demand)
 		self.HFconnectionGraphMatrixMax = HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolder()	#for dynamic normalisation (on demand)
 		if(HFconnectionMatrixAlgorithmSplitDatabase):
 			print("HFconnectionGraphMatrixHolderInitialisation warning: !HFconnectionMatrixAlgorithmSplitDatabase requires check")
+		'''
+		if(HFconnectionMatrixTime):
+			self.HFconnectionGraphMatrixTime = HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolderSplit()
+		if(HFconnectionMatrixInContextAssociations):
+			self.HFconnectionGraphMatrixInContextAssociations = HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolderSplit()
+		'''
 	else:
 		self.HFconnectionGraphMatrix = HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolder()
 		if(HFconnectionMatrixAlgorithmNormaliseStore):
 			self.HFconnectionGraphMatrixNormalised = HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolder()
+		'''
+		if(HFconnectionMatrixTime):
+			self.HFconnectionGraphMatrixTime = HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolder()
+		if(HFconnectionMatrixInContextAssociations):
+			self.HFconnectionGraphMatrixInContextAssociations = HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolder()
+		'''
 	if(simulatedDendriticBranchesIndependentProximalContext):
 		self.simulatedDendriticBranchesProximalContext = None	#HFNLPpy_MatrixOperations.createConnectionGraphMatrixHolder()
 
@@ -99,13 +115,24 @@ def initialiseHFconnectionMatrixAlgorithmWrapper(HFconnectionGraphObject):
 		HFconnectionGraphObject.HFconnectionGraphMatrixMin, _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrixMin, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore, HFconnectionsMatrixAlgorithmType)
 		HFconnectionGraphObject.HFconnectionGraphMatrixMax, _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrixMax, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore, HFconnectionsMatrixAlgorithmType)
 		''' 
-		#uses too much RAM (instead dynamically initialise HFconnectionGraphMatrix when new concepts are declared) - see addSentenceConceptNodesToHFconnectionGraphObject
+		#uses too much RAM (instead dynamically initialise HFconnectionGraphMatrix when new concepts are declared) - see HFNLPpy_hopfieldGraph:addSentenceConceptNodesToHFconnectionGraphObject:loadSentenceMatrixAlgorithmSplitMatrices
 		if(HFconnectionMatrixAlgorithmSplitRAM):
 			for sourceNeuronID in range(HFconnectionMatrixBasicMaxConcepts):
 				HFconnectionGraphObject.HFconnectionGraphMatrix[sourceNeuronID], _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore)
+				if(HFconnectionMatrixTime):
+					HFconnectionGraphObject.HFconnectionGraphMatrixTime[sourceNeuronID], _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore)
+				if(HFconnectionMatrixInContextAssociations):
+					HFconnectionGraphObject.HFconnectionGraphMatrixInContextAssociations[sourceNeuronID], _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore)
 		'''
 	else:
 		HFconnectionGraphObject.HFconnectionGraphMatrix, HFconnectionGraphObject.HFconnectionGraphMatrixNormalised = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore, HFconnectionsMatrixAlgorithmType)
+		'''
+		if(HFconnectionMatrixTime):
+			HFconnectionGraphObject.HFconnectionGraphMatrixTime, _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore, HFconnectionsMatrixAlgorithmType)
+		if(HFconnectionMatrixInContextAssociations):
+			HFconnectionGraphObject.HFconnectionGraphMatrixInContextAssociations, _ = initialiseHFconnectionMatrixWrapperAlgorithmMatrix(HFconnectionGraphObject, HFconnectionGraphObject.HFconnectionGraphMatrix, HFreadSavedConnectionsMatrixAlgorithm, HFconnectionMatrixAlgorithmSplit, HFconnectionMatrixAlgorithmNormaliseStore, HFconnectionsMatrixAlgorithmType)
+		'''
+		
 	initialiseHFconnectionMatrixWrapperAlgorithmMatrixActivationRecord(HFconnectionGraphObject)
 	if(simulatedDendriticBranchesIndependentProximalContext):
 		tensorShape = (numberOfIndependentDendriticBranches, HFconnectionGraphObject.connectionMatrixMaxConcepts)	#shape = numberOfIndependentProximalContexts * numberOfTargets
@@ -152,7 +179,6 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 		predictedSentenceConceptNodeList = []
 		predictedSentenceConceptNodeList.append(seedSentenceConceptNodeList[0])
 
-	
 	numberSourceNeurons = len(targetSentenceConceptNodeList)-1
 	for wSource in range(numberSourceNeurons):
 		
@@ -163,18 +189,17 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 			numberTargetNeurons = 1
 		connectionTargetNeuronSetLocalForward = set()
 		for wTarget in range(wSource+1, wSource+1+numberTargetNeurons):
-			somaActivationFound, connectionTargetNeuronSetLocalForwardTarget = performPredictions(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, conceptNeuronSourceList, wTarget, wSource, connectionTargetNeuronSet, HFconnectionGraphObject, False)
+			somaActivationFound, connectionTargetNeuronSetLocalForwardTarget = performPredictions(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, conceptNeuronSourceList, wTarget, wSource, connectionTargetNeuronSet, HFconnectionGraphObject, False)	#connectionTargetNeuronSet parameter is not used during forward predictions only
 			connectionTargetNeuronSetLocalForward = connectionTargetNeuronSetLocalForward.union(connectionTargetNeuronSetLocalForwardTarget)
 		
 		#forward+reverse predictions;
 		wTarget = wSource+1
 		conceptNeuronTarget = targetSentenceConceptNodeList[wTarget]
 		if(reversePredictions):
-			connectionTargetNeuronSetLocal = set()
-			somaActivationFound, connectionTargetNeuronSetLocalTarget = performPredictions(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, conceptNeuronSourceList, wTarget, wSource, connectionTargetNeuronSetLocalForward, HFconnectionGraphObject, True)
-			connectionTargetNeuronSetLocal = connectionTargetNeuronSetLocal.union(connectionTargetNeuronSetLocalTarget)
+			somaActivationFound, connectionTargetNeuronSetLocal = performPredictions(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, conceptNeuronSourceList, wTarget, wSource, connectionTargetNeuronSetLocalForward, HFconnectionGraphObject, True)
 		else:
-			connectionTargetNeuronSetLocal = connectionTargetNeuronSetLocalForward
+			connectionTargetNeuronSetLocal = connectionTargetNeuronSetLocalForward	#or connectionTargetNeuronSetLocalForwardTarget (as numberTargetNeurons = 1)
+			#print("connectionTargetNeuronSetLocal = ", list(connectionTargetNeuronSetLocal)[0].nodeName)
 				
 		if(seedHFnetworkSubsequenceBasic):
 			connectionTargetNeuronSet = connectionTargetNeuronSetLocal
@@ -182,6 +207,8 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 				predictedSentenceConceptNodeList.append(conceptNeuronTarget)
 		else:
 			connectionTargetNeuronSetLocalFiltered = selectActivatedNeurons(wSource, targetSentenceConceptNodeList, networkConceptNodeDict, connectionTargetNeuronSetLocal, HFconnectionGraphObject)
+			#print("connectionTargetNeuronSetLocalForward = ", list(connectionTargetNeuronSetLocalForward))
+			#print("connectionTargetNeuronSetLocal = ", list(connectionTargetNeuronSetLocal))
 			conceptNeuronSourceList.clear()
 			for connectionTargetNeuron in connectionTargetNeuronSetLocalFiltered:
 				if(printPredictions):
@@ -217,6 +244,13 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 			if(printPredictions):
 				print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
 
+		if(temporarilyWeightInContextAssociations):	
+			addContextWordsToConnectionGraphMatrixW(wSource, networkConceptNodeDict, predictedSentenceConceptNodeList, HFconnectionGraphObject, weightEnduranceType=weightEnduranceTypeInContextAdd)
+
+	if(temporarilyWeightInContextAssociations):	
+		for wSource in range(numberSourceNeurons):
+			addContextWordsToConnectionGraphMatrixW(wSource, networkConceptNodeDict, predictedSentenceConceptNodeList, HFconnectionGraphObject, weightEnduranceType=weightEnduranceTypeInContextSubtract)
+	
 	if(printPredictionsSentence):
 		targetSentenceText = ""
 		predictedSentenceText = ""
@@ -231,7 +265,7 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 		connectionTargetNeuronList = list(connectionTargetNeuronSet)
 		HFNLPpy_MatrixDatabase.finaliseMatrixDatabaseSentence(HFconnectionGraphObject, connectionTargetNeuronList, neuronIDalreadySaved)
 
-def performPredictions(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, conceptNeuronSourceList, wTarget, wSource, connectionTargetNeuronSetLocal, HFconnectionGraphObject, useReversePredictions):
+def performPredictions(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, conceptNeuronSourceList, wTarget, wSource, connectionTargetNeuronSet, HFconnectionGraphObject, useReversePredictions):
 	#print("wSource = ", wSource)
 	#print("wTarget = ", wTarget)
 	
@@ -246,30 +280,29 @@ def performPredictions(networkConceptNodeDict, sentenceIndex, targetSentenceConc
 		if(printPredictions):
 			print("\nseedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", seedSource = ", conceptNeuronSource.nodeName)
 		activationTime = calculateActivationTimeSequence(wSource)
-		somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, activationTime, wTarget, conceptNeuronTarget, wSource, conceptNeuronSource, connectionTargetNeuronSetLocal, HFconnectionGraphObject, useReversePredictions)
-		connectionTargetNeuronSetLocal = connectionTargetNeuronSet
+		somaActivationFound, connectionTargetNeuronSetLocal = simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, activationTime, wTarget, conceptNeuronTarget, wSource, conceptNeuronSource, connectionTargetNeuronSet, HFconnectionGraphObject, useReversePredictions)
 	else:
 		activationTime = None
 		if(wSource < seedHFnetworkSubsequenceLength):
 			if(printPredictions):
 				print("\nseedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", seedSource = ", conceptNeuronSource.nodeName)
-			somaActivationFound = simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, activationTime, wTarget, conceptNeuronTarget, wSource, conceptNeuronSource, connectionTargetNeuronSetLocal, HFconnectionGraphObject, useReversePredictions)
+			somaActivationFound, connectionTargetNeuronSetLocal = simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, activationTime, wTarget, conceptNeuronTarget, wSource, conceptNeuronSource, connectionTargetNeuronSet, HFconnectionGraphObject, useReversePredictions)
 		else:
 			if(printPredictions):
 				print("")
 				for feedSource in conceptNeuronSourceList:
 					print("feedBiologicalHFnetwork: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName, ", feedSource = ", feedSource.nodeName)
-			somaActivationFound = simulateBiologicalHFnetworkSequenceNodesPropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, activationTime, wTarget, conceptNeuronTarget, wSource, conceptNeuronSourceList, connectionTargetNeuronSetLocal, HFconnectionGraphObject, useReversePredictions)
+			somaActivationFound, connectionTargetNeuronSetLocal = simulateBiologicalHFnetworkSequenceNodesPropagate(networkConceptNodeDict, sentenceIndex, targetSentenceConceptNodeList, activationTime, wTarget, conceptNeuronTarget, wSource, conceptNeuronSourceList, connectionTargetNeuronSet, HFconnectionGraphObject, useReversePredictions)
 	return somaActivationFound, connectionTargetNeuronSetLocal
 			
 def simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget, conceptNeuronTarget, wSource, conceptNeuronSource, connectionTargetNeuronSet, HFconnectionGraphObject, useReversePredictions):
 	#print("simulateBiologicalHFnetworkSequenceNodePropagateForward: wSource = ", wSource, ", conceptNeuronSource = ", conceptNeuronSource.nodeName, ", wTarget = ", wTarget, ", conceptNeuronTarget = ", conceptNeuronTarget.nodeName)	
-	somaActivationFound = HFNLPpy_MatrixPropagate.simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, HFconnectionGraphObject, useReversePredictions)
-	return somaActivationFound
+	somaActivationFound, connectionTargetNeuronSetLocal = HFNLPpy_MatrixPropagate.simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSource, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, HFconnectionGraphObject, useReversePredictions)
+	return somaActivationFound, connectionTargetNeuronSetLocal
 
 def simulateBiologicalHFnetworkSequenceNodesPropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wTarget, conceptNeuronTarget, wSource, conceptNeuronSourceList, connectionTargetNeuronSet, HFconnectionGraphObject, useReversePredictions):
-	somaActivationFound = HFNLPpy_MatrixPropagate.simulateBiologicalHFnetworkSequenceNodesPropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, HFconnectionGraphObject, useReversePredictions)
-	return somaActivationFound
+	somaActivationFound, connectionTargetNeuronSetLocal = HFNLPpy_MatrixPropagate.simulateBiologicalHFnetworkSequenceNodesPropagate(networkConceptNodeDict, sentenceIndex, sentenceConceptNodeList, activationTime, wSource, conceptNeuronSourceList, wTarget, conceptNeuronTarget, connectionTargetNeuronSet, HFconnectionGraphObject, useReversePredictions)
+	return somaActivationFound, connectionTargetNeuronSetLocal
 
 '''
 #independent method (does not need to be executed in order of wSource)
@@ -306,17 +339,21 @@ def selectActivatedNeurons(wSource, sentenceConceptNodeList, networkConceptNodeD
 def addContextWordsToConnectionGraphMatrix(networkConceptNodeDict, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject):
 	for w1, token1 in enumerate(tokenisedSentence):
 		#print("w1 = ", w1)
-		conceptNode = sentenceConceptNodeList[w1]
-		#print("addContextWordsToConnectionGraphMatrix: conceptNode.nodeName = ", conceptNode.nodeName) 
-		neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
-		secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax(getContextSizeSource=True, wSource=w1)
-		closestDendriticBranchIndex = calculateDendriticBranchClosestIndex(networkConceptNodeDict, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, neuronID, secondDataIndexMax, w1)
-		if(not closestDendriticBranchIndex==-1):
-			for secondDataIndex in range(secondDataIndexMax):
-				#print("contextSizeIndex = ", contextSizeIndex)
-				addContextWordsToConnectionGraphNeuronID(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, closestDendriticBranchIndex, secondDataIndex, None, contextMatrixWeightStore, False)
+		addContextWordsToConnectionGraphMatrixW(w1, networkConceptNodeDict, sentenceConceptNodeList, HFconnectionGraphObject)
 
-def calculateDendriticBranchClosestIndex(networkConceptNodeDict, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, neuronID, secondDataIndexMax, w1):
+def addContextWordsToConnectionGraphMatrixW(w1, networkConceptNodeDict, sentenceConceptNodeList, HFconnectionGraphObject, weightEnduranceType=weightEnduranceTypeDefaultAdd):
+	#print("w1 = ", w1)
+	conceptNode = sentenceConceptNodeList[w1]
+	#print("addContextWordsToConnectionGraphMatrix: conceptNode.nodeName = ", conceptNode.nodeName) 
+	neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
+	secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax(getContextSizeSource=True, wSource=w1)
+	closestDendriticBranchIndex = calculateDendriticBranchClosestIndex(networkConceptNodeDict, sentenceConceptNodeList, HFconnectionGraphObject, neuronID, secondDataIndexMax, w1)
+	if(not closestDendriticBranchIndex==-1):
+		for secondDataIndex in range(secondDataIndexMax):
+			#print("contextSizeIndex = ", contextSizeIndex)
+			addContextWordsToConnectionGraphNeuronID(w1, neuronID, sentenceConceptNodeList, HFconnectionGraphObject, closestDendriticBranchIndex, secondDataIndex, None, contextMatrixWeightStore, False, weightEnduranceType)
+
+def calculateDendriticBranchClosestIndex(networkConceptNodeDict, sentenceConceptNodeList, HFconnectionGraphObject, neuronID, secondDataIndexMax, w1):
 	if(numberOfIndependentDendriticBranches == 1):
 		closestDendriticBranchIndex = 0
 	else:
@@ -376,8 +413,8 @@ def calculateDendriticBranchClosestIndex(networkConceptNodeDict, tokenisedSenten
 				closestDendriticBranchIndex = random.randint(0, numberOfIndependentDendriticBranches-1)
 	return closestDendriticBranchIndex
 
-def addContextWordsToConnectionGraphNeuronID(w1, neuronID, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject, closestDendriticBranchIndex, secondDataIndex, secondDataIndexMax, weightStore, bidirectionalContext):
-	contextConnectionVector = HFNLPpy_MatrixOperations.createContextVectorWrapperReverseLookup(w1, sentenceConceptNodeList, HFconnectionGraphObject, secondDataIndex, secondDataIndexMax, weightStore, bidirectionalContext, False)
+def addContextWordsToConnectionGraphNeuronID(w1, neuronID, sentenceConceptNodeList, HFconnectionGraphObject, closestDendriticBranchIndex, secondDataIndex, secondDataIndexMax, weightStore, bidirectionalContext, weightEnduranceType=weightEnduranceTypeDefaultAdd):
+	contextConnectionVector = HFNLPpy_MatrixOperations.createContextVectorWrapperReverseLookup(w1, sentenceConceptNodeList, HFconnectionGraphObject, secondDataIndex, secondDataIndexMax, weightStore, bidirectionalContext, False, weightEnduranceType=weightEnduranceType)
 	HFNLPpy_ConnectionMatrixAlgorithm.addContextConnectionsToGraphNeuronIDWrapper(HFconnectionGraphObject, contextConnectionVector, closestDendriticBranchIndex, secondDataIndex, neuronID)
 	if(HFconnectionMatrixAlgorithmNormaliseStore):	#if(not HFconnectionMatrixAlgorithmSplit):
 		HFNLPpy_ConnectionMatrixAlgorithm.normaliseBatchedTensorWrapper(HFconnectionGraphObject, closestDendriticBranchIndex, secondDataIndex)
