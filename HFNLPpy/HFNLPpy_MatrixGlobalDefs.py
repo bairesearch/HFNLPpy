@@ -52,12 +52,12 @@ if(temporarilyWeightInContextAssociations):
 algorithmMatrixPropagationOrder = "propagateReverseLookup"	#select: propagateForward/propagateReverseLookup #propagateForward is required for complete sequentially activated input support (aligns with HFNLPpy_DendriticSANI:useAlgorithmDendriticSANI:!reversePropagationOrder prediction implementation)	#propagateReverseLookup (orig implementation): for each neuron in sequence; complete computation is performed for every next word prediction target neuron candidate 
 
 ####  reverse predictions (future candidate predictions) ####
+formationBidirectionalContext = False
+predictionBidirectionalContext = False	#has to be false when adding predicted words (because no information regarding future text available)
 reversePredictions = False	#use reverse predictions from future candidate predictions (distal dendrites only)
 if(reversePredictions):
-	assert algorithmMatrixPropagationOrder=="propagateReverseLookup"	#only implementation currently coded
-if(temporarilyWeightInContextAssociations):	
-	assert algorithmMatrixPropagationOrder=="propagateReverseLookup"	#only implementation currently coded
-
+	formationBidirectionalContext = True
+	
 #### SANI ####
 algorithmMatrixSANI = True	#emulate DendriticSANIbiologicalSimulationSimple
 if(algorithmMatrixSANI):
@@ -262,3 +262,11 @@ def printe(str):
 def getHFconnectionMatrixBasicMaxConcepts(HFconnectionGraphObject):
 	return HFconnectionGraphObject.connectionMatrixMaxConcepts
 		
+
+if(reversePredictions):
+	assert algorithmMatrixPropagationOrder=="propagateReverseLookup"	#only implementation currently coded
+	assert algorithmMatrixTensorDim==4 #ie sequentialSegmentMax==secondDataIndexMax==numberOfBranchSequentialSegments
+	assert algorithmMatrixSANI==False #first verify that algorithmMatrixSANI (createContextVectorsSANI:etc) is supported	#createContextVectorSANI1 needs to be upgraded to support contextLength = len(sentenceConceptNodeList)*2 for prospective bidirectionalContext (need to reserve 100% more segments for candidate future context)
+if(temporarilyWeightInContextAssociations):	
+	assert algorithmMatrixPropagationOrder=="propagateReverseLookup"	#only implementation currently coded
+	

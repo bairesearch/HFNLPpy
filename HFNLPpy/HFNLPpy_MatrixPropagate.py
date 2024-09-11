@@ -57,20 +57,20 @@ def simulateBiologicalHFnetworkSequenceNodePropagate(networkConceptNodeDict, sen
 	#dendriticBranchClosestIndex = 0
 	
 	if(algorithmMatrixTensorDim==4):
-		connectionTargetNeuronSet0, connectionStrength, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, None, None, secondDataIndexMax, contextMatrixWeightStore, False, True, useReversePredictions=useReversePredictions, connectionTargetNeuronSet=connectionTargetNeuronSet)
+		connectionTargetNeuronSet0, connectionStrength, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, None, None, secondDataIndexMax, contextMatrixWeightStore, predictionBidirectionalContext, True, useReversePredictions=useReversePredictions, connectionTargetNeuronSet=connectionTargetNeuronSet)
 		foundClosestBranchIndex, dendriticBranchClosestTargetSet, closestConnectionStrength, _ = HFNLPpy_MatrixOperations.updateDendriticBranchClosestValue(foundClosestBranchIndex, dendriticBranchClosestTargetSet, closestConnectionStrength, None, connectionTargetNeuronSet0, connectionStrength, None)
 		if(debugAlgorithmMatrix):
 			print("connectionTargetNeuronListC[0] = ", list(connectionTargetNeuronSet0)[0].nodeName)
 	else:
 		for dendriticBranchIndex in range(numberOfIndependentDendriticBranches):
 			if(algorithmMatrixTensorDim==3):
-				connectionTargetNeuronSet1, connectionStrength, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, dendriticBranchIndex, None, secondDataIndexMax, contextMatrixWeightStore, False, True, useReversePredictions=useReversePredictions, connectionTargetNeuronSet=connectionTargetNeuronSet)
+				connectionTargetNeuronSet1, connectionStrength, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, dendriticBranchIndex, None, secondDataIndexMax, contextMatrixWeightStore, predictionBidirectionalContext, True, useReversePredictions=useReversePredictions, connectionTargetNeuronSet=connectionTargetNeuronSet)
 				foundClosestBranchIndex, dendriticBranchClosestTargetSet, closestConnectionStrength, _ = HFNLPpy_MatrixOperations.updateDendriticBranchClosestValue(foundClosestBranchIndex, dendriticBranchClosestTargetSet, closestConnectionStrength, None, connectionTargetNeuronSet1, connectionStrength, None)
 				#connectionTargetNeuronList.extend(list(connectionTargetNeuronSet1))
 			else:
 				connectionTargetNeuronList1 = []
 				for secondDataIndex in range(secondDataIndexMax):
-					connectionTargetNeuronSet2, connectionStrength, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, dendriticBranchIndex, secondDataIndex, None, contextMatrixWeightStore, False, False, useReversePredictions=useReversePredictions, connectionTargetNeuronSet=connectionTargetNeuronSet)
+					connectionTargetNeuronSet2, connectionStrength, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(wTarget, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, dendriticBranchIndex, secondDataIndex, None, contextMatrixWeightStore, predictionBidirectionalContext, False, useReversePredictions=useReversePredictions, connectionTargetNeuronSet=connectionTargetNeuronSet)
 					foundClosestBranchIndex, dendriticBranchClosestTargetSet, closestConnectionStrength, _ = HFNLPpy_MatrixOperations.updateDendriticBranchClosestValue(foundClosestBranchIndex, dendriticBranchClosestTargetSet, closestConnectionStrength, None, connectionTargetNeuronSet2, connectionStrength, None)
 					#connectionTargetNeuronList1.extend(list(connectionTargetNeuronSet2))
 				#connectionTargetNeuronList.extend(connectionTargetNeuronList1)

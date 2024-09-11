@@ -245,11 +245,12 @@ def seedBiologicalHFnetwork(networkConceptNodeDict, sentenceIndex, seedSentenceC
 				print("!expectPredictiveSequenceToBeFound: wSource < minimumEncodedSequenceLength-1")
 
 		if(temporarilyWeightInContextAssociations):	
-			addContextWordsToConnectionGraphMatrixW(wSource, networkConceptNodeDict, predictedSentenceConceptNodeList, HFconnectionGraphObject, weightEnduranceType=weightEnduranceTypeInContextAdd)
+			#CHECKTHIS currently use predictionBidirectionalContext as only seeded words have (limited) known future context
+			addContextWordsToConnectionGraphMatrixW(wSource, networkConceptNodeDict, predictedSentenceConceptNodeList, HFconnectionGraphObject, predictionBidirectionalContext, weightEnduranceType=weightEnduranceTypeInContextAdd)
 
 	if(temporarilyWeightInContextAssociations):	
 		for wSource in range(numberSourceNeurons):
-			addContextWordsToConnectionGraphMatrixW(wSource, networkConceptNodeDict, predictedSentenceConceptNodeList, HFconnectionGraphObject, weightEnduranceType=weightEnduranceTypeInContextSubtract)
+			addContextWordsToConnectionGraphMatrixW(wSource, networkConceptNodeDict, predictedSentenceConceptNodeList, HFconnectionGraphObject, predictionBidirectionalContext, weightEnduranceType=weightEnduranceTypeInContextSubtract)
 	
 	if(printPredictionsSentence):
 		targetSentenceText = ""
@@ -339,21 +340,21 @@ def selectActivatedNeurons(wSource, sentenceConceptNodeList, networkConceptNodeD
 def addContextWordsToConnectionGraphMatrix(networkConceptNodeDict, tokenisedSentence, sentenceConceptNodeList, HFconnectionGraphObject):
 	for w1, token1 in enumerate(tokenisedSentence):
 		#print("w1 = ", w1)
-		addContextWordsToConnectionGraphMatrixW(w1, networkConceptNodeDict, sentenceConceptNodeList, HFconnectionGraphObject)
+		addContextWordsToConnectionGraphMatrixW(w1, networkConceptNodeDict, sentenceConceptNodeList, HFconnectionGraphObject, formationBidirectionalContext, weightEnduranceTypeDefaultAdd)
 
-def addContextWordsToConnectionGraphMatrixW(w1, networkConceptNodeDict, sentenceConceptNodeList, HFconnectionGraphObject, weightEnduranceType=weightEnduranceTypeDefaultAdd):
+def addContextWordsToConnectionGraphMatrixW(w1, networkConceptNodeDict, sentenceConceptNodeList, HFconnectionGraphObject, bidirectionalContext, weightEnduranceType=weightEnduranceTypeDefaultAdd):
 	#print("w1 = ", w1)
 	conceptNode = sentenceConceptNodeList[w1]
-	#print("addContextWordsToConnectionGraphMatrix: conceptNode.nodeName = ", conceptNode.nodeName) 
+	#print("addContextWordsToConnectionGraphMatrixW: conceptNode.nodeName = ", conceptNode.nodeName) 
 	neuronID = HFconnectionGraphObject.neuronIDdict[conceptNode.nodeName]
 	secondDataIndexMax = HFNLPpy_MatrixOperations.getSecondDataIndexMax(getContextSizeSource=True, wSource=w1)
-	closestDendriticBranchIndex = calculateDendriticBranchClosestIndex(networkConceptNodeDict, sentenceConceptNodeList, HFconnectionGraphObject, neuronID, secondDataIndexMax, w1)
+	closestDendriticBranchIndex = calculateDendriticBranchClosestIndex(networkConceptNodeDict, sentenceConceptNodeList, HFconnectionGraphObject, neuronID, secondDataIndexMax, w1, bidirectionalContext)
 	if(not closestDendriticBranchIndex==-1):
 		for secondDataIndex in range(secondDataIndexMax):
 			#print("contextSizeIndex = ", contextSizeIndex)
-			addContextWordsToConnectionGraphNeuronID(w1, neuronID, sentenceConceptNodeList, HFconnectionGraphObject, closestDendriticBranchIndex, secondDataIndex, None, contextMatrixWeightStore, False, weightEnduranceType)
+			addContextWordsToConnectionGraphNeuronID(w1, neuronID, sentenceConceptNodeList, HFconnectionGraphObject, closestDendriticBranchIndex, secondDataIndex, None, contextMatrixWeightStore, bidirectionalContext, weightEnduranceType)
 
-def calculateDendriticBranchClosestIndex(networkConceptNodeDict, sentenceConceptNodeList, HFconnectionGraphObject, neuronID, secondDataIndexMax, w1):
+def calculateDendriticBranchClosestIndex(networkConceptNodeDict, sentenceConceptNodeList, HFconnectionGraphObject, neuronID, secondDataIndexMax, w1, bidirectionalContext):
 	if(numberOfIndependentDendriticBranches == 1):
 		closestDendriticBranchIndex = 0
 	else:
@@ -390,17 +391,17 @@ def calculateDendriticBranchClosestIndex(networkConceptNodeDict, sentenceConcept
 			closestDendriticBranchIndex = -1
 			if(algorithmMatrixTensorDim==4):
 				if(algorithmMatrixSANI or secondDataIndexMax > 0):					
-					_, connectionStrength, dendriticBranchIndex = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, None, None, secondDataIndexMax, contextMatrixWeightStore, False, True)
+					_, connectionStrength, dendriticBranchIndex = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, None, None, secondDataIndexMax, contextMatrixWeightStore, bidirectionalContext, True)
 					foundClosestBranchIndex, _, closestConnectionStrength, closestDendriticBranchIndex = HFNLPpy_MatrixOperations.updateDendriticBranchClosestValue(foundClosestBranchIndex, None, closestConnectionStrength, closestDendriticBranchIndex, None, connectionStrength, dendriticBranchIndex, True, connectionStrength)
 			else:
 				for dendriticBranchIndex in range(numberOfIndependentDendriticBranches):
 					#print("dendriticBranchIndex = ", dendriticBranchIndex)
 					if(algorithmMatrixTensorDim==3):
-						_, connectionStrength, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, dendriticBranchIndex, None, secondDataIndexMax, contextMatrixWeightStore, False, True)
+						_, connectionStrength, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, dendriticBranchIndex, None, secondDataIndexMax, contextMatrixWeightStore, bidirectionalContext, True)
 						foundClosestBranchIndex, _, closestConnectionStrength, closestDendriticBranchIndex = HFNLPpy_MatrixOperations.updateDendriticBranchClosestValue(foundClosestBranchIndex, None, closestConnectionStrength, closestDendriticBranchIndex, None, connectionStrength, dendriticBranchIndex, True, connectionStrength)
 					else:
 						for secondDataIndex in range(secondDataIndexMax):
-							_, connectionStrength, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, dendriticBranchIndex, secondDataIndex, None, contextMatrixWeightStore, False, False)
+							_, connectionStrength, _ = HFNLPpy_MatrixOperations.connectionMatrixCalculateConnectionTargetSetWrapper(w1, sentenceConceptNodeList, HFconnectionGraphObject, networkConceptNodeDict, dendriticBranchIndex, secondDataIndex, None, contextMatrixWeightStore, bidirectionalContext, False)
 							if(normaliseConnectionStrengthWrtContextLength):	
 								connectionStrengthNormalised = connectionStrength/secondDataIndex
 							else:

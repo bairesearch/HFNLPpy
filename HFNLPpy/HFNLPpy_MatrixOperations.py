@@ -379,9 +379,9 @@ if(algorithmMatrixPropagationOrder == "propagateForward"):
 def createContextVectorWrapperReverseLookup(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextSizeIndex, contextSizeMaxSource, weightStore, bidirectionalContext, matrixTensorDim4, useReversePredictions=False, connectionTargetNeuronSet=None, weightEnduranceType=weightEnduranceTypeDefaultAdd):
 	if(algorithmMatrixSANI):
 		if(matrixTensorDim4):
-			contextConnectionVector = createContextVectorsSANI(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextSizeMaxSource, weightStore, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType)
+			contextConnectionVector = createContextVectorsSANI(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextSizeMaxSource, weightStore, bidirectionalContext, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType)
 		else:
-			contextConnectionVector = createContextVectorSANI1(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextSizeIndex, weightStore, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType)
+			contextConnectionVector = createContextVectorSANI1(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextSizeIndex, weightStore, bidirectionalContext, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType)
 	else:
 		if(matrixTensorDim4):
 			contextConnectionVector = createContextVectors(w1, sentenceConceptNodeList, HFconnectionGraphObject, contextSizeMaxSource, weightStore, bidirectionalContext, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType)
@@ -437,10 +437,11 @@ def addToContextVector(w1, w2, sentenceConceptNodeList, HFconnectionGraphObject,
 		contextConnectionVector[neuronIDcontext] = calculateContextVectorValue(weightStore, w1, w2, weightEnduranceType)
 
 
-def createContextVectorsSANI(w1, sentenceConceptNodeList, HFconnectionGraphObject, sequentialSegmentMax, weightStore, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType):
+def createContextVectorsSANI(w1, sentenceConceptNodeList, HFconnectionGraphObject, sequentialSegmentMax, weightStore, bidirectionalContext, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType):
+	#note createContextVectorsSANI:etc does not currently use bidirectionalContext parameter, but is added for consistency with createContextVectors:etc
 	contextConnectionVectorList = []
 	for sequentialSegmentIndex in range(sequentialSegmentMax):	#numberOfBranchSequentialSegments
-		contextConnectionVector = createContextVectorSANI1(w1, sentenceConceptNodeList, HFconnectionGraphObject, sequentialSegmentIndex, weightStore, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType)
+		contextConnectionVector = createContextVectorSANI1(w1, sentenceConceptNodeList, HFconnectionGraphObject, sequentialSegmentIndex, weightStore, bidirectionalContext, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType)
 		contextConnectionVectorList.append(contextConnectionVector)
 	if(HFconnectionMatrixAlgorithmSplit):
 		contextConnectionVector = contextConnectionVectorList
@@ -448,8 +449,8 @@ def createContextVectorsSANI(w1, sentenceConceptNodeList, HFconnectionGraphObjec
 		contextConnectionVector = pt.stack(contextConnectionVectorList, dim=0)
 	return contextConnectionVector
 
-def createContextVectorSANI1(w1, sentenceConceptNodeList, HFconnectionGraphObject, sequentialSegmentIndex, weightStore, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType):
-	contextSequenceLength = getContextLength(w1, sentenceConceptNodeList)	
+def createContextVectorSANI1(w1, sentenceConceptNodeList, HFconnectionGraphObject, sequentialSegmentIndex, weightStore, bidirectionalContext, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType):
+	contextSequenceLength = getContextLength(w1, sentenceConceptNodeList, bidirectionalContext)	
 	validSequentialSegment = True
 	if(sequentialSegmentContextEncoding=="linear"):
 		#print("contextSequenceLength = ", contextSequenceLength)
@@ -480,9 +481,9 @@ def createContextVectorSANI1(w1, sentenceConceptNodeList, HFconnectionGraphObjec
 	#print("sequentialSegmentIndex = ", sequentialSegmentIndex)
 	#print("w1 = ", w1)
 	if(validSequentialSegment):
-		contextConnectionVector = createContextVectorSANI(w1, sentenceConceptNodeList, HFconnectionGraphObject, w2Min, w2Max, weightStore, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType)	#len(HFconnectionGraphObject.neuronNamelist)
+		contextConnectionVector = createContextVectorSANI(w1, sentenceConceptNodeList, HFconnectionGraphObject, w2Min, w2Max, weightStore, bidirectionalContext, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType)	#len(HFconnectionGraphObject.neuronNamelist)
 	else:
-		contextConnectionVector = createContextVectorSANIempty(w1, sentenceConceptNodeList, HFconnectionGraphObject, useReversePredictions)	#len(HFconnectionGraphObject.neuronNamelist)
+		contextConnectionVector = createContextVectorSANIempty(w1, sentenceConceptNodeList, HFconnectionGraphObject, bidirectionalContext)	#len(HFconnectionGraphObject.neuronNamelist)
 		#contextConnectionVector = pt.zeros(HFconnectionGraphObject.connectionMatrixMaxConcepts)
 	return contextConnectionVector
 
@@ -517,8 +518,8 @@ def createExponentialSpace(minVal, maxVal, size):
 		space = space.to(HFNLPpy_ConnectionMatrixOperations.device)
 	return space
 	
-def createContextVectorSANI(w1, sentenceConceptNodeList, HFconnectionGraphObject, w2Min, w2Max, weightStore, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType):
-	contextLength = getContextLength(w1, sentenceConceptNodeList)
+def createContextVectorSANI(w1, sentenceConceptNodeList, HFconnectionGraphObject, w2Min, w2Max, weightStore, bidirectionalContext, useReversePredictions, connectionTargetNeuronSet, weightEnduranceType):
+	contextLength = getContextLength(w1, sentenceConceptNodeList, bidirectionalContext)
 	contextConnectionVector = HFNLPpy_ConnectionMatrixAlgorithm.createContextVectorTensor(HFconnectionGraphObject, contextLength)
 	for w2, conceptNeuron2 in enumerate(sentenceConceptNodeList):
 		if(w1 != w2):
@@ -532,13 +533,13 @@ def createContextVectorSANI(w1, sentenceConceptNodeList, HFconnectionGraphObject
 				addToContextVector(w1, w2, sentenceConceptNodeList, HFconnectionGraphObject, contextConnectionVector, weightStore, False, weightEnduranceType)
 	return contextConnectionVector
 
-def createContextVectorSANIempty(w1, sentenceConceptNodeList, HFconnectionGraphObject, useReversePredictions=False):
-	contextLength = getContextLength(w1, sentenceConceptNodeList)
+def createContextVectorSANIempty(w1, sentenceConceptNodeList, HFconnectionGraphObject, bidirectionalContext):
+	contextLength = getContextLength(w1, sentenceConceptNodeList, bidirectionalContext)
 	contextConnectionVector = HFNLPpy_ConnectionMatrixAlgorithm.createContextVectorTensor(HFconnectionGraphObject, contextLength)
 	return contextConnectionVector
 
-def getContextLength(w1, sentenceConceptNodeList, bidirectionalContext=False):
-	if(bidirectionalContext or reversePredictions):
+def getContextLength(w1, sentenceConceptNodeList, bidirectionalContext):
+	if(bidirectionalContext or reversePredictions):	#reversePredictions always creates context vectors of full sentence size (even if bidirectionalContext is not currently used; eg during forward prediction phase)
 		contextLength = len(sentenceConceptNodeList)
 	else:
 		contextLength = w1	#len(sentenceConceptNodeList) [too large]	#int(w2Max-w2Min) [not possible as will vary across secondDataIndex]	#contextSizeMax [too large]
