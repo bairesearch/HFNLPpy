@@ -1,7 +1,7 @@
 """HFNLPpy_DendriticSANIDraw.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022-2024 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2026 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -25,6 +25,7 @@ plt.ioff()	# Turn interactive plotting off
 from math import cos, sin, radians
 from HFNLPpy_hopfieldNodeClass import *
 from HFNLPpy_hopfieldConnectionClass import *
+from HFNLPpy_globalDefs import drawSaveSvg
 from HFNLPpy_DendriticSANIGlobalDefs import *
 from HFNLPpy_DendriticSANINode import *
 
@@ -374,10 +375,13 @@ def displayDendriticSANIGraph(plot=True, save=False, fileName=None):
 	nx.draw_networkx_labels(dendriticSANIGraph, pos, labels, font_size=8)	#font_size=16, font_color='r'
 	
 	if(save):
+		fileExtension = ".svg" if drawSaveSvg else ".png"
+		saveFormat = 'svg' if drawSaveSvg else 'png'
+		fileName = fileName + fileExtension
 		if(highResolutionFigure):
-			plt.savefig(fileName, dpi=saveFigDPI)
+			plt.savefig(fileName, dpi=saveFigDPI, format=saveFormat)
 		else:
-			plt.savefig(fileName)
+			plt.savefig(fileName, format=saveFormat)
 	if(plot):
 		plt.show()
 	else:
@@ -399,4 +403,3 @@ def getActivationColor(neuronObject, colorActive, colorInactive, highlightNewAct
 	return color
 	
 	
-

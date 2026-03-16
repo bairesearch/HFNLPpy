@@ -1,7 +1,7 @@
 """HFNLPpy_hopfieldGraph.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022-2024 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2026 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -32,8 +32,8 @@ import random
 if(tokeniseSubwords):
 	import HFNLPpy_dataTokeniser
 if(useAlgorithmLayeredSANI):
-	import SANIHFNLPpy_LayeredSANIGraph
-	from SANIHFNLPpy_LayeredSANIGlobalDefs import SANIwordVectors
+	import HFNLPpy_LayeredSANIGraph
+	from HFNLPpy_LayeredSANIGlobalDefs import LayeredSANIwordVectors
 		
 if(useHFconnectionMatrix):
 	import torch as pt
@@ -117,10 +117,11 @@ def generateHopfieldGraphNetwork(articles, tokenizer):
 		trainSentence = False
 		for sentenceIndex, sentence in enumerate(articles):
 			generateHopfieldGraphSentenceString(sentenceIndex, sentence, numberOfSentences, tokenizer, trainSentence)
-		print("feedPredictionSuccesses = ", HFNLPpy_Matrix.feedPredictionSuccesses)
-		print("feedPredictionErrors = ", HFNLPpy_Matrix.feedPredictionErrors)
-		print("feedPredictionSuccessRate = ", HFNLPpy_Matrix.feedPredictionSuccesses/(HFNLPpy_Matrix.feedPredictionSuccesses+HFNLPpy_Matrix.feedPredictionErrors))
-	
+		if(useAlgorithmMatrix):
+			print("feedPredictionSuccesses = ", HFNLPpy_Matrix.feedPredictionSuccesses)
+			print("feedPredictionErrors = ", HFNLPpy_Matrix.feedPredictionErrors)
+			print("feedPredictionSuccessRate = ", HFNLPpy_Matrix.feedPredictionSuccesses/(HFNLPpy_Matrix.feedPredictionSuccesses+HFNLPpy_Matrix.feedPredictionErrors))
+
 	if(useHFconnectionMatrix):
 		if(useHFconnectionMatrixBasic):
 			HFNLPpy_ConnectionMatrixBasic.writeHFconnectionMatrixBasicWrapper(HFconnectionGraphObject)
@@ -243,11 +244,11 @@ def generateHopfieldGraphSentence(sentenceIndex, tokenisedSentence, numberOfSent
 		
 		if(useAlgorithmLayeredSANI):
 			#print("useAlgorithmLayeredSANI:... addSentenceConceptNodesToHFconnectionGraphObject")
-			#SANIHFNLPpy_LayeredSANIGraph creates Hopfield graph direct connections
-			sentenceConceptNodeList = SANIHFNLPpy_LayeredSANIGraph.generateLayeredSANIGraphSentence(HFconnectionGraphObject, sentenceIndex, tokenisedSentence, sentenceConceptNodeList, networkConceptNodeDict)	#sentenceConceptNodeList is replaced with sentenceSANINodeList
+			#HFNLPpy_LayeredSANIGraph creates Hopfield graph direct connections
+			sentenceConceptNodeList = HFNLPpy_LayeredSANIGraph.generateLayeredSANIGraphSentence(HFconnectionGraphObject, sentenceIndex, tokenisedSentence, sentenceConceptNodeList, networkConceptNodeDict)	#sentenceConceptNodeList is replaced with sentenceSANINodeList
 			recalculateHopfieldGraphNetworkSize()
 			#printConceptNodeList(sentenceConceptNodeList)
-			if(not SANIwordVectors):	#already added
+			if(not LayeredSANIwordVectors):	#already added
 				addSentenceConceptNodesToHFconnectionGraphObject(sentenceConceptNodeList, neuronIDdictNewlyAdded)
 			
 		if(useAlgorithmDendriticSANI):

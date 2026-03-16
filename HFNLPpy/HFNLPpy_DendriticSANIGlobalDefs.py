@@ -1,7 +1,7 @@
 """HFNLPpy_DendriticSANIGlobalDefs.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022-2024 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2026 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -23,10 +23,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import numpy as np
 
-
 #### dendritic structure type ####
 
-DendriticSANIbiologicalSimulationSimple = True	#single dendritic branch with multiple overloaded segments	#does not support resetConnectionTargetNeuronDendriteDuringActivation
+DendriticSANIbiologicalSimulationSimple = False	#single dendritic branch with multiple overloaded segments	#does not support resetConnectionTargetNeuronDendriteDuringActivation
 
 #### topk selection ####
 
@@ -98,7 +97,7 @@ drawBiologicalSimulationDynamicHighlightNewActivations = True	#useful with reset
 if(drawBiologicalSimulationDynamicHighlightNewActivations):
 	highlightNewActivationColor = 'magenta'	#'black'
 
-drawBiologicalSimulation = True	#optional
+drawBiologicalSimulation = False	#optional
 if(drawBiologicalSimulation):
 	drawBiologicalSimulationPlot = True	#default: True
 	drawBiologicalSimulationSave = False	#default: False	#save to file
@@ -107,7 +106,7 @@ if(drawBiologicalSimulation):
 
 #if(biologicalSimulationForward):	#required for drawBiologicalSimulationSentenceDynamic/drawBiologicalSimulationNetworkDynamic
 if(updateNeuronObjectActivationLevels or not vectoriseComputation):
-	drawBiologicalSimulationDynamic = False	#draw dynamic activation levels of biological simulation	#optional
+	drawBiologicalSimulationDynamic = True	#draw dynamic activation levels of biological simulation	#optional
 	if(drawBiologicalSimulationDynamic):
 		drawBiologicalSimulationDynamicPlot = True	#default: True
 		drawBiologicalSimulationDynamicSave = False	#default: False	#save to file
@@ -117,9 +116,9 @@ else:
 	print("HFNLPpy_DendriticSANIPropagateVectorised warning: updateNeuronObjectActivationLevels is required for vectoriseComputation:drawBiologicalSimulationDynamic (if drawBiologicalSimulationDynamic is required; either enable updateNeuronObjectActivationLevels or disable vectoriseComputation)")
 	drawBiologicalSimulationDynamic = False	#mandatory: False
 
-debugCalculateNeuronActivation = False	#default: False
+debugCalculateNeuronActivation = False	#default: False	#True: only plot the last/seeded sentence (must be manually specified)
 if(debugCalculateNeuronActivation):
-	sentenceIndexDebug = 3	#10	#208	#397	#1	#10	#397
+	sentenceIndexDebug = 10	#10	#208	#397	#1	#10	#397
 	wSourceDebug = 9	#3
 	wTargetDebug = 15	#4
 else:
@@ -225,9 +224,9 @@ else:
 	vectoriseComputationCurrentDendriticInput = False
 
 onlyPropagateIfConceptNeuronTargetActivatedByConceptNeuronSourceVectorised = False	#True: orig implementation
-if(vectoriseComputation):
-	if(enforceMinimumEncodedSequenceLength):
-		onlyPropagateIfConceptNeuronTargetActivatedByConceptNeuronSourceVectorised = False	#mandatory
+#if(vectoriseComputation):
+#	if(enforceMinimumEncodedSequenceLength):
+#		onlyPropagateIfConceptNeuronTargetActivatedByConceptNeuronSourceVectorised = False	#mandatory
 	
 	
 #### dendritic branch/sequential segment activation level cache ####
@@ -375,7 +374,7 @@ if(DendriticSANIbiologicalSimulationSimple):
 	numberOfBranches2 = 1
 	numberOfBranchSequentialSegments = 5
 else:
-	numberOfBranches1 = 5	#5	#3	#numberOfVerticalBranches (w expectFirstBranchSequentialSegmentConnectionStrictNumBranches1) or numberOfVerticalBranches-1 (w !expectFirstBranchSequentialSegmentConnectionStrictNumBranches1)
+	numberOfBranches1 = 4	#default: 5	#orig: 4 	#3->5	#numberOfVerticalBranches (w expectFirstBranchSequentialSegmentConnectionStrictNumBranches1) or numberOfVerticalBranches-1 (w !expectFirstBranchSequentialSegmentConnectionStrictNumBranches1)
 	if(supportForNonBinarySubbranchSize):
 		if(debugBiologicalSimulationEncodeSyntaxInDendriticBranchStructure):
 			numberOfBranches2 = 4

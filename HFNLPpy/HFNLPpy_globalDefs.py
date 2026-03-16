@@ -1,7 +1,7 @@
 """HFNLPpy_globalDefs.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022-2024 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2026 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -17,6 +17,27 @@ HFNLP - global defs
 
 """
 
+#HFNLP algorithm selection;
+algorithmHFNLP = "generateHopfieldNetwork"
+#algorithmHFNLP = "generateSANIconceptNeurons"	#execute Layered SANI preprocessor before HFNLP (orig name:"SANIHFNLP")
+
+#select HFNLP algorithm;
+if(algorithmHFNLP=="generateHopfieldNetwork"):
+	useAlgorithmLayeredSANI = False
+	useAlgorithmMatrix = True
+	useAlgorithmDendriticSANI = False	#simulate sequential activation of dendritic input 
+	useAlgorithmScan = False
+	useAlgorithmArtificial = False	#default
+	useAlgorithmDendriticPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
+elif(algorithmHFNLP=="generateSANIconceptNeurons"):
+	useAlgorithmLayeredSANI = True
+	useAlgorithmMatrix = False
+	useAlgorithmDendriticSANI = False	#simulate sequential activation of dendritic input 
+	useAlgorithmScan = False
+	useAlgorithmArtificial = False	#default
+	useAlgorithmDendriticPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
+
+#print parameters
 printVerbose = True
 printNodeCreation = True
 printNodeExisting = True
@@ -27,15 +48,6 @@ if(printPredictionsSentence):
 	printPredictions = False
 	printNodeExisting = False
 	printDatabaseAccess = False
-
-#select SANIHFNLP algorithm;
-useAlgorithmLayeredSANI = False
-#select HFNLP algorithm;
-useAlgorithmMatrix = True
-useAlgorithmDendriticSANI = False	#simulate sequential activation of dendritic input 
-useAlgorithmScan = False
-useAlgorithmArtificial = False	#default
-useAlgorithmDendriticPrototype = False	#optional	#add contextual connections to emulate primary connection spatiotemporal index restriction (visualise biological connections without simulation)
 	
 #development parameters
 debugUseSmallSequentialInputDataset = True
@@ -209,8 +221,9 @@ else:
 if(drawHopfieldGraph):
 	drawHopfieldGraphPlot = True
 	drawHopfieldGraphSave = False
-	drawHopfieldGraphSentence = False
+	drawHopfieldGraphSentence = True
 	drawHopfieldGraphNetwork = True	#default: True	#draw graph for entire network (not just sentence)
+drawSaveSvg = True	#default: False	#False: save png, True: save svg
 
 
 
@@ -225,7 +238,8 @@ if(biologicalSimulationTestHarness):
 seedHFnetworkSubsequence = True #seed/prime HFNLP network with initial few words of a trained sentence and verify that full sentence is sequentially activated (interpret last sentence as target sequence, interpret first seedHFnetworkSubsequenceLength words of target sequence as seed subsequence)
 seedHFnetworkSubsequenceType = "none"
 if(seedHFnetworkSubsequence):
-	seedHFnetworkSubsequenceType = "all"	#options: all/lastSentence
+	seedHFnetworkSubsequenceType = "all"
+	#seedHFnetworkSubsequenceType = "lastSentence"
 	#seedHFnetworkSubsequence currently requires !biologicalSimulationEncodeSyntaxInDendriticBranchStructure
 	seedHFnetworkSubsequenceLength = 4	#must be < len(targetSentenceConceptNodeList)
 	seedHFnetworkSubsequenceBasic = False	#emulate simulateBiologicalHFnetworkSequenceTrain:simulateBiologicalHFnetworkSequenceNodePropagateWrapper method (only propagate those activate neurons that exist in the target sequence); else propagate all active neurons
@@ -236,9 +250,6 @@ if(enforceMinimumEncodedSequenceLength):
 
 
 #### data loading (main) #### 
-
-#HFNLP algorithm selection;
-algorithmHFNLP = "generateHopfieldNetwork"
 
 NLPsequentialInputTypeTokeniseWords = False	#perform spacy tokenization later in pipeline
 

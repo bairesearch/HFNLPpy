@@ -1,7 +1,7 @@
 """HFNLPpy_hopfieldGraphDraw.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022-2024 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2026 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -162,10 +162,13 @@ def displayHopfieldGraph(plot=True, save=False, fileName=None):
 			nx.draw(hopfieldGraph, pos, with_labels=True, alpha=graphTransparency)
 
 	if(save):
+		fileExtension = ".svg" if drawSaveSvg else ".png"
+		saveFormat = 'svg' if drawSaveSvg else 'png'
+		fileName = fileName + fileExtension
 		if(highResolutionFigure):
-			plt.savefig(fileName, dpi=saveFigDPI)
+			plt.savefig(fileName, dpi=saveFigDPI, format=saveFormat)
 		else:
-			plt.savefig(fileName)
+			plt.savefig(fileName, format=saveFormat)
 	if(plot):
 		plt.show()
 	else:	

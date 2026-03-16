@@ -1,7 +1,7 @@
 """HFNLPpy_hopfieldNodeClass.py
 
 # Author:
-Richard Bruce Baxter - Copyright (c) 2022-2024 Baxter AI (baxterai.com)
+Richard Bruce Baxter - Copyright (c) 2022-2026 Baxter AI (baxterai.com)
 
 # License:
 MIT License
@@ -25,7 +25,7 @@ import numpy as np
 
 from HFNLPpy_globalDefs import *
 if(useAlgorithmLayeredSANI):
-	from SANIHFNLPpy_LayeredSANINode import layeredSANINodePropertiesInitialisation
+	from HFNLPpy_LayeredSANINode import layeredSANINodePropertiesInitialisation
 if(useAlgorithmDendriticSANI):
 	from HFNLPpy_DendriticSANINode import dendriticSANINodePropertiesInitialisation
 	
